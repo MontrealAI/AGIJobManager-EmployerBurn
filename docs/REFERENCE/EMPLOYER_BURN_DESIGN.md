@@ -19,7 +19,7 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 ## Burn amount
 - `burnAmount = job.payout * employerBurnBps / 10_000`.
 - `employerBurnBps` defaults to `0` for safe rollout and backward compatibility.
-- Owner may set bounded value through `setEmployerBurnBps(uint256)`.
+- Owner may set bounded value through `setEmployerBurnBps(uint256)`, but only when escrow/bond locks are empty, preventing retroactive policy changes on active jobs.
 
 ## Observability
 When non-zero burn is applied, `EmployerBurned(jobId, employer, amount)` is emitted.

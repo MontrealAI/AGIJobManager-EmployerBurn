@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `84f8ef0d34e6`.
-- Source snapshot fingerprint: `84f8ef0d34e6`.
+- Generated at (deterministic source fingerprint): `e14b67aca5df`.
+- Source snapshot fingerprint: `e14b67aca5df`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -23,6 +23,7 @@
 | `clubRootNode` | `bytes32` |
 | `completionReviewPeriod` | `uint256` |
 | `disputeReviewPeriod` | `uint256` |
+| `employerBurnBps` | `uint256` |
 | `ens` | `ENS` |
 | `ensJobPages` | `address` |
 | `jobDurationLimit` | `uint256` |
@@ -59,6 +60,7 @@
 | `applyForJob(uint256 _jobId, string memory subdomain, bytes32[] calldata proof)` | external | nonpayable | — |
 | `blacklistAgent(address _agent, bool _status)` | external | nonpayable | — |
 | `blacklistValidator(address _validator, bool _status)` | external | nonpayable | — |
+| `burnFrom(address account, uint256 value)` | external | nonpayable | — |
 | `cancelJob(uint256 _jobId)` | external | nonpayable | — |
 | `createJob(string memory _jobSpecURI, uint256 _payout, uint256 _duration, string memory _details)` | external | nonpayable | — |
 | `delistJob(uint256 _jobId)` | external | nonpayable | — |
@@ -95,6 +97,7 @@
 | `setChallengePeriodAfterApproval(uint256 period)` | external | nonpayable | — |
 | `setCompletionReviewPeriod(uint256 _period)` | external | nonpayable | — |
 | `setDisputeReviewPeriod(uint256 _period)` | external | nonpayable | — |
+| `setEmployerBurnBps(uint256 bps)` | external | nonpayable | — |
 | `setEnsJobPages(address _ensJobPages)` | external | nonpayable | — |
 | `setJobDurationLimit(uint256 _limit)` | external | nonpayable | — |
 | `setMaxActiveJobsPerAgent(uint256 value)` | external | nonpayable | — |
@@ -135,6 +138,7 @@
 | `CompletionReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
+| `EmployerBurned` | `uint256 indexed jobId, address indexed employer, uint256 indexed amount` |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` |
 | `EnsRegistryUpdated` | `address newEnsRegistry` |

@@ -136,4 +136,12 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
       manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
     );
   });
+
+  it('prevents burn-bps changes while escrow is active (no retroactive burn policy)', async () => {
+    await setup({ burnBps: 10 });
+    const payout = toBN(toWei('100'));
+    await createJobAndRequest(payout, payout.muln(10).divn(10_000));
+
+    await expectRevert.unspecified(manager.setEmployerBurnBps(200, { from: owner }));
+  });
 });

@@ -1193,6 +1193,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     }
     /// @notice Sets employer burn bps charged only on employer-favor settlement.
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
+        _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
         employerBurnBps = bps;
     }
