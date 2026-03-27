@@ -6,6 +6,7 @@ interface IAGIJobManagerBurnView {
     function employerBurnBps() external view returns (uint256);
     function voteQuorum() external view returns (uint256);
     function completionReviewPeriod() external view returns (uint256);
+    function challengePeriodAfterApproval() external view returns (uint256);
     function disputeReviewPeriod() external view returns (uint256);
     function getJobCore(uint256 jobId)
         external
@@ -129,52 +130,45 @@ contract EmployerBurnReadHelper {
             uint8 settlementPathCode
         )
     {
-        (
-            address employer,
-            ,
-            uint256 payout,
-            ,
-            ,
-            bool completed,
-            bool disputed,
-            bool expired,
-            uint8 agentPayoutPct
-        ) = manager.getJobCore(jobId);
-        agentPayoutPct;
+        (address employer,, uint256 payout,,, bool completed, bool disputed, bool expired,) = manager.getJobCore(jobId);
         if (completed || expired) {
             return (false, true, true, BURN_READINESS_ALREADY_TERMINAL, EMPLOYER_WIN_PATH_NONE);
         }
 
-        uint256 burnAmount = (payout * manager.employerBurnBps()) / 10_000;
-        if (burnAmount == 0) {
-            balanceSufficient = true;
-            allowanceSufficient = true;
-        } else {
-            address token = manager.agiToken();
-            balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
-            allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
-        }
-
-        (
-            bool completionRequested,
-            uint256 approvals,
-            uint256 disapprovals,
-            uint256 completionRequestedAt,
-            uint256 disputedAt
-        ) = manager.getJobValidation(jobId);
+        uint256 burnAmount;
+        (burnAmount, balanceSufficient, allowanceSufficient) = _getBurnFundingStatus(employer, payout);
 
         if (disputed) {
+            (, , , , uint256 disputedAt) = manager.getJobValidation(jobId);
             employerWinReadyNow = true;
             settlementPathCode = EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
             if (block.timestamp > disputedAt + manager.disputeReviewPeriod()) {
                 settlementPathCode = EMPLOYER_WIN_PATH_STALE_DISPUTE_OWNER;
             }
         } else {
+            (
+                bool completionRequested,
+                uint256 approvals,
+                uint256 disapprovals,
+                uint256 completionRequestedAt,
+                uint256 disputedAtIgnored
+            ) = manager.getJobValidation(jobId);
+            disputedAtIgnored;
             if (!completionRequested) {
                 return (false, balanceSufficient, allowanceSufficient, BURN_READINESS_NOT_EMPLOYER_WIN_PATH, EMPLOYER_WIN_PATH_NONE);
             }
             if (block.timestamp <= completionRequestedAt + manager.completionReviewPeriod()) {
                 return (false, balanceSufficient, allowanceSufficient, BURN_READINESS_NOT_EMPLOYER_WIN_PATH, EMPLOYER_WIN_PATH_NONE);
+            }
+            // Conservative challenge-window guard: if any approval quorum could have armed validatorApproved,
+            // do not report finalize-path readiness until challenge window has definitely elapsed.
+            if (approvals >= manager.voteQuorum()) {
+                uint256 minSafeFinalizationTime = completionRequestedAt
+                    + manager.completionReviewPeriod()
+                    + manager.challengePeriodAfterApproval();
+                if (block.timestamp <= minSafeFinalizationTime) {
+                    return (false, balanceSufficient, allowanceSufficient, BURN_READINESS_NOT_EMPLOYER_WIN_PATH, EMPLOYER_WIN_PATH_NONE);
+                }
             }
             uint256 totalVotes = approvals + disapprovals;
             if (totalVotes == 0 || totalVotes < manager.voteQuorum() || approvals >= disapprovals) {
@@ -194,5 +188,19 @@ contract EmployerBurnReadHelper {
             return (employerWinReadyNow, true, false, BURN_READINESS_INSUFFICIENT_ALLOWANCE, settlementPathCode);
         }
         return (employerWinReadyNow, true, true, BURN_READINESS_OK, settlementPathCode);
+    }
+
+    function _getBurnFundingStatus(address employer, uint256 payout)
+        internal
+        view
+        returns (uint256 burnAmount, bool balanceSufficient, bool allowanceSufficient)
+    {
+        burnAmount = (payout * manager.employerBurnBps()) / 10_000;
+        if (burnAmount == 0) {
+            return (0, true, true);
+        }
+        address token = manager.agiToken();
+        balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
+        allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
     }
 }

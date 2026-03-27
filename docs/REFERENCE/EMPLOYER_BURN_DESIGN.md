@@ -34,6 +34,8 @@ To reduce operator mistakes for non-technical employers, additive periphery cont
 - `getEmployerBurnReadiness(jobId)` → readiness booleans + reason/path codes.
 - `canFinalizeEmployerWinWithBurn(jobId)` → single boolean guard.
 
+Helper readiness is intentionally conservative for finalize-path timing: it waits for review-period completion and an additional challenge-window safety margin before reporting finalize-path employer-win readiness.
+
 ## Etherscan-first operator flow
 1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)`.
 2. Ensure employer AGIALPHA balance covers `payout + burn`.
