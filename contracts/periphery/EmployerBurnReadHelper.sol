@@ -134,10 +134,8 @@ contract EmployerBurnReadHelper {
         uint256 burnAmount = (payout * manager.employerBurnBps()) / 10_000;
         (bool balanceSufficient, bool allowanceSufficient) = _getFundingReadiness(employer, burnAmount);
 
-        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt, uint256 disputedAt) =
-            _readValidation(jobId);
-
         if (disputed) {
+            (,,, , uint256 disputedAt) = _readValidation(jobId);
             return _composeReadinessWithFunding(
                 true,
                 _getDisputeSettlementPath(disputedAt),
@@ -147,6 +145,8 @@ contract EmployerBurnReadHelper {
             );
         }
 
+        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
+            _readValidation(jobId);
         (bool finalizeReady, uint8 pathCode) =
             _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
         return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
