@@ -13,20 +13,28 @@ Use these getters instead:
 - `getJobValidatorCount(jobId)` / `getJobValidatorAt(jobId, index)` for validator lists.
 - `getJobVote(jobId, validator)` for validator votes (0 = none, 1 = approved, 2 = disapproved).
 
-## Runtime bytecode size limit (EIP-170)
+## Runtime + initcode size limits (EIP-170 / EIP-3860)
 
-Ethereum mainnet enforces a **24,576-byte** runtime bytecode cap (EIP‑170). We enforce a safety margin of **<= 24,575 bytes** for deployable contracts.
+Ethereum mainnet enforces:
+
+- **Runtime bytecode cap:** 24,576 bytes (EIP‑170)
+- **Initcode cap:** 49,152 bytes (EIP‑3860)
+
+The repository now checks both hard limits and also reports preferred internal budgets:
+
+- Preferred runtime budget: <= 23,000 bytes
+- Preferred initcode budget: <= 46,000 bytes
 
 ### How to measure locally
 
-Compile and check the deployed bytecode size:
+Compile and check size limits:
 
 ```bash
 npx truffle compile --all
-node -e "const a=require('./build/contracts/AGIJobManager.json'); const b=(a.deployedBytecode||'').replace(/^0x/,''); console.log('AGIJobManager deployedBytecode bytes:', b.length/2)"
+node scripts/check-bytecode-size.js
 ```
 
-We also enforce this in tests (`test/bytecodeSize.test.js`) so CI fails if the limit is exceeded.
+We also enforce these checks in tests (`test/bytecodeSize.test.js`) and in the contract-size script used by `npm test` (`scripts/check-contract-sizes.js`) so CI fails on EIP hard-limit violations.
 
 ## Validator payout rule (approvers-only)
 
