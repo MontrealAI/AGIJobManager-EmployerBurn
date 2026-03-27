@@ -47,8 +47,9 @@ AGIJobManager is an Ethereum smart-contract system for escrowed AGI work agreeme
 
 - Mainnet AGIALPHA token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Burn executes only on employer-win settlement paths (`_refundEmployer` flow via finalize/dispute resolution), not on agent-win, cancel, or expiry paths.
-- Operator sets burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
+- Operator configures burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
 - Employers must keep extra AGIALPHA balance and allowance for the burn, in addition to escrow approval.
+- Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 
 ### Manual vs automated (do not assume)
 

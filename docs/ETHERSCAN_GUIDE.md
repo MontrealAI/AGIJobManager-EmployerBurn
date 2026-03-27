@@ -174,7 +174,7 @@ jobId: 42
 ### 4) Finalize after windows
 Write: `finalizeJob(jobId)`
 - `jobId`: numeric ID to settle
-- If the job settles employer-win and `employerBurnBps > 0`, AGIJobManager will also execute `burnFrom(employer, burnAmount)` on AGIALPHA; ensure employer allowance/balance includes burn coverage.
+- If the job settles employer-win and `employerBurnBps > 0`, AGIJobManager also executes `burnFrom(employer, burnAmount)` on AGIALPHA; ensure employer allowance/balance includes burn coverage.
 
 ```text
 jobId: 42

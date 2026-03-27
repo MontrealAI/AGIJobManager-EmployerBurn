@@ -108,9 +108,9 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     );
   });
 
-  it('supports explicit zero-burn behavior safely', async () => {
-    await setup({ burnBps: 0 });
-    const payout = toBN(toWei('100'));
+  it('zero-burn edge case on tiny payout does not emit burn and keeps supply constant', async () => {
+    await setup();
+    const payout = toBN(1);
     const jobId = await createJobAndRequest(payout);
 
     const supplyBefore = await token.totalSupply();
@@ -118,8 +118,7 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     const supplyAfter = await token.totalSupply();
 
     const event = tx.logs.find((l) => l.event === 'EmployerBurned');
-    assert.ok(event);
-    assert.equal(event.args.amount.toString(), '0');
+    assert.equal(Boolean(event), false);
     assert.equal(supplyAfter.toString(), supplyBefore.toString());
   });
 

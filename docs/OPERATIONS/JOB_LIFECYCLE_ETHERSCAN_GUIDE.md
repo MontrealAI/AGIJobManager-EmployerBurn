@@ -196,7 +196,7 @@ flowchart TD
 2. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
 3. Employer ensures wallet balance can cover both escrow payout and burn.
 4. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
-5. On employer-win settlement, verify `EmployerBurned` event and amount.
+5. On employer-win settlement, verify `EmployerBurned` event and amount when burn amount is non-zero.
 
 ## Glossary
 - **Merkle proof:** cryptographic inclusion path showing an address is in an off-chain list committed on-chain.
