@@ -192,10 +192,7 @@ contract EmployerBurnReadHelper {
         bool allowanceSufficient,
         uint256 burnAmount
     ) internal view returns (bool, bool, bool, uint8, uint8) {
-        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
-            _readValidation(jobId);
-        (bool finalizeReady, uint8 pathCode) =
-            _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
+        (bool finalizeReady, uint8 pathCode) = _isFinalizeEmployerWinReady(jobId);
         return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
     }
 
@@ -206,13 +203,9 @@ contract EmployerBurnReadHelper {
         return EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
     }
 
-    function _isFinalizeEmployerWinReady(
-        uint256 jobId,
-        bool completionRequested,
-        uint256 approvals,
-        uint256 disapprovals,
-        uint256 completionRequestedAt
-    ) internal view returns (bool ready, uint8 pathCode) {
+    function _isFinalizeEmployerWinReady(uint256 jobId) internal view returns (bool ready, uint8 pathCode) {
+        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
+            _readValidation(jobId);
         if (!completionRequested) {
             return (false, EMPLOYER_WIN_PATH_NONE);
         }
