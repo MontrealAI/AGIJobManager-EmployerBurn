@@ -192,11 +192,14 @@ contract EmployerBurnReadHelper {
         bool allowanceSufficient,
         uint256 burnAmount
     ) internal view returns (bool, bool, bool, uint8, uint8) {
+        (bool finalizeReady, uint8 pathCode) = _getFinalizeReadiness(jobId);
+        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
+    }
+
+    function _getFinalizeReadiness(uint256 jobId) internal view returns (bool ready, uint8 pathCode) {
         (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
             _readValidation(jobId);
-        (bool finalizeReady, uint8 pathCode) =
-            _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
-        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
+        return _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
     }
 
     function _getDisputeSettlementPath(uint256 disputedAt) internal view returns (uint8) {
