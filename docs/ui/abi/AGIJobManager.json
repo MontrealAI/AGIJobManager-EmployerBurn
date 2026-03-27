@@ -393,6 +393,31 @@
       "inputs": [
         {
           "indexed": true,
+          "internalType": "uint256",
+          "name": "jobId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "employer",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "EmployerBurned",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "uint8",
           "name": "hook",
           "type": "uint8"
@@ -1340,6 +1365,19 @@
     {
       "inputs": [],
       "name": "disputeReviewPeriod",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "employerBurnBps",
       "outputs": [
         {
           "internalType": "uint256",
@@ -2573,6 +2611,19 @@
         }
       ],
       "name": "setChallengePeriodAfterApproval",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "bps",
+          "type": "uint256"
+        }
+      ],
+      "name": "setEmployerBurnBps",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
