@@ -116,8 +116,8 @@ contract EmployerBurnReadHelper {
     }
 
     function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
-        (bool ready, bool balanceOk, bool allowanceOk,,) = _getEmployerBurnReadiness(jobId);
-        return ready && balanceOk && allowanceOk;
+        (bool ready, bool balanceOk, bool allowanceOk,, uint8 pathCode) = _getEmployerBurnReadiness(jobId);
+        return ready && balanceOk && allowanceOk && pathCode == EMPLOYER_WIN_PATH_FINALIZE;
     }
 
     function _getEmployerBurnReadiness(uint256 jobId)

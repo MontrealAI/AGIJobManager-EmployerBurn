@@ -85,7 +85,7 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(readiness.employerWinReadyNow, true);
     assert.equal(readiness.reasonCode.toString(), '0');
     assert.equal(readiness.settlementPathCode.toString(), '2');
-    assert.equal(await helper.canFinalizeEmployerWinWithBurn(jobId), true);
+    assert.equal(await helper.canFinalizeEmployerWinWithBurn(jobId), false);
   });
 
   it('reports insufficient allowance in readiness helper', async () => {
@@ -152,5 +152,60 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(readiness.employerWinReadyNow, false);
     assert.equal(readiness.reasonCode.toString(), '1');
     assert.equal(readiness.settlementPathCode.toString(), '0');
+  });
+
+  it('reports finalize readiness only on non-disputed finalize path', async () => {
+    token = await MockERC20.new({ from: owner });
+    manager = await AGIJobManager.new(
+      token.address,
+      'ipfs://base',
+      [ZERO_ADDRESS, ZERO_ADDRESS],
+      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
+      [ZERO_ROOT, ZERO_ROOT],
+      { from: owner }
+    );
+    helper = await EmployerBurnReadHelper.new(manager.address, { from: owner });
+
+    await manager.addAdditionalAgent(agent, { from: owner });
+    await manager.addAdditionalValidator(validatorA, { from: owner });
+    await manager.addAdditionalValidator(validatorB, { from: owner });
+    await manager.addAdditionalValidator(validatorC, { from: owner });
+    await manager.setRequiredValidatorApprovals(1, { from: owner });
+    await manager.setRequiredValidatorDisapprovals(3, { from: owner });
+    await manager.setCompletionReviewPeriod(1, { from: owner });
+    await manager.setChallengePeriodAfterApproval(2, { from: owner });
+    await manager.setEmployerBurnBps(100, { from: owner });
+
+    const agiType = await MockERC721.new({ from: owner });
+    await agiType.mint(agent, { from: owner });
+    await manager.addAGIType(agiType.address, 92, { from: owner });
+
+    await token.mint(agent, toWei('1000'), { from: owner });
+    await token.mint(validatorA, toWei('1000'), { from: owner });
+    await token.mint(validatorB, toWei('1000'), { from: owner });
+    await token.mint(validatorC, toWei('1000'), { from: owner });
+    await token.approve(manager.address, toWei('1000'), { from: agent });
+    await token.approve(manager.address, toWei('1000'), { from: validatorA });
+    await token.approve(manager.address, toWei('1000'), { from: validatorB });
+    await token.approve(manager.address, toWei('1000'), { from: validatorC });
+
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    await token.mint(employer, payout.add(burn), { from: owner });
+    await token.approve(manager.address, payout.add(burn), { from: employer });
+
+    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
+    await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
+    await manager.validateJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorC });
+
+    await time.increase(3);
+    const readiness = await helper.getEmployerBurnReadiness(jobId);
+    assert.equal(readiness.employerWinReadyNow, true);
+    assert.equal(readiness.settlementPathCode.toString(), '1');
+    assert.equal(await helper.canFinalizeEmployerWinWithBurn(jobId), true);
   });
 });
