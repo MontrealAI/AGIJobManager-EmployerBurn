@@ -139,6 +139,7 @@
 | `CompletionReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
+| `EmployerBurnEnforced` | `uint256 indexed jobId, address indexed employer, address indexed finalizer, address token, uint256 amount, address settlementContract, uint8 outcomeCode` |
 | `EmployerBurned` | `uint256 indexed jobId, address indexed employer, uint256 indexed amount` |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` |

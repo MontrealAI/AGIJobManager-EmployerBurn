@@ -73,11 +73,15 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     const supplyBefore = await token.totalSupply();
     const tx = await moveToEmployerWin(jobId);
 
-    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
-    assert.ok(event);
-    assert.equal(event.args.jobId.toNumber(), jobId);
-    assert.equal(event.args.employer, employer);
-    assert.equal(event.args.amount.toString(), burn.toString());
+    const enforcementEvent = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforcementEvent);
+    assert.equal(enforcementEvent.args.jobId.toNumber(), jobId);
+    assert.equal(enforcementEvent.args.employer, employer);
+    assert.equal(enforcementEvent.args.finalizer, moderator);
+    assert.equal(enforcementEvent.args.token, token.address);
+    assert.equal(enforcementEvent.args.amount.toString(), burn.toString());
+    assert.equal(enforcementEvent.args.settlementContract, manager.address);
+    assert.equal(enforcementEvent.args.outcomeCode.toString(), '2');
 
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
