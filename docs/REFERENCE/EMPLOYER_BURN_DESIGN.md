@@ -20,7 +20,7 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 - `burnAmount = job.payout * employerBurnBps / 10_000`.
 - `employerBurnBps` defaults to `0` for safe rollout and backward compatibility.
 - Owner may set bounded value through `setEmployerBurnBps(uint256)`, but only when escrow/bond locks are empty, preventing retroactive policy changes on active jobs.
-- Non-zero burn bps is guarded by a runtime capability check (`burnFrom(..., 0)` probe) so burn cannot be enabled against non-burnable token configs.
+- Token capability is enforced at settlement time: if the configured token does not implement `burnFrom` (or reverts), the employer-win settlement path reverts atomically.
 
 ## Observability
 When non-zero burn is applied, `EmployerBurned(jobId, employer, amount)` is emitted.

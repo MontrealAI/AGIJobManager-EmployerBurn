@@ -50,8 +50,8 @@ const timeoutBlocksMainnet = n(process.env.MAINNET_TIMEOUT_BLOCKS, 500);
 const timeoutBlocksSepolia = n(process.env.SEPOLIA_TIMEOUT_BLOCKS, 500);
 
 const solcVersion = '0.8.23';
-const solcRuns = 40;
-const solcViaIR = false;
+const solcRuns = 1;
+const solcViaIR = true;
 const evmVersion = (process.env.SOLC_EVM_VERSION || 'shanghai').trim();
 
 const testProvider = ganache.provider({
