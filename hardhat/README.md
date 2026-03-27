@@ -22,6 +22,7 @@ UI note: this guide is deployment authority. For the standalone mainnet browser 
 | Transaction | Required signer | Notes |
 | --- | --- | --- |
 | `scripts/deploy.js` / `scripts/deploy-ens-job-pages.js` | deployer key | contract deploy + scripted setup |
+| `scripts/deploy-employer-burn-read-helper.js` | deployer key | optional additive deployment for Etherscan burn-read helper |
 | `NameWrapper.setApprovalForAll(newEnsJobPages, true)` | wrapped-root owner | manual, always required for wrapped-root control |
 | `AGIJobManager.setEnsJobPages(newEnsJobPages)` | AGIJobManager owner | manual pointer switch to new ENSJobPages |
 | `migrateLegacyWrappedJobPage(jobId, exactLabel)` | ENSJobPages owner | manual, only for affected legacy jobs |
@@ -39,6 +40,7 @@ UI note: this guide is deployment authority. For the standalone mainnet browser 
 - Optionally transfers AGIJobManager ownership to `FINAL_OWNER`.
 - Writes deployment artifacts for auditability and manual verification fallback.
 - Provides additive utility script to deploy/replace `ENSJobPages` (`scripts/deploy-ens-job-pages.js`).
+- Provides additive utility script to deploy `EmployerBurnReadHelper` (`scripts/deploy-employer-burn-read-helper.js`) bound to an existing AGIJobManager address.
 
 ### Does not
 - Perform runtime protocol tuning after deployment (pause flags, thresholds, roots, etc.).
