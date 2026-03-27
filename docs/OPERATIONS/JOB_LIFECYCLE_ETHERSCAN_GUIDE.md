@@ -9,6 +9,7 @@
 - ENS replacement requires two manual owner transactions in order: wrapper approval -> `setEnsJobPages`.
 - ENS name format is `<prefix><jobId>.<jobsRootName>` (default prefix `agijob`).
 - Settlement/dispute outcomes are authoritative even if ENS writes fail (best-effort ENS hooks).
+- Employer-burn mode: employer-win settlement can require an additional AGIALPHA burn from the employer wallet.
 
 ## Defaults used in examples
 
@@ -112,9 +113,10 @@ flowchart TD
 ## Role recipes (Etherscan Write Contract)
 
 ### 1) Employer: create job
-1. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, payoutInBaseUnits)`.
+1. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, payoutInBaseUnits + expectedBurnInBaseUnits)`.
 2. On AGIJobManager, call `createJob(jobSpecURI, payout, duration, details)`.
 3. Confirm `JobCreated` event.
+4. Keep extra AGIALPHA balance in the employer wallet for possible employer-win burn (`payout * employerBurnBps / 10_000`).
 
 ### 2) Agent: apply + complete
 1. Verify agent authorization path (additional list, Merkle root, or ENS ownership).
@@ -131,7 +133,7 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win: AGIALPHA refund transfer to employer, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurned(jobId, employer, amount)` event, no completion NFT mint, and no `JobCompleted` event.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.
@@ -170,6 +172,7 @@ flowchart TD
 | `NotAuthorized` | bad proof / subdomain / list membership | verify allowlist, Merkle root proof, or ENS ownership path |
 | `InvalidState` on finalize | window not elapsed or wrong path | inspect `getJobCore(jobId)` + `getJobValidation(jobId)` and validator counts |
 | transfer failures | missing AGIALPHA allowance/balance | re-check token `approve` and balances |
+| employer-win settlement reverts unexpectedly | employer burn allowance/balance missing | increase employer AGIALPHA allowance/balance beyond escrow amount and retry |
 | no ENS update visible | hook target reverted | inspect `EnsHookAttempted.success` and ENS helper config |
 | unexpected tokenURI | ENS URI rejected as unsafe | fallback uses jobCompletionURI; verify `tokenURI(tokenId)` |
 
@@ -186,6 +189,14 @@ flowchart TD
 | `ValidatorLimitReached` | max validators reached | no additional validator votes can be cast |
 | `IneligibleAgentPayout` | agent has no active AGI type payout tier | owner/operator must configure eligible AGI type |
 | `SettlementPaused` | settlement lane paused by owner | wait for owner unpause |
+
+## Employer-burn operator checklist (mainnet/testnet)
+
+1. Owner reads `employerBurnBps()` and confirms expected policy.
+2. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
+3. Employer ensures wallet balance can cover both escrow payout and burn.
+4. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
+5. On employer-win settlement, verify `EmployerBurned` event and amount.
 
 ## Glossary
 - **Merkle proof:** cryptographic inclusion path showing an address is in an off-chain list committed on-chain.

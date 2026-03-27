@@ -5,6 +5,7 @@
 - **Production AGIALPHA token**: `0xa61a3b3a130a9c20768eebf97e21515a6046a1fa`.
 - **Operational dependency**: AGIALPHA must be **unpaused** for normal escrow, bond, payout, finalize, and dispute settlement flows.
 - **Token accounting assumptions**: AGIALPHA is expected to be 18 decimals, non-fee-on-transfer, and non-rebasing so exact-receipt escrow accounting remains valid.
+- **Employer-burn mode**: on employer-win settlement, AGIJobManager can call `burnFrom(employer, burnAmount)` where `burnAmount = payout * employerBurnBps / 10_000`.
 
 ## Post-deploy checklist
 1. Verify deployed runtime bytecode is below EIP-170 cap (`< 24575` bytes).
@@ -14,6 +15,7 @@
 3. Transfer ownership to business operator multisig (recommended), keeping standard `Ownable.transferOwnership` semantics.
 4. Configure operational params (validator thresholds, review windows, bond params) and then lock identity config when ready.
 5. Run smoke lifecycle: create -> apply -> complete request -> validator/dispute path -> finalize.
+6. If `employerBurnBps > 0`, run employer-win smoke and confirm `EmployerBurned` emits and token total supply decreases by expected amount.
 
 ## Settlement liveness model
 - Settlement/finalization paths are designed to remain live even if ENS mirrors are broken, reverting, or out-of-sync.

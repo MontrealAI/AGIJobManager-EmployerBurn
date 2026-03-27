@@ -323,6 +323,10 @@ interface NameWrapper {
     function ownerOf(uint256 id) external view returns (address);
 }
 
+interface IAGIALPHABurnable is IERC20 {
+    function burnFrom(address account, uint256 value) external;
+}
+
 
 
 contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
@@ -343,6 +347,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     error InsolventEscrowBalance();
     error ConfigLocked();
     error SettlementPaused();
+    error BurnBpsTooHigh();
 
     IERC20 public agiToken;
     string private baseIpfsUrl;
@@ -390,6 +395,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     /// @notice Total AGI locked as dispute bonds for unsettled disputes.
     uint256 public lockedDisputeBonds;
     uint256 public maxActiveJobsPerAgent = 3;
+    /// @notice Employer burn rate charged only on employer-favor finalization paths.
+    /// @dev Denominated in basis points over job payout (10_000 = 100%).
+    uint256 public employerBurnBps = 0;
 
     bytes32 public clubRootNode;
     bytes32 public alphaClubRootNode;
@@ -512,6 +520,8 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event AgentBondMinUpdated(uint256 indexed oldMin, uint256 indexed newMin);
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
+    event EmployerBurnBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
+    event EmployerBurned(uint256 indexed jobId, address indexed employer, uint256 indexed amount);
 
     uint8 private constant ENS_HOOK_CREATE = 1;
     uint8 private constant ENS_HOOK_ASSIGN = 2;
@@ -1183,6 +1193,15 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         challengePeriodAfterApproval = period;
         emit ChallengePeriodAfterApprovalUpdated(oldPeriod, period);
     }
+    /// @notice Sets the employer burn basis points charged on employer-win finalization.
+    /// @dev Burn is computed as `job.payout * employerBurnBps / 10_000`.
+    ///      This is used only in employer-favor settlement and dispute-resolution paths.
+    function setEmployerBurnBps(uint256 bps) external onlyOwner {
+        if (bps > 10_000) revert BurnBpsTooHigh();
+        uint256 oldBps = employerBurnBps;
+        employerBurnBps = bps;
+        emit EmployerBurnBpsUpdated(oldBps, bps);
+    }
     function getJobCore(uint256 jobId)
         external
         view
@@ -1505,6 +1524,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.disputed = false;
         _decrementActiveJob(job);
         _releaseEscrow(job);
+        uint256 burnAmount;
+        unchecked {
+            burnAmount = (job.payout * employerBurnBps) / 10_000;
+        }
+        if (burnAmount > 0) {
+            IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
+        }
+        emit EmployerBurned(jobId, job.employer, burnAmount);
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);
         uint256 agentBondPool = _settleAgentBond(job, false, poolToValidators);
