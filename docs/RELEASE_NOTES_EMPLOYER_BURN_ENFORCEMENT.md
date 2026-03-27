@@ -16,6 +16,7 @@ Date: 2026-03-27
 ## Compatibility
 - Backward-compatible with existing employer-burn behavior.
 - Existing `EmployerBurned` event remains unchanged.
+- Added additive `EmployerBurnEnforced` event carrying finalizer, token, settlement contract, and outcome code metadata for stronger audit trails.
 - No migration of existing job state required.
 
 ## Operator action

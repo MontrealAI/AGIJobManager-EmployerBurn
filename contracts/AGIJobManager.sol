@@ -520,6 +520,15 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
     event EmployerBurned(uint256 indexed jobId, address indexed employer, uint256 indexed amount);
+    event EmployerBurnEnforced(
+        uint256 indexed jobId,
+        address indexed employer,
+        address indexed finalizer,
+        address token,
+        uint256 amount,
+        address settlementContract,
+        uint8 outcomeCode
+    );
 
     uint8 private constant ENS_HOOK_CREATE = 1;
     uint8 private constant ENS_HOOK_ASSIGN = 2;
@@ -1529,7 +1538,15 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         uint256 burnAmount = (job.payout * employerBurnBps) / 10_000;
         if (burnAmount != 0) {
             IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
-            emit EmployerBurned(jobId, job.employer, burnAmount);
+            emit EmployerBurnEnforced(
+                jobId,
+                job.employer,
+                msg.sender,
+                address(agiToken),
+                burnAmount,
+                address(this),
+                2
+            );
         }
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);

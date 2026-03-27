@@ -26,6 +26,7 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 ## Observability
 When non-zero burn is applied, events emitted are:
 - `EmployerBurned(jobId, employer, amount)` (backward compatible).
+- `EmployerBurnEnforced(jobId, employer, finalizer, token, amount, settlementContract, outcomeCode)` for indexed auditability of payer, caller, token, and settlement path metadata.
 
 ## Etherscan read helpers
 To reduce operator mistakes for non-technical employers, additive periphery contract `EmployerBurnReadHelper` exposes:

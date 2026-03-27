@@ -17,6 +17,7 @@
 | `CompletionReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` | Moderator or owner resolved dispute | Audit resolution code distribution and reasons |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
+| `EmployerBurnEnforced` | `uint256 indexed jobId, address indexed employer, address indexed finalizer, address token, uint256 amount, address settlementContract, uint8 outcomeCode` | Employer-win settlement burn executed | Reconcile burn payer, token, and caller in one indexed record |
 | `EmployerBurned` | `uint256 indexed jobId, address indexed employer, uint256 indexed amount` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
