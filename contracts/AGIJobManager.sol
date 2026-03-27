@@ -1248,6 +1248,12 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         );
     }
 
+    /// @notice Returns finalization-gate fields used by off-chain/periphery readiness checks.
+    function getJobFinalizationGate(uint256 jobId) external view returns (bool validatorApproved, uint256 validatorApprovedAt) {
+        Job storage job = _job(jobId);
+        return (job.validatorApproved, job.validatorApprovedAt);
+    }
+
     function getJobSpecURI(uint256 jobId) external view returns (string memory) {
         Job storage job = _job(jobId);
         return job.jobSpecURI;
