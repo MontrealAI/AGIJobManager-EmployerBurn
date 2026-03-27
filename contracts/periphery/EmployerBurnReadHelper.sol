@@ -135,21 +135,10 @@ contract EmployerBurnReadHelper {
         (bool balanceSufficient, bool allowanceSufficient) = _getFundingReadiness(employer, burnAmount);
 
         if (disputed) {
-            (,,, , uint256 disputedAt) = _readValidation(jobId);
-            return _composeReadinessWithFunding(
-                true,
-                _getDisputeSettlementPath(disputedAt),
-                balanceSufficient,
-                allowanceSufficient,
-                burnAmount
-            );
+            return _getDisputedReadiness(jobId, balanceSufficient, allowanceSufficient, burnAmount);
         }
 
-        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
-            _readValidation(jobId);
-        (bool finalizeReady, uint8 pathCode) =
-            _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
-        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
+        return _getFinalizeReadiness(jobId, balanceSufficient, allowanceSufficient, burnAmount);
     }
 
     function _readCoreMinimal(uint256 jobId) internal view returns (address employer, uint256 payout, bool completed, bool disputed, bool expired) {
@@ -162,6 +151,35 @@ contract EmployerBurnReadHelper {
         returns (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt, uint256 disputedAt)
     {
         (completionRequested, approvals, disapprovals, completionRequestedAt, disputedAt) = manager.getJobValidation(jobId);
+    }
+
+    function _getDisputedReadiness(
+        uint256 jobId,
+        bool balanceSufficient,
+        bool allowanceSufficient,
+        uint256 burnAmount
+    ) internal view returns (bool, bool, bool, uint8, uint8) {
+        (,,, , uint256 disputedAt) = _readValidation(jobId);
+        return _composeReadinessWithFunding(
+            true,
+            _getDisputeSettlementPath(disputedAt),
+            balanceSufficient,
+            allowanceSufficient,
+            burnAmount
+        );
+    }
+
+    function _getFinalizeReadiness(
+        uint256 jobId,
+        bool balanceSufficient,
+        bool allowanceSufficient,
+        uint256 burnAmount
+    ) internal view returns (bool, bool, bool, uint8, uint8) {
+        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
+            _readValidation(jobId);
+        (bool finalizeReady, uint8 pathCode) =
+            _isFinalizeEmployerWinReady(jobId, completionRequested, approvals, disapprovals, completionRequestedAt);
+        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
     }
 
     function _getFundingReadiness(address employer, uint256 burnAmount)
