@@ -6,6 +6,7 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 - Use Hardhat for deploy/replacement; use Etherscan for owner controls and verification reads.
 - ENSJobPages cutover is additive: deploy new ENSJobPages, grant wrapper approval, set AGIJobManager ENSJobPages pointer, migrate legacy jobs if needed, lock only after validation.
 - Never lock identity/configuration before validating addresses, approvals, and expected ENS hook behavior.
+- If employer-burn is enabled (`employerBurnBps > 0`), ensure employer operators are instructed to approve and hold burn coverage in addition to escrow.
 
 
 ## Start here by owner intent
@@ -63,6 +64,7 @@ node scripts/advisor/state_advisor.js --input scripts/advisor/sample_job_state.j
 - Phase 0: `pauseAll` enabled; configure params/roles.
 - Phase 1: keep settlement paused (`unpause` + `setSettlementPaused(true)`) for a controlled read-only warm-up; note this also blocks `createJob`/`applyForJob` writes because they require `whenSettlementNotPaused`.
 - Phase 2: enable live operations (`setSettlementPaused(false)`) once moderators/validators are ready; this opens both intake and settlement paths.
+- Burn policy: explicitly set and announce `setEmployerBurnBps(...)` before opening production traffic; document the exact bps in operator comms.
 - Use conservative thresholds/quorum first; ratchet only after observing production behavior.
 
 ## 3) Incident playbooks
@@ -137,3 +139,4 @@ Before `lockIdentityConfiguration()` or `lockConfiguration()`:
 - `updateAGITokenAddress`: identity-critical; only before lock.
 - `updateEnsRegistry`/`updateNameWrapper`/`updateRootNodes`/`setEnsJobPages`: identity-critical; only before lock.
 - Parameter setters affecting incentives (`setValidatorBondParams`, `setAgentBondParams`, `setValidatorSlashBps`, `setVoteQuorum`, etc.) should use change tickets and announced effective times.
+- `setEmployerBurnBps`: economic-impact setting; announce before changing and verify employer-facing runbooks are updated.
