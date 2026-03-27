@@ -193,10 +193,11 @@ flowchart TD
 ## Employer-burn operator checklist (mainnet/testnet)
 
 1. Owner reads `employerBurnBps()` and confirms expected policy.
-2. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
-3. Employer ensures wallet balance can cover both escrow payout and burn.
-4. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
-5. On employer-win settlement, verify `EmployerBurned` event and amount when burn amount is non-zero.
+2. Owner confirms `agiToken()` is the canonical AGIALPHA token before enabling non-zero burn policy.
+3. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
+4. Employer ensures wallet balance can cover both escrow payout and burn.
+5. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
+6. On employer-win settlement, verify `EmployerBurned` event and amount when burn amount is non-zero.
 
 ## Glossary
 - **Merkle proof:** cryptographic inclusion path showing an address is in an off-chain list committed on-chain.

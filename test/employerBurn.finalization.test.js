@@ -4,6 +4,7 @@ const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const AGIJobManager = artifacts.require('AGIJobManager');
 const MockERC20 = artifacts.require('MockERC20');
 const MockERC721 = artifacts.require('MockERC721');
+const ERC20NoReturn = artifacts.require('ERC20NoReturn');
 
 const ZERO_ROOT = '0x' + '00'.repeat(32);
 const ZERO_ADDRESS = '0x' + '00'.repeat(20);
@@ -144,4 +145,18 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
 
     await expectRevert.unspecified(manager.setEmployerBurnBps(200, { from: owner }));
   });
+
+  it('blocks enabling burn on token configs that do not support burnFrom', async () => {
+    const plainToken = await ERC20NoReturn.new({ from: owner });
+    const m = await AGIJobManager.new(
+      plainToken.address,
+      'ipfs://base',
+      [ZERO_ADDRESS, ZERO_ADDRESS],
+      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
+      [ZERO_ROOT, ZERO_ROOT],
+      { from: owner }
+    );
+    await expectRevert.unspecified(m.setEmployerBurnBps(100, { from: owner }));
+  });
+
 });

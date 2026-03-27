@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `e14b67aca5df`.
-- Source snapshot fingerprint: `e14b67aca5df`.
+- Generated at (deterministic source fingerprint): `d71fbf26310d`.
+- Source snapshot fingerprint: `d71fbf26310d`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface

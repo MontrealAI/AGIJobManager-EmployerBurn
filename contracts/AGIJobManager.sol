@@ -1041,6 +1041,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function updateAGITokenAddress(address _newTokenAddress) external onlyOwner whenIdentityConfigurable {
         if (_newTokenAddress.code.length == 0) revert InvalidParameters();
         _requireEmptyEscrow();
+        if (employerBurnBps > 0) {
+            IAGIALPHABurnable(_newTokenAddress).burnFrom(msg.sender, 0);
+        }
         address oldToken = address(agiToken);
         agiToken = IERC20(_newTokenAddress);
         emit AGITokenAddressUpdated(oldToken, _newTokenAddress);
@@ -1195,6 +1198,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
         _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
+        if (bps > 0) {
+            IAGIALPHABurnable(address(agiToken)).burnFrom(msg.sender, 0);
+        }
         employerBurnBps = bps;
     }
 
