@@ -119,7 +119,9 @@ contract EmployerBurnReadHelper {
 
     function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
         (bool ready, bool balanceOk, bool allowanceOk,, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
-        return ready && balanceOk && allowanceOk && settlementPathCode == EMPLOYER_WIN_PATH_FINALIZE;
+        bool isFinalizePath = settlementPathCode > EMPLOYER_WIN_PATH_NONE
+            && settlementPathCode < EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
+        return ready && balanceOk && allowanceOk && isFinalizePath;
     }
 
     function _getEmployerBurnReadiness(uint256 jobId) internal view returns (bool, bool, bool, uint8, uint8) {
