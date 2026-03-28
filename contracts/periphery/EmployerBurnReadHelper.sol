@@ -41,10 +41,16 @@ interface IERC20ReadOnly {
     function allowance(address owner, address spender) external view returns (uint256);
 }
 
+interface IAGIALPHAPausableReadOnly {
+    function isPaused() external view returns (bool);
+}
+
 /// @title EmployerBurnReadHelper
 /// @notice Read-only helper contract for Etherscan-first employer burn preflight checks.
 /// @dev This helper is additive and non-authoritative: AGIJobManager remains settlement source-of-truth.
 contract EmployerBurnReadHelper {
+    error ManagerAddressZero();
+
     uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
     uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
     uint8 public constant EMPLOYER_WIN_PATH_DISPUTE_MODERATOR = 2;
@@ -57,11 +63,12 @@ contract EmployerBurnReadHelper {
     uint8 public constant BURN_READINESS_INSUFFICIENT_BALANCE = 4;
     uint8 public constant BURN_READINESS_INSUFFICIENT_ALLOWANCE = 5;
     uint8 public constant BURN_READINESS_SETTLEMENT_PAUSED = 6;
+    uint8 public constant BURN_READINESS_TOKEN_PAUSED = 7;
 
     IAGIJobManagerBurnView public immutable manager;
 
     constructor(address managerAddress) {
-        require(managerAddress != address(0), "manager=0");
+        if (managerAddress == address(0)) revert ManagerAddressZero();
         manager = IAGIJobManagerBurnView(managerAddress);
     }
 
@@ -132,6 +139,9 @@ contract EmployerBurnReadHelper {
         if (manager.settlementPaused()) {
             return (false, true, true, BURN_READINESS_SETTLEMENT_PAUSED, EMPLOYER_WIN_PATH_NONE);
         }
+        if (_isTokenPausedBestEffort(manager.agiToken())) {
+            return (false, true, true, BURN_READINESS_TOKEN_PAUSED, EMPLOYER_WIN_PATH_NONE);
+        }
 
         uint256 burnAmount = (payout * manager.employerBurnBps()) / 10_000;
         (bool balanceSufficient, bool allowanceSufficient) = _getFundingReadiness(employer, burnAmount);
@@ -166,6 +176,14 @@ contract EmployerBurnReadHelper {
         address token = manager.agiToken();
         balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
         allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
+    }
+
+    function _isTokenPausedBestEffort(address token) internal view returns (bool paused_) {
+        (bool ok, bytes memory data) = token.staticcall(abi.encodeWithSelector(IAGIALPHAPausableReadOnly.isPaused.selector));
+        if (!ok || data.length != 32) {
+            return false;
+        }
+        paused_ = abi.decode(data, (bool));
     }
 
     function _readinessForDisputed(

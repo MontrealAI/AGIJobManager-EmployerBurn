@@ -42,6 +42,7 @@ To reduce operator mistakes for non-technical employers, additive periphery cont
 - `getEmployerBurnReadiness(jobId)` → readiness booleans + reason/path codes (includes dispute-resolution paths).
 - `canFinalizeEmployerWinWithBurn(jobId)` → single boolean guard for the **`finalizeJob` employer-win branch only**.
 - If settlement is paused on AGIJobManager, readiness reports not-ready and finalize helper returns false.
+- If AGIALPHA exposes `isPaused()` and reports paused, readiness reports `BURN_READINESS_TOKEN_PAUSED` to prevent avoidable failed writes.
 
 ## Etherscan-first operator flow
 1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)`.

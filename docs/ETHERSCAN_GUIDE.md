@@ -32,6 +32,7 @@ Use this guide if you only have:
    - `BURN_READINESS_INSUFFICIENT_BALANCE` (`4`)
    - `BURN_READINESS_INSUFFICIENT_ALLOWANCE` (`5`)
    - `BURN_READINESS_SETTLEMENT_PAUSED` (`6`)
+   - `BURN_READINESS_TOKEN_PAUSED` (`7`)
 7. Confirm job status is not already terminal (`completed` or `expired`) from `getJobCore(jobId)`.
 8. Confirm you are calling the intended settlement function:
    - Permissionless lane: `finalizeJob(jobId)`
@@ -158,6 +159,7 @@ node scripts/etherscan/prepare_inputs.js --action convert --amount 1.5 --duratio
 | 4 | `BURN_READINESS_INSUFFICIENT_BALANCE` | Employer wallet AGIALPHA balance is too low for the burn amount. |
 | 5 | `BURN_READINESS_INSUFFICIENT_ALLOWANCE` | Employer approved amount is too low for AGIJobManager to burn. |
 | 6 | `BURN_READINESS_SETTLEMENT_PAUSED` | Settlement lane is paused; settlement call will revert until unpaused. |
+| 7 | `BURN_READINESS_TOKEN_PAUSED` | AGIALPHA token currently reports paused state; burn will fail until token unpauses. |
 
 `settlementPathCode` quick reference:
 - `0`: no active employer-win settlement path right now.
