@@ -106,6 +106,11 @@ Measured on 2026-03-28 using `node scripts/check-contract-sizes.js` in this repo
 
 Status: current repo state passes hard deployability limits; AGIJobManager remains above internal preferred runtime budget (23,000) and should continue to be monitored for growth.
 
+Mainnet rules verified from source:
+- EIP-170 (active): deployed runtime code-size hard limit remains `0x6000` = 24,576 bytes.
+- EIP-3860 (active): initcode size hard limit remains 49,152 bytes.
+- EIP-7907 exists as a proposal to increase limits, but is not currently an active mainnet fork rule.
+
 ## 9) Implementation summary (current codebase)
 - Core burn enforcement in `AGIJobManager._refundEmployer`.
 - Burn rate config via `setEmployerBurnBps`.
@@ -125,13 +130,13 @@ Status: current repo state passes hard deployability limits; AGIJobManager remai
   - stale-dispute employer-win burn,
   - no burn on agent-win,
   - insufficient allowance failure,
+  - insufficient balance failure,
   - settlement pause behavior,
   - helper readiness and allowance/balance diagnostics.
-- Size checks currently fail due to AGIJobManager runtime > EIP-170.
 - Re-validated on 2026-03-28:
   - `npx truffle test test/employerBurn.finalization.test.js --network test` (pass).
   - `npm run docs:check` (pass).
-  - `node scripts/check-contract-sizes.js` (fails on AGIJobManager runtime limit).
+  - `node scripts/check-contract-sizes.js` (passes hard mainnet limits; warns on internal preferred budget).
 
 ## 12) Documentation summary snapshot
 - EmployerBurn design note, ADR, Etherscan guide, runbooks, and checklist already include EmployerBurn-specific operator guidance.
