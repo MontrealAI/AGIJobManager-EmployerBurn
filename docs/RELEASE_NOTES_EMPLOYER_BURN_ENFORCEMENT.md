@@ -4,6 +4,7 @@ Date: 2026-03-28
 
 ## Summary
 - Added Etherscan-first helper views for employer-burn preflight checks.
+- Added token-pause awareness to helper readiness (`BURN_READINESS_TOKEN_PAUSED`) when AGIALPHA exposes `isPaused()`.
 - Kept employer-burn enforcement on authoritative employer-win settlement path in `AGIJobManager`.
 - Reconciled external AGIALPHA token verification notes to dated live-source checks.
 - Added `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` for burn observability on authoritative employer-win paths.
