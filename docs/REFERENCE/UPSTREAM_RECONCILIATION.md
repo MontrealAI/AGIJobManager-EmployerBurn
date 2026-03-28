@@ -16,3 +16,7 @@ The following names remain intentionally preserved for compatibility and audit c
 - Historical docs and generated references that describe upstream-compatible interfaces.
 
 Rationale: renaming the on-chain contract or established ABI identifiers would add integration risk and create avoidable migration complexity for existing operators, tooling, and external integrations.
+
+## Latest verification artifact
+
+- See `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md` for the latest full audit matrix, architecture validation, source verification note, and release-blocker status snapshot.
