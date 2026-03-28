@@ -221,6 +221,11 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await expectRevert.unspecified(
       m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
     );
+
+    await pausableToken.unpause({ from: owner });
+    const tx2 = await m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
+    const enforced = tx2.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
   });
 
   it('does not let protocol-held AGIALPHA subsidize employer burn', async () => {
