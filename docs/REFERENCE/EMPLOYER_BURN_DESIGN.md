@@ -21,6 +21,7 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 ## Burn source and atomicity
 - Source: `burnFrom(job.employer, burnAmount)` on configured AGI token.
 - The protocol contract never burns from treasury/escrow balances.
+- No protocol subsidy: protocol accounting never fronts, socializes, reimburses, or nets out the employer burn amount.
 - If `burnFrom` fails (allowance/balance/token-level revert), employer-win settlement reverts atomically.
 - Ordering: settlement first checks lifecycle eligibility, then executes burn, then proceeds with employer refund + validator/bond settlement; no partial burn-without-settlement or settlement-without-burn.
 
