@@ -1,5 +1,7 @@
 # Deployment Documentation Index
 
+Repository identity: **AGIJobManager-EmployerBurn**. Compatibility-preserved on-chain contract names remain `AGIJobManager`; see `../REFERENCE/UPSTREAM_RECONCILIATION.md`.
+
 ## Start here by deployment task
 - Fresh deployment (official path): [../../hardhat/README.md](../../hardhat/README.md)
 - ENSJobPages replacement/cutover: [./ENS_JOB_PAGES_MAINNET_REPLACEMENT.md](./ENS_JOB_PAGES_MAINNET_REPLACEMENT.md)
@@ -33,4 +35,3 @@
   - `../ui/GENESIS_JOB_MAINNET_HTML_UI.md`
   - `../../ui/README.md`
 - For deployment/cutover decisions, this index and `../../hardhat/README.md` remain canonical.
-

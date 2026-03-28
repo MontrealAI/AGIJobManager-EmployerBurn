@@ -1,5 +1,7 @@
 # Mainnet Deployment Checklist
 
+Identity check: this repository is the `AGIJobManager-EmployerBurn` variant. Keep on-chain compatibility names (`AGIJobManager`) but use EmployerBurn operator docs/metadata. See `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
+
 - Transfer contract ownership to a multisig (e.g., Safe), not an EOA.
 - Decide whether to keep `useEnsJobTokenURI` disabled at launch; if enabling, confirm `ensJobPages` is the intended contract.
 - ENS configuration verification:
