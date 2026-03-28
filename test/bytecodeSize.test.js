@@ -37,8 +37,15 @@ function loadArtifact(name) {
 }
 
 contract("Bytecode size guard", () => {
+  const DEPLOYABLE_CONTRACTS = [
+    "AGIJobManager",
+    "EmployerBurnReadHelper",
+    "ENSJobPages",
+    "AGIJobPages",
+  ];
+
   it("keeps deployed bytecode within the EIP-170 runtime size limit", () => {
-    ["AGIJobManager", "EmployerBurnReadHelper"].forEach((name) => {
+    DEPLOYABLE_CONTRACTS.forEach((name) => {
       const artifact = loadArtifact(name);
       if (!artifact) {
         return;
@@ -52,7 +59,7 @@ contract("Bytecode size guard", () => {
   });
 
   it("keeps initcode within the EIP-3860 initcode size limit", () => {
-    ["AGIJobManager", "EmployerBurnReadHelper"].forEach((name) => {
+    DEPLOYABLE_CONTRACTS.forEach((name) => {
       const artifact = loadArtifact(name);
       if (!artifact) {
         return;
@@ -66,7 +73,7 @@ contract("Bytecode size guard", () => {
   });
 
   it("reports preferred size-headroom budgets", () => {
-    ["AGIJobManager", "EmployerBurnReadHelper"].forEach((name) => {
+    DEPLOYABLE_CONTRACTS.forEach((name) => {
       const artifact = loadArtifact(name);
       if (!artifact) {
         return;

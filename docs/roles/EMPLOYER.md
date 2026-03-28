@@ -7,10 +7,16 @@ This guide is for job posters (employers). It shows how to safely create and man
 - The AGIJobManager contract address.
 - Confidence that the AGI token address is correct.
 
-## Step‑by‑step (non‑technical)
+## Step‑by‑step (non‑technical, Etherscan-first)
 > **Screenshot placeholder:** Etherscan “Write Contract” tab showing `createJob` inputs filled in.
 ### 1) Approve escrow amount
-Use your wallet or Etherscan to approve **only the exact payout amount**.
+Use your wallet or Etherscan to approve AGIALPHA to the **AGIJobManager contract**.
+
+- Minimum safe approval for EmployerBurn variant:
+  - `approval >= payout + expectedBurn`
+  - where `expectedBurn = payout * employerBurnBps / 10_000`.
+- The extra burn approval is only consumed if settlement ends in an employer-win path.
+- If burn policy is `0` bps, extra burn approval is not required.
 
 ### 2) Create a job
 Generate/upload the **job spec metadata** JSON and call `createJob(jobSpecURI, payout, duration, details)`.
@@ -34,13 +40,21 @@ If no agent has been assigned and the job is not completed, call `cancelJob(jobI
 ### 5) Dispute (if needed)
 Call `disputeJob(jobId)` if you disagree with the completion or validation direction.
 
-### 6) Receive NFT receipt
+### 6) Employer-burn preflight checks (recommended)
+Use `EmployerBurnReadHelper` in Etherscan **Read Contract** before settlement:
+- `quoteEmployerBurn(jobId)`
+- `getEmployerBurnRequirements(jobId)`
+- `getEmployerBurnReadiness(jobId)`
+- `canFinalizeEmployerWinWithBurn(jobId)` (for `finalizeJob` path only)
+
+### 7) Receive NFT receipt
 When a job completes, an NFT is minted to your wallet.
 - Event: `NFTIssued`
 - Token URI: points to the **job completion metadata** (`jobCompletionURI`, with `baseIpfsUrl` fallback)
 
 ## Common mistakes
 - **Insufficient allowance** → `TransferFailed`
+- **Employer-win settlement revert after dispute/finalize** → usually missing employer burn allowance or wallet balance for `burnFrom`.
 - **Job already assigned or completed** → `InvalidState`
 - **Wrong jobId** → `JobNotFound`
 
@@ -55,4 +69,4 @@ When a job completes, an NFT is minted to your wallet.
 - `getJobValidation(jobId)` → completionRequested flag
 
 ### Events to index
-`JobCreated`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`, `DisputeResolved`
+`JobCreated`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurned`

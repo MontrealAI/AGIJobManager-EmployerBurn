@@ -83,6 +83,28 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
   });
 
+  it('burns exact amount on stale-dispute employer-win owner resolution', async () => {
+    await setup();
+    await manager.setDisputeReviewPeriod(1, { from: owner });
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    const jobId = await createJobAndRequest(payout, burn);
+
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await time.increase(2);
+
+    const supplyBefore = await token.totalSupply();
+    const tx = await manager.resolveStaleDispute(jobId, true, { from: owner });
+    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
+    assert.ok(event);
+    assert.equal(event.args.jobId.toNumber(), jobId);
+    assert.equal(event.args.employer, employer);
+    assert.equal(event.args.amount.toString(), burn.toString());
+    const supplyAfter = await token.totalSupply();
+    assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
+  });
+
   it('does not burn on agent-win finalization', async () => {
     await setup();
     const payout = toBN(toWei('100'));
