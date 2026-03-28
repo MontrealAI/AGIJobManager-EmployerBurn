@@ -39,7 +39,9 @@ Use this guide if you only have:
    - Owner stale-dispute lane: `resolveStaleDispute(jobId, true)`
 9. Confirm wallet/network in your browser extension is Ethereum mainnet.
 10. Submit and wait for receipt status `Success`.
-11. Verify `EmployerBurnEnforced` in transaction logs.
+11. Verify burn evidence conditionally:
+   - If `quoteEmployerBurn(jobId).amount > 0`, the settlement tx **must** include `EmployerBurnEnforced`.
+   - If `quoteEmployerBurn(jobId).amount == 0` (for example `BURN_READINESS_BURN_BPS_ZERO` / reason code `3`), settlement can succeed without that event.
 
 ### Exact approval vs unlimited approval (risk warning)
 
