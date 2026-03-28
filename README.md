@@ -53,6 +53,7 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 - Burn observability: settlement emits `EmployerBurned(jobId, employer, amount)` when non-zero burn is applied.
 - Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 - Upstream reconciliation note: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
+- Latest audit and blocker report (2026-03-28): `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`.
 
 ### Manual vs automated (do not assume)
 
