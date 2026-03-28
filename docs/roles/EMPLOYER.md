@@ -69,4 +69,4 @@ When a job completes, an NFT is minted to your wallet.
 - `getJobValidation(jobId)` → completionRequested flag
 
 ### Events to index
-`JobCreated`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurned`
+`JobCreated`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnEnforced`

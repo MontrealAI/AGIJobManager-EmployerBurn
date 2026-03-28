@@ -193,11 +193,11 @@ Every step emits events and changes state/balances.
 | `validateJob` | `JobValidated` | none (until threshold) | `validatorApprovals`, validator maps |
 | `disapproveJob` | `JobDisapproved`, maybe `JobDisputed` | none | `validatorDisapprovals`, `disputed` |
 | `resolveDisputeWithCode(AGENT_WIN)` | `DisputeResolvedWithCode`, `JobCompleted`, `NFTIssued` | contract → agent/validators | `completed`, reputation updates |
-| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurned` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
+| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurnEnforced` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
 
 Key events include:
 - `JobCreated`, `JobApplied`, `JobCompletionRequested`
-- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurned`
+- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnEnforced`
 - `JobCompleted`, `NFTIssued`
 
 Token movements:
