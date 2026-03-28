@@ -158,6 +158,24 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     );
   });
 
+  it('reverts employer-win settlement with insufficient burn balance', async () => {
+    await setup();
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    await token.mint(employer, payout, { from: owner });
+    await token.approve(manager.address, payout.add(burn), { from: employer });
+    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
+    await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+
+    await expectRevert.unspecified(
+      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
+    );
+  });
+
   it('zero-burn edge case on tiny payout does not emit burn and keeps supply constant', async () => {
     await setup();
     const payout = toBN(1);
