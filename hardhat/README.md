@@ -1,6 +1,6 @@
 # Hardhat Operator Guide (Official / Recommended)
 
-This `hardhat/` project is the official deployment and verification workflow for AGIJobManager.
+This `hardhat/` project is the official deployment and verification workflow for the AGIJobManager EmployerBurn variant.
 
 > Truffle remains supported as a legacy path. Hardhat is the recommended production path for new deployments and replacements.
 
