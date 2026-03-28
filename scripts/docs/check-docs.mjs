@@ -10,6 +10,7 @@ const requiredFiles = [
   'docs/OPERATIONS/MONITORING.md','docs/SECURITY_MODEL.md','docs/TESTING.md','docs/TROUBLESHOOTING.md','docs/GLOSSARY.md',
   'docs/DEPLOYMENT_OPERATIONS.md','docs/SCRIPTS_REFERENCE.md',
   'docs/REFERENCE/VERSIONS.md','docs/REFERENCE/CONTRACT_INTERFACE.md','docs/REFERENCE/EVENTS_AND_ERRORS.md',
+  'docs/REFERENCE/UPSTREAM_RECONCILIATION.md',
   'docs/assets/palette.svg','docs/assets/architecture-wireframe.svg'
 ];
 
@@ -112,7 +113,7 @@ for (const row of mustIncludeColumns) {
 }
 
 const requiredSectionSnippets = [
-  ['README.md', ['## Documentation', 'docs/README.md', 'docs/QUINTESSENTIAL_USE_CASE.md', 'docs:gen', 'docs:check', 'check-no-binaries']],
+  ['README.md', ['## Documentation', 'docs/README.md', 'docs/QUINTESSENTIAL_USE_CASE.md', 'docs/REFERENCE/UPSTREAM_RECONCILIATION.md', 'docs:gen', 'docs:check', 'check-no-binaries']],
   ['docs/CONTRACTS/AGIJobManager.md', [
     '| Action | Owner | Moderator | Employer | Agent | Validator | Anyone |',
     '| Parameter | Purpose | Safe range guidance | Operational note | Where set |',
@@ -135,6 +136,28 @@ for (const [file, snippets] of requiredSectionSnippets) {
       fail(`Missing required section snippet in ${file}: ${snippet}`);
     }
   }
+}
+
+const canonicalIdentityFiles = [
+  'README.md',
+  'package.json',
+  'hardhat/README.md',
+  'docs/DEPLOYMENT/README.md',
+  'docs/ETHERSCAN_GUIDE.md',
+  'MAINNET_DEPLOYMENT_CHECKLIST.md'
+];
+const staleRepoRefs = ['github.com/MontrealAI/AGIJobManager/'];
+for (const file of canonicalIdentityFiles) {
+  const content = fs.readFileSync(path.join(root, file), 'utf8');
+  for (const stale of staleRepoRefs) {
+    if (content.includes(stale)) fail(`Stale upstream repo reference in canonical file ${file}: ${stale}`);
+  }
+}
+
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+if (!String(packageJson.name || '').includes('employerburn')) fail('package.json name must include "employerburn"');
+if (!String(packageJson.description || '').toLowerCase().includes('employer')) {
+  fail('package.json description must explicitly mention employer-funded burn behavior');
 }
 
 

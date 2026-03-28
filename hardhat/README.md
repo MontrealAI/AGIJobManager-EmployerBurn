@@ -1,8 +1,10 @@
 # Hardhat Operator Guide (Official / Recommended)
 
-This `hardhat/` project is the official deployment and verification workflow for AGIJobManager.
+This `hardhat/` project is the official deployment and verification workflow for the **AGIJobManager EmployerBurn variant**.
 
 > Truffle remains supported as a legacy path. Hardhat is the recommended production path for new deployments and replacements.
+
+Compatibility note: on-chain contract name remains `AGIJobManager` for ABI/deployment continuity. Repository/product identity is `AGIJobManager-EmployerBurn`.
 
 UI note: this guide is deployment authority. For the standalone mainnet browser artifact, see `../docs/ui/GENESIS_JOB_MAINNET_HTML_UI.md`; use UI only after deploy/cutover steps are complete.
 
