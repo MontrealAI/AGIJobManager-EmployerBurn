@@ -134,7 +134,7 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurned(jobId, employer, amount)` event, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` event, no completion NFT mint, and no `JobCompleted` event.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.
@@ -198,7 +198,7 @@ flowchart TD
 3. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
 4. Employer ensures wallet balance can cover both escrow payout and burn.
 5. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
-6. On employer-win settlement, verify `EmployerBurned` event and amount when burn amount is non-zero.
+6. On employer-win settlement, verify `EmployerBurnEnforced` event and amount when burn amount is non-zero.
 
 ## Glossary
 - **Merkle proof:** cryptographic inclusion path showing an address is in an off-chain list committed on-chain.

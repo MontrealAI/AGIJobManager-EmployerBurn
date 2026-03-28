@@ -15,7 +15,7 @@
 3. Transfer ownership to business operator multisig (recommended), keeping standard `Ownable.transferOwnership` semantics.
 4. Configure operational params (validator thresholds, review windows, bond params) and then lock identity config when ready.
 5. Run smoke lifecycle: create -> apply -> complete request -> validator/dispute path -> finalize.
-6. If `employerBurnBps > 0`, run employer-win smoke and confirm `EmployerBurned` emits and token total supply decreases by expected amount.
+6. If `employerBurnBps > 0`, run employer-win smoke and confirm `EmployerBurnEnforced` emits and token total supply decreases by expected amount.
 
 ## Settlement liveness model
 - Settlement/finalization paths are designed to remain live even if ENS mirrors are broken, reverting, or out-of-sync.
