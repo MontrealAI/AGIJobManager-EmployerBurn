@@ -210,12 +210,12 @@ Alias note: `check-no-binaries` is exposed as `npm run check:no-binaries`.
 - Terms & Conditions: [`docs/LEGAL/TERMS_AND_CONDITIONS.md`](docs/LEGAL/TERMS_AND_CONDITIONS.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)
 
-[ci-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager/ci.yml?branch=main&style=flat-square&label=CI
-[ci-url]: https://github.com/MontrealAI/AGIJobManager/actions/workflows/ci.yml
-[security-verification-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager/security-verification.yml?branch=main&style=flat-square&label=Security%20Verification
-[security-verification-url]: https://github.com/MontrealAI/AGIJobManager/actions/workflows/security-verification.yml
-[docs-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager/docs.yml?branch=main&style=flat-square&label=Docs%20Integrity
-[docs-url]: https://github.com/MontrealAI/AGIJobManager/actions/workflows/docs.yml
+[ci-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager-EmployerBurn/ci.yml?branch=main&style=flat-square&label=CI
+[ci-url]: https://github.com/MontrealAI/AGIJobManager-EmployerBurn/actions/workflows/ci.yml
+[security-verification-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager-EmployerBurn/security-verification.yml?branch=main&style=flat-square&label=Security%20Verification
+[security-verification-url]: https://github.com/MontrealAI/AGIJobManager-EmployerBurn/actions/workflows/security-verification.yml
+[docs-badge]: https://img.shields.io/github/actions/workflow/status/MontrealAI/AGIJobManager-EmployerBurn/docs.yml?branch=main&style=flat-square&label=Docs%20Integrity
+[docs-url]: https://github.com/MontrealAI/AGIJobManager-EmployerBurn/actions/workflows/docs.yml
 [security-badge]: https://img.shields.io/badge/Security-Policy-blue?style=flat-square
 [security-url]: ./SECURITY.md
 [license-badge]: https://img.shields.io/github/license/MontrealAI/AGIJobManager?style=flat-square
