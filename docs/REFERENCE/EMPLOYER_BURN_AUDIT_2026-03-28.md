@@ -98,9 +98,9 @@ Not required for correctness of burn enforcement. However, deployability size re
 
 ## 8) Contract-size report and deployability note
 
-Measured on 2026-03-28 using `npm run size` / `node scripts/check-contract-sizes.js` in this repository state:
-- `AGIJobManager` runtime: **25,192 bytes** (exceeds EIP-170 limit 24,576 by 616 bytes).
-- `AGIJobManager` initcode: **27,520 bytes** (within EIP-3860 limit 49,152).
+Measured on 2026-03-28 using `node scripts/check-contract-sizes.js` in this repository state:
+- `AGIJobManager` runtime: **25,219 bytes** (exceeds EIP-170 limit 24,576 by 643 bytes).
+- `AGIJobManager` initcode: **27,547 bytes** (within EIP-3860 limit 49,152).
 - `EmployerBurnReadHelper` runtime/initcode: 3,958 / 4,146 bytes.
 - `ENSJobPages` runtime/initcode: 15,602 / 16,634 bytes.
 
@@ -128,6 +128,10 @@ Status: current repo state is above EIP-170 for AGIJobManager and must be treate
   - settlement pause behavior,
   - helper readiness and allowance/balance diagnostics.
 - Size checks currently fail due to AGIJobManager runtime > EIP-170.
+- Re-validated on 2026-03-28:
+  - `npx truffle test test/employerBurn.finalization.test.js --network test` (pass).
+  - `npm run docs:check` (pass).
+  - `node scripts/check-contract-sizes.js` (fails on AGIJobManager runtime limit).
 
 ## 12) Documentation summary snapshot
 - EmployerBurn design note, ADR, Etherscan guide, runbooks, and checklist already include EmployerBurn-specific operator guidance.
