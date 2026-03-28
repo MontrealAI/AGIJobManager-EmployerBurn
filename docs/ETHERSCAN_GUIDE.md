@@ -25,18 +25,21 @@ Use this guide if you only have:
 2. Confirm the AGIALPHA token is exactly `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 3. On AGIALPHA, confirm `allowance(employer, AGIJobManager)` is at least the burn quote.
 4. Confirm employer wallet AGIALPHA balance covers the burn quote (this is separate from escrow already posted).
-5. Confirm `getEmployerBurnReadiness(jobId)` does **not** return:
+5. Confirm `getEmployerBurnReadiness(jobId)` is on an employer-win path **before** writing:
+   - `reasonCode` must **not** be `BURN_READINESS_NOT_EMPLOYER_WIN_PATH` (`1`).
+   - `settlementPathCode` must be one of `1`, `2`, or `3` (not `0`).
+6. Confirm `getEmployerBurnReadiness(jobId)` does **not** return:
    - `BURN_READINESS_INSUFFICIENT_BALANCE` (`4`)
    - `BURN_READINESS_INSUFFICIENT_ALLOWANCE` (`5`)
    - `BURN_READINESS_SETTLEMENT_PAUSED` (`6`)
-6. Confirm job status is not already terminal (`completed` or `expired`) from `getJobCore(jobId)`.
-7. Confirm you are calling the intended settlement function:
+7. Confirm job status is not already terminal (`completed` or `expired`) from `getJobCore(jobId)`.
+8. Confirm you are calling the intended settlement function:
    - Permissionless lane: `finalizeJob(jobId)`
    - Moderator lane: `resolveDisputeWithCode(jobId, 2, reason)`
    - Owner stale-dispute lane: `resolveStaleDispute(jobId, true)`
-8. Confirm wallet/network in your browser extension is Ethereum mainnet.
-9. Submit and wait for receipt status `Success`.
-10. Verify `EmployerBurnEnforced` in transaction logs.
+9. Confirm wallet/network in your browser extension is Ethereum mainnet.
+10. Submit and wait for receipt status `Success`.
+11. Verify `EmployerBurnEnforced` in transaction logs.
 
 ### Exact approval vs unlimited approval (risk warning)
 
