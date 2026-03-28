@@ -2,7 +2,7 @@
   "name": "agijobmanager-hardhat",
   "private": true,
   "version": "1.0.0",
-  "description": "Official Hardhat deployment + verification workflow for AGIJobManager",
+  "description": "Official Hardhat deployment + verification workflow for AGIJobManager EmployerBurn variant",
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",

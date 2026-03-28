@@ -1,5 +1,12 @@
 # Mainnet Deployment Checklist
 
+## EmployerBurn-specific preflight
+
+- Confirm the AGIALPHA mainnet token address is `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
+- Confirm `employerBurnBps` policy is decided and documented before production traffic.
+- Confirm employer guidance includes separate burn allowance/balance requirements beyond payout escrow.
+- Confirm event monitoring includes `EmployerBurned` for employer-win burn observability.
+
 - Transfer contract ownership to a multisig (e.g., Safe), not an EOA.
 - Decide whether to keep `useEnsJobTokenURI` disabled at launch; if enabling, confirm `ensJobPages` is the intended contract.
 - ENS configuration verification:

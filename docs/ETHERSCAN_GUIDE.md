@@ -12,6 +12,13 @@ Use this guide if you only have:
 - ENS writes are best-effort: settlement can succeed even if ENS side effects fail.
 - Treat `lockIdentityConfiguration()` and `lockConfiguration()` as irreversible and postpone until full post-cutover validation.
 
+## Employer burn quick flow (Etherscan-first)
+
+1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` on `EmployerBurnReadHelper`.
+2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender (not the helper).
+3. Execute the eligible settlement path on AGIJobManager (`finalizeJob`, `resolveDisputeWithCode` resolution `2`, or `resolveStaleDispute` with `employerWins=true`).
+4. Verify `EmployerBurned` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, amount, and path.
+
 ## Choose your role
 - [Employer](#employer-flow)
 - [Agent](#agent-flow)

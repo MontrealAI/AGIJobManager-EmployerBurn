@@ -8,6 +8,12 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 - Never lock identity/configuration before validating addresses, approvals, and expected ENS hook behavior.
 - If employer-burn is enabled (`employerBurnBps > 0`), ensure employer operators are instructed to approve and hold burn coverage in addition to escrow.
 
+## Employer-burn owner checks
+
+- Confirm `employerBurnBps()` matches the publicly announced policy before enabling traffic.
+- Confirm runbooks instruct employers to approve AGIJobManager as spender for burn authorization.
+- During incident review, verify employer-win settlements include `EmployerBurned` when burn amount is non-zero.
+
 
 ## Start here by owner intent
 - **I need to deploy or replace ENSJobPages now:** use `hardhat/README.md`, then `docs/DEPLOYMENT/ENS_JOB_PAGES_MAINNET_REPLACEMENT.md`.

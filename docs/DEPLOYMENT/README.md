@@ -11,6 +11,12 @@
 - ENS replacement is additive and requires manual post-deploy wiring.
 - Do not lock ENS/identity configuration until cutover + migration checks pass.
 
+## EmployerBurn variant deployment identity
+
+- Repository identity is the **AGIJobManager EmployerBurn variant**.
+- On-chain contract name remains `AGIJobManager` for compatibility, while operator guidance is EmployerBurn-first.
+- Reconciliation reference: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
+
 ## 1) Hardhat (recommended / official)
 
 - [Hardhat Operator Guide](../../hardhat/README.md)
@@ -33,4 +39,3 @@
   - `../ui/GENESIS_JOB_MAINNET_HTML_UI.md`
   - `../../ui/README.md`
 - For deployment/cutover decisions, this index and `../../hardhat/README.md` remain canonical.
-
