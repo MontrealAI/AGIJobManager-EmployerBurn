@@ -3,6 +3,13 @@
 ## Scope
 This variant enforces an **employer-funded AGIALPHA burn** only when a job is finalized in favor of the employer.
 
+## Live AGIALPHA token verification (mainnet)
+Verified against the live token at `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA` (Etherscan verified ABI/source metadata):
+- `burnFrom(address,uint256)` is present.
+- `permit(...)` is present (ERC-2612 style), but **not required** for protocol operation.
+- Token supports pausing (`pause`, `unpause`, `paused`, `isPaused`), so paused-token conditions can block `burnFrom` and therefore atomically block employer-win settlement.
+- Role-gated controls (`PAUSER_ROLE`, etc.) exist on the token and are external to AGIJobManager; protocol behavior is fail-safe on token-level reverts.
+
 ## Authoritative trigger
 The burn is executed only inside `AGIJobManager._refundEmployer(...)`, which is reached by employer-win settlement paths:
 - `finalizeJob(...)` when disapprovals beat approvals after the review path.

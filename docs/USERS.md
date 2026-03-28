@@ -148,7 +148,8 @@ This path uses the Etherscan **Write Contract** UI. You will need the contract a
 2. Connect your wallet.
 3. Call `approve(spender, amount)` where:
    - `spender` = AGIJobManager contract address
-   - `amount` = exact payout you want to escrow
+   - `amount` = at least `payout + expectedBurn` for EmployerBurn variant
+   - `expectedBurn` = `payout * employerBurnBps / 10_000` (burn only if employer wins settlement)
 4. **After the job completes**, revoke or reduce the allowance by calling `approve(spender, 0)`.
 
 ### Common calls (click‑by‑click)
@@ -191,12 +192,12 @@ Every step emits events and changes state/balances.
 | `requestJobCompletion` | `JobCompletionRequested` | none | `completionRequested`, `jobCompletionURI` |
 | `validateJob` | `JobValidated` | none (until threshold) | `validatorApprovals`, validator maps |
 | `disapproveJob` | `JobDisapproved`, maybe `JobDisputed` | none | `validatorDisapprovals`, `disputed` |
-| `resolveDisputeWithCode(AGENT_WIN)` | `DisputeResolvedWithCode`, `DisputeResolved`, `JobCompleted`, `NFTIssued` | contract → agent/validators | `completed`, reputation updates |
-| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `DisputeResolved` | contract → employer refund | `completed` |
+| `resolveDisputeWithCode(AGENT_WIN)` | `DisputeResolvedWithCode`, `JobCompleted`, `NFTIssued` | contract → agent/validators | `completed`, reputation updates |
+| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurned` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
 
 Key events include:
 - `JobCreated`, `JobApplied`, `JobCompletionRequested`
-- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `DisputeResolved`
+- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurned`
 - `JobCompleted`, `NFTIssued`
 
 Token movements:

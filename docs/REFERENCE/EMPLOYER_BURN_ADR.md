@@ -34,3 +34,4 @@ Reason: burn enforcement is already integrated in `_refundEmployer` (single auth
 - No protocol subsidy path introduced.
 - Employer must provide AGIALPHA allowance/balance; third parties may trigger permissionless finalization only after employer authorization exists.
 - If AGIALPHA token config changes to a token without compatible burn behavior, employer-win settlement reverts (fail-safe).
+- AGIJobManager runtime size is close to EIP-170 limit, so new observability/UX surfaces should preferentially live in periphery/docs instead of core unless a security invariant requires core changes.

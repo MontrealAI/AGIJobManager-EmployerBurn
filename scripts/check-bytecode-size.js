@@ -6,7 +6,12 @@ const MAX_INITCODE_BYTES = 49152;
 const TARGET_RUNTIME_BYTES = 23000;
 const TARGET_INITCODE_BYTES = 46000;
 const artifactsDir = path.join(__dirname, "..", "build", "contracts");
-const defaultContracts = ["AGIJobManager"];
+const defaultContracts = [
+  "AGIJobManager",
+  "EmployerBurnReadHelper",
+  "ENSJobPages",
+  "AGIJobPages"
+];
 
 function hexSizeBytes(hexLike, label, contractName) {
   if (!hexLike) {
