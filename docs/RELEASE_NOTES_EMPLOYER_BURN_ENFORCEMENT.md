@@ -1,10 +1,12 @@
 # Release Notes — Employer Burn Enforcement Hardening
 
-Date: 2026-03-27
+Date: 2026-03-28
 
 ## Summary
 - Added Etherscan-first helper views for employer-burn preflight checks.
 - Kept employer-burn enforcement on authoritative employer-win settlement path in `AGIJobManager`.
+- Reconciled external AGIALPHA token verification notes to dated live-source checks.
+- Reconfirmed contract-size gate status: `AGIJobManager` runtime currently exceeds EIP-170 and remains a release blocker.
 
 ## Contract interface additions
 - New additive periphery contract: `EmployerBurnReadHelper`.
@@ -21,3 +23,4 @@ Date: 2026-03-27
 ## Operator action
 - Continue approving AGIJobManager on AGIALPHA from employer wallet.
 - Use helper views before attempting employer-win finalization/dispute settlement.
+- Treat size-gate failure as a hard stop for new mainnet deployments until runtime bytecode is reduced below 24,576 bytes.
