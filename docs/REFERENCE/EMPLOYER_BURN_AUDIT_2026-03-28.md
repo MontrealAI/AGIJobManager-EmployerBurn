@@ -27,6 +27,7 @@ AGIJobManager remains the single settlement authority. Employer-favor settlement
 ### Existing EmployerBurn surface found
 Already implemented in core:
 - Config: `employerBurnBps`.
+- Config observability: `EmployerBurnBpsUpdated(oldBps, newBps)` event.
 - Enforcement point: `_refundEmployer(...)` computes burn and calls `burnFrom(job.employer, burnAmount)`.
 - Event: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
@@ -99,8 +100,8 @@ Not required: current implementation is deployable under Ethereum mainnet hard s
 ## 8) Contract-size report and deployability note
 
 Measured on 2026-03-28 using `node scripts/check-contract-sizes.js` in this repository state:
-- `AGIJobManager` runtime: **24,299 bytes** (within EIP-170 limit 24,576; headroom 277 bytes).
-- `AGIJobManager` initcode: **26,627 bytes** (within EIP-3860 limit 49,152; headroom 22,525 bytes).
+- `AGIJobManager` runtime: **24,339 bytes** (within EIP-170 limit 24,576; headroom 237 bytes).
+- `AGIJobManager` initcode: **26,667 bytes** (within EIP-3860 limit 49,152; headroom 22,485 bytes).
 - `EmployerBurnReadHelper` runtime/initcode: 3,958 / 4,146 bytes.
 - `ENSJobPages` runtime/initcode: 15,602 / 16,634 bytes.
 

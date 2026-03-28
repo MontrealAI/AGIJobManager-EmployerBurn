@@ -310,6 +310,16 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await expectRevert.unspecified(manager.setEmployerBurnBps(200, { from: owner }));
   });
 
+  it('emits EmployerBurnBpsUpdated when owner updates burn bps', async () => {
+    await setup({ burnBps: 0 });
+    const tx = await manager.setEmployerBurnBps(125, { from: owner });
+    const event = tx.logs.find((l) => l.event === 'EmployerBurnBpsUpdated');
+    assert.ok(event, 'EmployerBurnBpsUpdated not emitted');
+    assert.equal(event.args.oldBps.toString(), '0');
+    assert.equal(event.args.newBps.toString(), '125');
+    assert.equal((await manager.employerBurnBps()).toString(), '125');
+  });
+
   it('reverts employer-win settlement when configured token does not implement burnFrom', async () => {
     const plainToken = await ERC20NoReturn.new({ from: owner });
     const m = await AGIJobManager.new(

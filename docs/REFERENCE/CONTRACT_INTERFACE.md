@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `23092a2ae9ae`.
-- Source snapshot fingerprint: `23092a2ae9ae`.
+- Generated at (deterministic source fingerprint): `d0e48107604a`.
+- Source snapshot fingerprint: `d0e48107604a`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -138,6 +138,7 @@
 | `CompletionReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
+| `EmployerBurnBpsUpdated` | `uint256 indexed oldBps, uint256 indexed newBps` |
 | `EmployerBurnEnforced` | `uint256 indexed jobId, address indexed employer, address token, uint256 amount, address finalizer, uint8 settlementPathCode` |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` |
