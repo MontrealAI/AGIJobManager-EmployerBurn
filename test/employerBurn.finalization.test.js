@@ -73,11 +73,14 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     const supplyBefore = await token.totalSupply();
     const tx = await moveToEmployerWin(jobId);
 
-    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
-    assert.ok(event);
-    assert.equal(event.args.jobId.toNumber(), jobId);
-    assert.equal(event.args.employer, employer);
-    assert.equal(event.args.amount.toString(), burn.toString());
+    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
+    assert.equal(enforced.args.jobId.toNumber(), jobId);
+    assert.equal(enforced.args.employer, employer);
+    assert.equal(enforced.args.token, token.address);
+    assert.equal(enforced.args.amount.toString(), burn.toString());
+    assert.equal(enforced.args.finalizer, moderator);
+    assert.equal(enforced.args.settlementPathCode.toString(), '2');
 
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
@@ -96,11 +99,13 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
 
     const supplyBefore = await token.totalSupply();
     const tx = await manager.resolveStaleDispute(jobId, true, { from: owner });
-    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
-    assert.ok(event);
-    assert.equal(event.args.jobId.toNumber(), jobId);
-    assert.equal(event.args.employer, employer);
-    assert.equal(event.args.amount.toString(), burn.toString());
+    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
+    assert.equal(enforced.args.jobId.toNumber(), jobId);
+    assert.equal(enforced.args.employer, employer);
+    assert.equal(enforced.args.amount.toString(), burn.toString());
+    assert.equal(enforced.args.finalizer, owner);
+    assert.equal(enforced.args.settlementPathCode.toString(), '3');
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
   });
@@ -116,10 +121,10 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await time.increase(2);
     const tx = await manager.finalizeJob(jobId, { from: employer });
 
-    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurned')), false);
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnEnforced')), false);
   });
 
-  it('emits EmployerBurned when finalizeJob settles employer-win', async () => {
+  it('emits EmployerBurnEnforced when finalizeJob settles employer-win', async () => {
     await setup();
     await manager.setRequiredValidatorDisapprovals(3, { from: owner });
     await manager.setVoteQuorum(2, { from: owner });
@@ -132,11 +137,13 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
     await time.increase(2);
     const tx = await manager.finalizeJob(jobId, { from: employer });
-    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
-    assert.ok(event);
-    assert.equal(event.args.jobId.toNumber(), jobId);
-    assert.equal(event.args.employer, employer);
-    assert.equal(event.args.amount.toString(), burn.toString());
+    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
+    assert.equal(enforced.args.jobId.toNumber(), jobId);
+    assert.equal(enforced.args.employer, employer);
+    assert.equal(enforced.args.amount.toString(), burn.toString());
+    assert.equal(enforced.args.finalizer, employer);
+    assert.equal(enforced.args.settlementPathCode.toString(), '1');
   });
 
   it('reverts employer-win settlement with insufficient burn allowance', async () => {
@@ -160,7 +167,7 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     const tx = await moveToEmployerWin(jobId);
     const supplyAfter = await token.totalSupply();
 
-    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
+    const event = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
     assert.equal(Boolean(event), false);
     assert.equal(supplyAfter.toString(), supplyBefore.toString());
   });

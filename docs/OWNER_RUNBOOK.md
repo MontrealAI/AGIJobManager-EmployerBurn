@@ -12,7 +12,7 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 
 - Confirm `employerBurnBps()` matches the publicly announced policy before enabling traffic.
 - Confirm runbooks instruct employers to approve AGIJobManager as spender for burn authorization.
-- During incident review, verify employer-win settlements include `EmployerBurned` when burn amount is non-zero.
+- During incident review, verify employer-win settlements include `EmployerBurnEnforced` when burn amount is non-zero.
 
 
 ## Start here by owner intent

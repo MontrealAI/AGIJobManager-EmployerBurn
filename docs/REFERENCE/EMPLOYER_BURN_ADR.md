@@ -27,7 +27,7 @@ Reason: burn enforcement is already integrated in `_refundEmployer` (single auth
 - Keep burn logic in `AGIJobManager._refundEmployer(...)`.
 - Keep `burnFrom(job.employer, amount)` as the only burn source.
 - Add Etherscan helpers for quote/readiness/requirements to reduce operator mistakes.
-- Keep existing `EmployerBurned` event for burn observability while avoiding bytecode-size regressions in core contract.
+- Emit `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` from the authoritative burn point for indexed traceability of payer/path/caller.
 
 ## Consequences
 - No shadow settlement or duplicate state machine.

@@ -18,7 +18,9 @@ const forbiddenSnippets = [
   'contributeToRewardPool(',
   'RewardPoolContribution(',
   'resolveDispute(uint256',
-  'DisputeResolved('
+  'DisputeResolved(',
+  'EmployerBurned(',
+  'safeMintCompletionNFT('
 ];
 
 let failed = false;

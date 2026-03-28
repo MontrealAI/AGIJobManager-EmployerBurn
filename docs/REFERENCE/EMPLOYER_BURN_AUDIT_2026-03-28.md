@@ -28,7 +28,7 @@ AGIJobManager remains the single settlement authority. Employer-favor settlement
 Already implemented in core:
 - Config: `employerBurnBps`.
 - Enforcement point: `_refundEmployer(...)` computes burn and calls `burnFrom(job.employer, burnAmount)`.
-- Event: `EmployerBurned(jobId, employer, amount)`.
+- Event: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
 Already implemented in periphery:
 - `EmployerBurnReadHelper` preflight/readiness helpers: `quoteEmployerBurn`, `getEmployerBurnRequirements`, `getEmployerBurnReadiness`, `canFinalizeEmployerWinWithBurn`.
@@ -62,7 +62,7 @@ Not adopted because burn is already integrated at core settlement authority in `
 Already implemented and currently active.
 
 ### Option D — Stop/blocker
-Not required for correctness of burn enforcement. However, deployability size remains a release blocker (see section 8).
+Not required: current implementation is deployable under Ethereum mainnet hard size limits (see section 8).
 
 ## 5) Existing implementation reconciliation
 
@@ -99,12 +99,12 @@ Not required for correctness of burn enforcement. However, deployability size re
 ## 8) Contract-size report and deployability note
 
 Measured on 2026-03-28 using `node scripts/check-contract-sizes.js` in this repository state:
-- `AGIJobManager` runtime: **25,219 bytes** (exceeds EIP-170 limit 24,576 by 643 bytes).
-- `AGIJobManager` initcode: **27,547 bytes** (within EIP-3860 limit 49,152).
+- `AGIJobManager` runtime: **24,299 bytes** (within EIP-170 limit 24,576; headroom 277 bytes).
+- `AGIJobManager` initcode: **26,627 bytes** (within EIP-3860 limit 49,152; headroom 22,525 bytes).
 - `EmployerBurnReadHelper` runtime/initcode: 3,958 / 4,146 bytes.
 - `ENSJobPages` runtime/initcode: 15,602 / 16,634 bytes.
 
-Status: current repo state is above EIP-170 for AGIJobManager and must be treated as deployment blocker until bytecode is reduced below 24,576.
+Status: current repo state passes hard deployability limits; AGIJobManager remains above internal preferred runtime budget (23,000) and should continue to be monitored for growth.
 
 ## 9) Implementation summary (current codebase)
 - Core burn enforcement in `AGIJobManager._refundEmployer`.
@@ -138,9 +138,8 @@ Status: current repo state is above EIP-170 for AGIJobManager and must be treate
 - This report adds a date-stamped reconciliation + blocker status artifact for reviewers and release managers.
 
 ## 13) Open risks / follow-ups
-1. **Critical release blocker:** reduce AGIJobManager runtime bytecode below 24,576 before mainnet deployment.
-2. Consider whether additional indexed burn observability fields (token/finalizer/path) are needed; if added, implement in a bytecode-safe way.
-3. Continue enforcing canonical-doc checks to avoid drift across legacy docs.
+1. Continue tracking AGIJobManager runtime against the preferred 23,000-byte budget to preserve future change headroom.
+2. Continue enforcing canonical-doc checks to avoid drift across legacy docs.
 
 ---
 

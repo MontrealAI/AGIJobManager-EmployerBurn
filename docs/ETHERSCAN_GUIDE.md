@@ -17,7 +17,7 @@ Use this guide if you only have:
 1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` on `EmployerBurnReadHelper`.
 2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender (not the helper).
 3. Execute the eligible settlement path on AGIJobManager (`finalizeJob`, `resolveDisputeWithCode` resolution `2`, or `resolveStaleDispute` with `employerWins=true`).
-4. Verify `EmployerBurned` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, amount, and path.
+4. Verify `EmployerBurnEnforced` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, token, amount, finalizer, and path.
 
 ## Choose your role
 - [Employer](#employer-flow)
@@ -182,7 +182,7 @@ jobId: 42
 Write: `finalizeJob(jobId)`
 - `jobId`: numeric ID to settle
 - If the job settles employer-win and `employerBurnBps > 0`, AGIJobManager also executes `burnFrom(employer, burnAmount)` on AGIALPHA; ensure employer allowance/balance includes burn coverage.
-- Verify burn-path observability in logs with `EmployerBurned(jobId, employer, amount)`.
+- Verify burn-path observability in logs with `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
 ```text
 jobId: 42
