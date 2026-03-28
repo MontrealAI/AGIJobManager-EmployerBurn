@@ -1,6 +1,6 @@
 # Events and Errors Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `a2d6f2f71a0a`.
+- Generated at (deterministic source fingerprint): `dbcfc3e1ee5c`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Events catalog
@@ -18,6 +18,7 @@
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` | Moderator or owner resolved dispute | Audit resolution code distribution and reasons |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EmployerBurned` | `uint256 indexed jobId, address indexed employer, uint256 indexed amount` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
+| `EmployerBurnEnforced` | `uint256 indexed jobId, address indexed employer, address indexed token, uint256 amount, address finalizer, uint8 settlementPathCode` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `EnsRegistryUpdated` | `address newEnsRegistry` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
