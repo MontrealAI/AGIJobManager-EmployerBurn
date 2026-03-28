@@ -520,6 +520,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
     event EmployerBurned(uint256 indexed jobId, address indexed employer, uint256 indexed amount);
+    event EmployerBurnEnforced(
+        uint256 indexed jobId,
+        address indexed employer,
+        address indexed token,
+        uint256 amount,
+        address finalizer,
+        uint8 settlementPathCode
+    );
 
     uint8 private constant ENS_HOOK_CREATE = 1;
     uint8 private constant ENS_HOOK_ASSIGN = 2;
@@ -527,6 +535,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     uint8 private constant ENS_HOOK_REVOKE = 4;
     uint8 private constant ENS_HOOK_LOCK = 5;
     uint8 private constant ENS_HOOK_LOCK_BURN = 6;
+    uint8 private constant EMPLOYER_BURN_PATH_FINALIZE = 1;
+    uint8 private constant EMPLOYER_BURN_PATH_DISPUTE_MODERATOR = 2;
+    uint8 private constant EMPLOYER_BURN_PATH_STALE_DISPUTE_OWNER = 3;
     uint256 internal constant ENS_HOOK_GAS_LIMIT = 500_000;
     uint256 internal constant ENS_URI_GAS_LIMIT = 200_000;
     uint256 internal constant ENS_URI_MAX_RETURN_BYTES = 2048;
@@ -997,7 +1008,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         if (resolutionCode == 1) {
             _completeJob(_jobId, true);
         } else if (resolutionCode == 2) {
-            _refundEmployer(_jobId, job);
+            _refundEmployer(_jobId, job, EMPLOYER_BURN_PATH_DISPUTE_MODERATOR);
         } else {
             revert InvalidParameters();
         }
@@ -1011,7 +1022,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
 
         _clearDispute(job);
         if (employerWins) {
-            _refundEmployer(_jobId, job);
+            _refundEmployer(_jobId, job, EMPLOYER_BURN_PATH_STALE_DISPUTE_OWNER);
         } else {
             _completeJob(_jobId, true);
         }
@@ -1350,7 +1361,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         } else if (approvals > disapprovals) {
             _completeJob(_jobId, true);
         } else {
-            _refundEmployer(_jobId, job);
+            _refundEmployer(_jobId, job, EMPLOYER_BURN_PATH_FINALIZE);
         }
 
     }
@@ -1521,7 +1532,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _safeMint(to, tokenId);
     }
 
-    function _refundEmployer(uint256 jobId, Job storage job) internal {
+    function _refundEmployer(uint256 jobId, Job storage job, uint8 settlementPathCode) internal {
         job.completed = true;
         job.disputed = false;
         _decrementActiveJob(job);
@@ -1530,6 +1541,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         if (burnAmount != 0) {
             IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
             emit EmployerBurned(jobId, job.employer, burnAmount);
+            emit EmployerBurnEnforced(
+                jobId,
+                job.employer,
+                address(agiToken),
+                burnAmount,
+                msg.sender,
+                settlementPathCode
+            );
         }
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);

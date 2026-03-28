@@ -134,7 +134,7 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurned(jobId, employer, amount)` event, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurned(jobId, employer, amount)` and `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` events, no completion NFT mint, and no `JobCompleted` event.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.

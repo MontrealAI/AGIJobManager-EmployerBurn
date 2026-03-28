@@ -25,6 +25,7 @@
     "forge:test": "forge test",
     "forge:invariant": "FOUNDRY_PROFILE=ci forge test --match-path forge-test/invariant/*.t.sol",
     "slither": "./scripts/security/run-slither.sh",
+    "deploy:employerburn:prod": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6",
     "deploy:agijobmanager:prod": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6"
   },
   "dependencies": {
