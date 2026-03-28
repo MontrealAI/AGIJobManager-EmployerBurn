@@ -558,7 +558,7 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     assert.equal((await manager.getHighestPayoutPercentage(agent)).toString(), "0");
   });
 
-  it("safe-mints to ERC721 receivers, falls back for non-receivers, and blocks wrapper misuse", async () => {
+  it("mints completion NFT to both receiver and non-receiver employers", async () => {
     const token = await MockERC20.new({ from: owner });
     const ens = await MockENS.new({ from: owner });
     const wrapper = await MockNameWrapper.new({ from: owner });
@@ -580,7 +580,7 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     await manager.requestJobCompletion(0, "ipfs://completion-safe", { from: agent });
     await time.increase((await manager.completionReviewPeriod()).addn(1));
     await manager.finalizeJob(0, { from: owner });
-    assert.equal((await receiverEmployer.receivedCount()).toString(), "1");
+    assert.equal((await receiverEmployer.receivedCount()).toString(), "0");
 
     await token.mint(nonReceiverEmployer.address, payout, { from: owner });
     await nonReceiverEmployer.createJob("ipfs://spec-unsafe", payout, 100, "details", { from: owner });
@@ -592,14 +592,10 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     await manager.finalizeJob(1, { from: owner });
     assert.equal(await manager.ownerOf(1), nonReceiverEmployer.address);
 
-    await expectCustomError(
-      manager.safeMintCompletionNFT.call(nonReceiverEmployer.address, 999, { from: owner }),
-      "NotAuthorized"
-    );
   });
 
 
-  it("keeps settlement live when safe-mint receiver gas-griefs", async () => {
+  it("keeps settlement live when employer contract receiver gas-griefs", async () => {
     const token = await MockERC20.new({ from: owner });
     const ens = await MockENS.new({ from: owner });
     const wrapper = await MockNameWrapper.new({ from: owner });
@@ -624,7 +620,7 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     assert.equal(await manager.ownerOf(0), gasGriefer.address);
   });
 
-  it("stores tokenURI before safe-mint callback", async () => {
+  it("stores tokenURI for finalized completion NFTs", async () => {
     const token = await MockERC20.new({ from: owner });
     const ens = await MockENS.new({ from: owner });
     const wrapper = await MockNameWrapper.new({ from: owner });
@@ -646,7 +642,7 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     await time.increase((await manager.completionReviewPeriod()).addn(1));
 
     await manager.finalizeJob(0, { from: owner });
-    assert.equal(await receiver.seenTokenUri(), "ipfs://base/QmCallbackURI");
+    assert.equal(await manager.tokenURI(0), "ipfs://base/QmCallbackURI");
   });
 
 

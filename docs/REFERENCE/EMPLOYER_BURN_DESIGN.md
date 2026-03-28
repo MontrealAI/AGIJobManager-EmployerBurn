@@ -31,8 +31,8 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 - Token capability is enforced at settlement time: if the configured token does not implement `burnFrom` (or reverts), the employer-win settlement path reverts atomically.
 
 ## Observability
-When non-zero burn is applied, `EmployerBurned(jobId, employer, amount)` is emitted.
-Caller/path traceability is obtained from the transaction entrypoint (`finalizeJob`, `resolveDisputeWithCode`, `resolveStaleDispute`) due to AGIJobManager size-budget constraints.
+When non-zero burn is applied, `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` is emitted.
+The event is settlement-path aware (`1=finalizeJob`, `2=resolveDisputeWithCode`, `3=resolveStaleDispute`).
 
 ## Etherscan read helpers
 To reduce operator mistakes for non-technical employers, additive periphery contract `EmployerBurnReadHelper` exposes:
@@ -47,4 +47,4 @@ To reduce operator mistakes for non-technical employers, additive periphery cont
 2. Ensure employer AGIALPHA balance covers `payout + burn`.
 3. Approve AGIJobManager for at least `payout + burn`.
 4. Execute eligible finalize/dispute resolution path.
-5. Verify settlement + `EmployerBurned` event when burn amount is non-zero.
+5. Verify settlement + `EmployerBurnEnforced` event when burn amount is non-zero.

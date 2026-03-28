@@ -519,7 +519,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event AgentBondMinUpdated(uint256 indexed oldMin, uint256 indexed newMin);
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
-    event EmployerBurned(uint256 indexed jobId, address indexed employer, uint256 indexed amount);
+    event EmployerBurnEnforced(
+        uint256 indexed jobId,
+        address indexed employer,
+        address token,
+        uint256 amount,
+        address finalizer,
+        uint8 settlementPathCode
+    );
 
     uint8 private constant ENS_HOOK_CREATE = 1;
     uint8 private constant ENS_HOOK_ASSIGN = 2;
@@ -533,7 +540,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     uint256 internal constant ENS_URI_MAX_STRING_BYTES = 1024;
     uint256 internal constant NFT_BALANCE_OF_GAS_LIMIT = 100_000;
     uint256 internal constant ERC165_GAS_LIMIT = 50_000;
-    uint256 internal constant SAFE_MINT_GAS_LIMIT = 250_000;
     uint256 internal constant MAX_JOB_SPEC_URI_BYTES = 2048;
     uint256 internal constant MAX_JOB_COMPLETION_URI_BYTES = 1024;
     uint256 internal constant MAX_BASE_IPFS_URL_BYTES = 512;
@@ -1505,20 +1511,8 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         }
         tokenUriValue = UriUtils.applyBaseIpfs(tokenUriValue, baseIpfsUrl);
         _tokenURIs[tokenId] = tokenUriValue;
-        if (job.employer.code.length != 0) {
-            try this.safeMintCompletionNFT{ gas: SAFE_MINT_GAS_LIMIT }(job.employer, tokenId) {
-            } catch {
-                _mint(job.employer, tokenId);
-            }
-        } else {
-            _mint(job.employer, tokenId);
-        }
+        _mint(job.employer, tokenId);
         emit NFTIssued(tokenId, job.employer, tokenUriValue);
-    }
-
-    function safeMintCompletionNFT(address to, uint256 tokenId) external {
-        if (msg.sender != address(this)) revert NotAuthorized();
-        _safeMint(to, tokenId);
     }
 
     function _refundEmployer(uint256 jobId, Job storage job) internal {
@@ -1529,7 +1523,15 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         uint256 burnAmount = (job.payout * employerBurnBps) / 10_000;
         if (burnAmount != 0) {
             IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
-            emit EmployerBurned(jobId, job.employer, burnAmount);
+            uint8 settlementPathCode = _getEmployerBurnPathCode();
+            emit EmployerBurnEnforced(
+                jobId,
+                job.employer,
+                address(agiToken),
+                burnAmount,
+                msg.sender,
+                settlementPathCode
+            );
         }
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);
@@ -1550,6 +1552,19 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _t(job.employer, employerRefund);
         _settleDisputeBond(job, false);
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
+    }
+
+    function _getEmployerBurnPathCode() internal pure returns (uint8) {
+        if (msg.sig == this.finalizeJob.selector) {
+            return 1;
+        }
+        if (msg.sig == this.resolveDisputeWithCode.selector) {
+            return 2;
+        }
+        if (msg.sig == this.resolveStaleDispute.selector) {
+            return 3;
+        }
+        return 0;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {

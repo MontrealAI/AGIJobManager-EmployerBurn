@@ -159,7 +159,7 @@ contract AGIJobManagerSecurityVerificationTest is Test {
         ensManager.applyForJob(badLabelJobId, "bad.label", new bytes32[](0));
     }
 
-    function test_ReentrancyDuringNFTMintCannotDoubleSettle() external {
+    function test_FinalizeCannotDoubleSettleEvenWithoutNFTReceiverCallback() external {
         MaliciousCompletionReceiver receiver = new MaliciousCompletionReceiver(address(manager), address(token));
 
         token.mint(address(receiver), 100 ether);
@@ -183,7 +183,7 @@ contract AGIJobManagerSecurityVerificationTest is Test {
         vm.prank(address(receiver));
         receiver.finalize(jobId);
 
-        assertEq(receiver.reentryAttempts(), 1);
+        assertEq(receiver.reentryAttempts(), 0);
         assertFalse(receiver.reentrySucceeded());
 
         vm.expectRevert();

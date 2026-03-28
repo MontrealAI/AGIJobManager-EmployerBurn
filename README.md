@@ -50,7 +50,7 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 - Operator configures burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
 - Etherscan helper views are provided by additive periphery contract `EmployerBurnReadHelper`: `quoteEmployerBurn(jobId)`, `getEmployerBurnRequirements(jobId)`, `getEmployerBurnReadiness(jobId)`, `canFinalizeEmployerWinWithBurn(jobId)`.
 - Employers must keep extra AGIALPHA balance and allowance for the burn, in addition to escrow approval.
-- Burn observability: settlement emits `EmployerBurned(jobId, employer, amount)` when non-zero burn is applied.
+- Burn observability: settlement emits `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` when non-zero burn is applied.
 - Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 - Upstream reconciliation note: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
 - Latest audit and blocker report (2026-03-28): `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`.
