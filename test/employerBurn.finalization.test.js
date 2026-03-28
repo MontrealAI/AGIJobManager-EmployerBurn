@@ -5,6 +5,7 @@ const AGIJobManager = artifacts.require('AGIJobManager');
 const MockERC20 = artifacts.require('MockERC20');
 const MockERC721 = artifacts.require('MockERC721');
 const ERC20NoReturn = artifacts.require('ERC20NoReturn');
+const MockPausableBurnableERC20 = artifacts.require('MockPausableBurnableERC20');
 
 const ZERO_ROOT = '0x' + '00'.repeat(32);
 const ZERO_ADDRESS = '0x' + '00'.repeat(20);
@@ -174,6 +175,57 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await expectRevert.unspecified(
       manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
     );
+  });
+
+  it('reverts employer-win settlement when AGIALPHA burn path is paused', async () => {
+    const pausableToken = await MockPausableBurnableERC20.new({ from: owner });
+    const m = await AGIJobManager.new(
+      pausableToken.address,
+      'ipfs://base',
+      [ZERO_ADDRESS, ZERO_ADDRESS],
+      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
+      [ZERO_ROOT, ZERO_ROOT],
+      { from: owner }
+    );
+    await m.addModerator(moderator, { from: owner });
+    await m.addAdditionalAgent(agent, { from: owner });
+    await m.addAdditionalValidator(validatorA, { from: owner });
+    await m.addAdditionalValidator(validatorB, { from: owner });
+    await m.setRequiredValidatorApprovals(2, { from: owner });
+    await m.setRequiredValidatorDisapprovals(2, { from: owner });
+    await m.setEmployerBurnBps(100, { from: owner });
+
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    await pausableToken.mint(employer, payout.add(burn), { from: owner });
+    await pausableToken.mint(agent, toWei('1000'), { from: owner });
+    await pausableToken.mint(validatorA, toWei('1000'), { from: owner });
+    await pausableToken.mint(validatorB, toWei('1000'), { from: owner });
+    await pausableToken.approve(m.address, payout.add(burn), { from: employer });
+    await pausableToken.approve(m.address, toWei('1000'), { from: agent });
+    await pausableToken.approve(m.address, toWei('1000'), { from: validatorA });
+    await pausableToken.approve(m.address, toWei('1000'), { from: validatorB });
+
+    const agiType = await MockERC721.new({ from: owner });
+    await agiType.mint(agent, { from: owner });
+    await m.addAGIType(agiType.address, 92, { from: owner });
+
+    const tx = await m.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await m.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
+    await m.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
+    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+
+    await pausableToken.pause({ from: owner });
+    await expectRevert.unspecified(
+      m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
+    );
+
+    await pausableToken.unpause({ from: owner });
+    const tx2 = await m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
+    const enforced = tx2.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
   });
 
   it('does not let protocol-held AGIALPHA subsidize employer burn', async () => {

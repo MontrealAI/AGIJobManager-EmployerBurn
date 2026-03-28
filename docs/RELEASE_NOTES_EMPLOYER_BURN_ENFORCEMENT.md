@@ -8,6 +8,7 @@ Date: 2026-03-28
 - Reconciled external AGIALPHA token verification notes to dated live-source checks.
 - Added `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` for burn observability on authoritative employer-win paths.
 - Reconfirmed contract-size gate status: `AGIJobManager` runtime and initcode are both within Ethereum mainnet hard limits (EIP-170/EIP-3860).
+- Added explicit regression coverage for paused-token behavior: employer-win settlement now has a dedicated test asserting atomic revert when token pause blocks `burnFrom`.
 
 ## Contract interface additions
 - New additive periphery contract: `EmployerBurnReadHelper`.
