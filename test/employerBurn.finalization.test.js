@@ -12,7 +12,7 @@ const EMPTY_PROOF = [];
 const { toBN, toWei } = web3.utils;
 
 contract('AGIJobManager employer-funded burn settlement', (accounts) => {
-  const [owner, employer, agent, validatorA, validatorB, moderator] = accounts;
+  const [owner, employer, agent, validatorA, validatorB, moderator, relayer] = accounts;
   let token;
   let manager;
 
@@ -174,6 +174,51 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await expectRevert.unspecified(
       manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
     );
+  });
+
+  it('does not let protocol-held AGIALPHA subsidize employer burn', async () => {
+    await setup();
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+
+    // Employer only funds escrow; no extra balance for burn.
+    await token.mint(employer, payout, { from: owner });
+    await token.approve(manager.address, payout.add(burn), { from: employer });
+    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
+    await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+
+    // Even if protocol balance is topped up, burn still must come from employer via burnFrom.
+    await token.mint(manager.address, burn, { from: owner });
+
+    await expectRevert.unspecified(
+      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
+    );
+  });
+
+  it('allows third-party finalizer to trigger authorized employer burn on finalizeJob path', async () => {
+    await setup();
+    await manager.setRequiredValidatorDisapprovals(3, { from: owner });
+    await manager.setVoteQuorum(2, { from: owner });
+    await manager.setCompletionReviewPeriod(1, { from: owner });
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    const jobId = await createJobAndRequest(payout, burn);
+
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await time.increase(2);
+
+    const tx = await manager.finalizeJob(jobId, { from: relayer });
+    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
+    assert.ok(enforced);
+    assert.equal(enforced.args.employer, employer);
+    assert.equal(enforced.args.finalizer, relayer);
+    assert.equal(enforced.args.amount.toString(), burn.toString());
+    assert.equal(enforced.args.settlementPathCode.toString(), '1');
   });
 
   it('zero-burn edge case on tiny payout does not emit burn and keeps supply constant', async () => {

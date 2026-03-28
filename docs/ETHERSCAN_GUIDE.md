@@ -37,6 +37,7 @@ Use this guide if you only have:
    - Permissionless lane: `finalizeJob(jobId)`
    - Moderator lane: `resolveDisputeWithCode(jobId, 2, reason)`
    - Owner stale-dispute lane: `resolveStaleDispute(jobId, true)`
+   - Important: `finalizeJob` can be called by any address when conditions are met; if employer-win and burn is non-zero, AGIJobManager still burns from the employer wallet authorization (`burnFrom(employer, amount)`), never from caller funds.
 9. Confirm wallet/network in your browser extension is Ethereum mainnet.
 10. Submit and wait for receipt status `Success`.
 11. Verify burn evidence conditionally:
