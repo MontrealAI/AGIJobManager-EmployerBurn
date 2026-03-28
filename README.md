@@ -1,4 +1,4 @@
-# AGIJobManager
+# AGIJobManager EmployerBurn Variant
 
 [![CI][ci-badge]][ci-url]
 [![Security Verification][security-verification-badge]][security-verification-url]
@@ -6,7 +6,7 @@
 [![Security Policy][security-badge]][security-url]
 [![License][license-badge]][license-url]
 
-AGIJobManager is an Ethereum smart-contract system for escrowed AGI work agreements, with optional ENS-backed job pages managed by `ENSJobPages`.
+AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI work agreements where employer-win settlement paths can enforce an employer-authorized AGIALPHA burn, with optional ENS-backed job pages managed by `ENSJobPages`.
 
 > [!IMPORTANT]
 > **New here? Start with the [Genesis Console](https://montrealai.github.io/agijobmanagerv0.html).**  

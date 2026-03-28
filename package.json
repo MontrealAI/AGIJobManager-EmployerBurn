@@ -1,8 +1,8 @@
 {
-  "name": "agijobmanager",
+  "name": "agijobmanager-employerburn",
   "version": "0.1.0",
   "private": true,
-  "description": "Single-contract AGIJobManager",
+  "description": "AGIJobManager EmployerBurn variant with employer-authorized AGIALPHA burn enforcement",
   "scripts": {
     "build": "truffle compile",
     "size": "node scripts/check-bytecode-size.js",
