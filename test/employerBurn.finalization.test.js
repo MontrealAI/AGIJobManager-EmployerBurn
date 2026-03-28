@@ -97,6 +97,26 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurned')), false);
   });
 
+  it('emits EmployerBurned when finalizeJob settles employer-win', async () => {
+    await setup();
+    await manager.setRequiredValidatorDisapprovals(3, { from: owner });
+    await manager.setVoteQuorum(2, { from: owner });
+    await manager.setCompletionReviewPeriod(1, { from: owner });
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    const jobId = await createJobAndRequest(payout, burn);
+
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await time.increase(2);
+    const tx = await manager.finalizeJob(jobId, { from: employer });
+    const event = tx.logs.find((l) => l.event === 'EmployerBurned');
+    assert.ok(event);
+    assert.equal(event.args.jobId.toNumber(), jobId);
+    assert.equal(event.args.employer, employer);
+    assert.equal(event.args.amount.toString(), burn.toString());
+  });
+
   it('reverts employer-win settlement with insufficient burn allowance', async () => {
     await setup();
     const payout = toBN(toWei('100'));
