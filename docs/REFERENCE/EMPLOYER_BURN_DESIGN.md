@@ -24,6 +24,7 @@ No agent-win, cancel, or expire path calls `_refundEmployer(...)`.
 - No protocol subsidy: protocol accounting never fronts, socializes, reimburses, or nets out the employer burn amount.
 - If `burnFrom` fails (allowance/balance/token-level revert), employer-win settlement reverts atomically.
 - Ordering: settlement first checks lifecycle eligibility, then executes burn, then proceeds with employer refund + validator/bond settlement; no partial burn-without-settlement or settlement-without-burn.
+- Permissionless finalization note: on the `finalizeJob` employer-win branch, **any caller** may trigger settlement, but burn payer remains `job.employer` due to `burnFrom(job.employer, ...)` and required employer allowance.
 
 ## Burn amount
 - `burnAmount = job.payout * employerBurnBps / 10_000`.
