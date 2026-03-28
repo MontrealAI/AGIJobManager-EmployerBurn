@@ -19,6 +19,35 @@ Use this guide if you only have:
 3. Execute the eligible settlement path on AGIJobManager (`finalizeJob`, `resolveDisputeWithCode` resolution `2`, or `resolveStaleDispute` with `employerWins=true`).
 4. Verify `EmployerBurnEnforced` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, token, amount, finalizer, and path.
 
+### Before you click **Write** (Employer burn transactions)
+
+1. Confirm you are on the verified AGIJobManager contract page (Write Contract tab).
+2. Confirm the AGIALPHA token is exactly `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
+3. On AGIALPHA, confirm `allowance(employer, AGIJobManager)` is at least the burn quote.
+4. Confirm employer wallet AGIALPHA balance covers the burn quote (this is separate from escrow already posted).
+5. Confirm `getEmployerBurnReadiness(jobId)` does **not** return:
+   - `BURN_READINESS_INSUFFICIENT_BALANCE` (`4`)
+   - `BURN_READINESS_INSUFFICIENT_ALLOWANCE` (`5`)
+   - `BURN_READINESS_SETTLEMENT_PAUSED` (`6`)
+6. Confirm job status is not already terminal (`completed` or `expired`) from `getJobCore(jobId)`.
+7. Confirm you are calling the intended settlement function:
+   - Permissionless lane: `finalizeJob(jobId)`
+   - Moderator lane: `resolveDisputeWithCode(jobId, 2, reason)`
+   - Owner stale-dispute lane: `resolveStaleDispute(jobId, true)`
+8. Confirm wallet/network in your browser extension is Ethereum mainnet.
+9. Submit and wait for receipt status `Success`.
+10. Verify `EmployerBurnEnforced` in transaction logs.
+
+### Exact approval vs unlimited approval (risk warning)
+
+- **Exact approval (recommended):** approve exactly the quoted burn amount for this settlement.  
+  - Pros: least approval risk if spender key/contract assumptions change.
+  - Cons: may require another approval transaction later.
+- **Unlimited approval (`2^256-1`):** convenient, but high risk.  
+  - If spender trust assumptions break, remaining wallet balance can be exposed.
+- The spender for burn is **AGIJobManager** (not `EmployerBurnReadHelper`).
+- Approval is always a **separate transaction** from settlement/finalization.
+
 ## Choose your role
 - [Employer](#employer-flow)
 - [Agent](#agent-flow)
@@ -110,6 +139,26 @@ node scripts/etherscan/prepare_inputs.js --action convert --amount 1.5 --duratio
 | `InsolventEscrowBalance` | owner action would violate escrow solvency | reduce action amount |
 | `ConfigLocked` | identity config already locked | cannot change identity config |
 | `finalizeJob` opens dispute | validator outcomes/quorum unresolved | moderator resolution path is required |
+
+### Employer burn readiness reason codes (plain English)
+
+`getEmployerBurnReadiness(jobId)` returns `reasonCode` + `settlementPathCode`.
+
+| reasonCode | Constant | Plain English |
+|---:|---|---|
+| 0 | `BURN_READINESS_OK` | Job is on an employer-win path and burn funding checks passed. |
+| 1 | `BURN_READINESS_NOT_EMPLOYER_WIN_PATH` | Current job state is not an employer-win settlement path right now. |
+| 2 | `BURN_READINESS_ALREADY_TERMINAL` | Job already completed or expired; no further settlement burn flow. |
+| 3 | `BURN_READINESS_BURN_BPS_ZERO` | Employer burn rate is currently zero; no burn amount required. |
+| 4 | `BURN_READINESS_INSUFFICIENT_BALANCE` | Employer wallet AGIALPHA balance is too low for the burn amount. |
+| 5 | `BURN_READINESS_INSUFFICIENT_ALLOWANCE` | Employer approved amount is too low for AGIJobManager to burn. |
+| 6 | `BURN_READINESS_SETTLEMENT_PAUSED` | Settlement lane is paused; settlement call will revert until unpaused. |
+
+`settlementPathCode` quick reference:
+- `0`: no active employer-win settlement path right now.
+- `1`: employer-win through `finalizeJob`.
+- `2`: employer-win through moderator dispute resolution.
+- `3`: employer-win through stale-dispute owner resolution.
 
 ### Etherscan input formatting
 - `bytes32`: `0x` + 64 hex chars.
@@ -383,3 +432,37 @@ node scripts/merkle/export_merkle_proofs.js --input scripts/merkle/sample_addres
 node scripts/etherscan/prepare_inputs.js --action apply --route merkle --jobId 42 --proof '["0x...","0x..."]'
 node scripts/advisor/state_advisor.js --input scripts/advisor/sample_job_state.json
 ```
+
+---
+
+## F) FAQ (EmployerBurn, plain English)
+
+### Q1) Why do I need a second approval if I already escrowed payout AGIALPHA?
+Escrow approval and employer-burn approval are separate token spends. Escrow is consumed when creating the job; burn is consumed later only if settlement is employer-win.
+
+### Q2) Can AGIJobManager burn tokens from any wallet?
+No. Burn uses `burnFrom(employer, amount)` on the employer tied to that job and requires that employer's allowance.
+
+### Q3) Can the protocol treasury pay my burn for me?
+No. Burn source is employer wallet authorization only. Protocol-held balances are not used to satisfy burn.
+
+### Q4) Why did my finalize/dispute tx revert?
+Most common reasons: settlement paused, job not in eligible employer-win path, insufficient AGIALPHA allowance, insufficient AGIALPHA balance, or wrong signer for moderator/owner-only paths.
+
+### Q5) Is permit required?
+No. Standard `approve` is supported and is the default Etherscan-first path.
+
+---
+
+## G) Short glossary (non-technical)
+
+- **Allowance:** token permission you give a spender contract to move/burn up to a limit.
+- **Spender:** contract address that uses your allowance. Here, spender is AGIJobManager.
+- **Burn:** permanent token destruction that reduces total supply.
+- **Basis points (bps):** 1 bps = 0.01%; 100 bps = 1%.
+- **Finalization:** closing a job into a terminal outcome.
+- **Employer-win:** settlement path where employer receives refund-side outcome.
+- **Permit:** signature-based allowance method (EIP-2612) as an alternative to `approve`.
+- **Paused:** emergency stop state where protected functions revert.
+- **Revert:** transaction fails and all state changes in that tx are undone.
+- **Event:** log emitted by a contract, used as verifiable evidence of what happened.

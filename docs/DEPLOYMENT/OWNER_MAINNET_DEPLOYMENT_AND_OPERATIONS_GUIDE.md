@@ -50,6 +50,13 @@ Expected result of a safe cutover:
 - **I need full deployment context too:** read `hardhat/README.md` first, then return here for owner-only execution.
 - **I am deciding whether to lock config:** complete all checks in Section 0 and migration status review before any lock call.
 
+## 0.4) EmployerBurn mainnet constants (owner quick reference)
+
+- AGIALPHA mainnet token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
+- Burn spender: `AGIJobManager` (not helper contracts).
+- Read helper for Etherscan-first preflight: `EmployerBurnReadHelper`.
+- Required burn evidence event when non-zero burn is applied: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
+
 
 > **Path clarity:** Hardhat is the official/recommended deployment workflow for current production operations. The Truffle deployment section in this document remains for legacy/supported environments and institutional reproducibility.
 
