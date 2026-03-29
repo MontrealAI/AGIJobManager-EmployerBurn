@@ -104,7 +104,13 @@ function loadDeployConfig(chainId) {
 
 function assertCompilerMatchesHardhatConfig() {
   const hardhatSolidity = hre.config.solidity;
-  const canonicalCompiler = Array.isArray(hardhatSolidity?.compilers) ? hardhatSolidity.compilers[0] : hardhatSolidity;
+  const compilers = Array.isArray(hardhatSolidity?.compilers) ? hardhatSolidity.compilers : [hardhatSolidity];
+  if (compilers.length !== 1) {
+    throw new Error(
+      `Expected exactly one canonical compiler profile in hardhat.config.js. Found ${compilers.length}; deployment aborted for determinism.`
+    );
+  }
+  const canonicalCompiler = compilers[0];
   if (!canonicalCompiler) {
     throw new Error('Unable to resolve compiler settings from hardhat.config.js');
   }
@@ -272,6 +278,11 @@ async function main() {
   const resolvedFinalOwner = resolveFinalOwner(profile);
   const dryRun = process.env.DRY_RUN === '1';
   const compilerProfile = assertCompilerMatchesHardhatConfig();
+  const preflightHash = ethers.keccak256(
+    ethers.toUtf8Bytes(
+      JSON.stringify(stableObject({ constructorArgs, finalOwner: resolvedFinalOwner, compilerProfile, network: network.name }))
+    )
+  );
 
   if (chainId === 1) {
     if (process.env.DEPLOY_CONFIRM_MAINNET !== MAINNET_CONFIRMATION_VALUE) {
@@ -298,6 +309,7 @@ async function main() {
 
   console.log('=== AGIJobManager EmployerBurn deployment plan (Hardhat canonical) ===');
   console.log(JSON.stringify(plan, null, 2));
+  console.log(`planHash: ${preflightHash}`);
   if (chainId === 1) {
     console.log('MAINNET SAFETY: this script will broadcast live transactions unless DRY_RUN=1.');
     console.log('MAINNET SAFETY: run DRY_RUN=1 first on every config change and verify the plan hash and constructor args.');
@@ -374,7 +386,7 @@ async function main() {
     console.log('[owner] transferOwnership skipped (deployer is final owner).');
   }
 
-  const stablePayload = stableObject({ constructorArgs, libraries: linkedLibraries, finalOwner: resolvedFinalOwner });
+  const stablePayload = stableObject({ constructorArgs, libraries: linkedLibraries, finalOwner: resolvedFinalOwner, compilerProfile });
   const configHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(stablePayload)));
 
   const outDir = path.join(__dirname, '..', 'deployments', network.name);

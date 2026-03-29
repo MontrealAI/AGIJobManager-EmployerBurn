@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const hre = require("hardhat");
 
 const { ethers, run, network } = hre;
@@ -53,6 +55,62 @@ function requireExplicitMainnetEnv(key) {
     throw new Error(`Mainnet deploy requires explicit ${key} environment variable (no implicit default on chainId=1).`);
   }
   return value;
+}
+
+function writeDeploymentReceipt({
+  networkName,
+  chainId,
+  deployer,
+  confirmations,
+  verifyDelayMs,
+  ensJobPagesAddress,
+  deploymentTxHash,
+  deploymentBlockNumber,
+  constructorArgs,
+  currentRootOwner,
+  configuredManager,
+  configuredRootName,
+  configuredRootNode,
+  finalOwner,
+  ownerOverride,
+  lockConfig,
+  verificationSucceeded,
+}) {
+  const outDir = path.resolve(__dirname, "..", "deployments", networkName);
+  fs.mkdirSync(outDir, { recursive: true });
+  const filePath = path.join(outDir, `ens-job-pages-deployment.${chainId}.${deploymentBlockNumber}.json`);
+  const payload = {
+    timestamp: new Date().toISOString(),
+    chainId,
+    network: networkName,
+    deployer,
+    confirmations,
+    verifyDelayMs,
+    contract: {
+      name: "ENSJobPages",
+      address: ensJobPagesAddress,
+      txHash: deploymentTxHash,
+      blockNumber: deploymentBlockNumber,
+    },
+    constructorArgs,
+    root: {
+      currentOwner: currentRootOwner,
+      rootName: configuredRootName,
+      rootNode: configuredRootNode,
+    },
+    jobManager: configuredManager,
+    ownershipTransferred: Boolean(ownerOverride),
+    finalOwner,
+    lockConfigurationRequested: lockConfig,
+    lockConfigurationExecuted: lockConfig,
+    verificationSucceeded,
+    manualCutoverRequired: [
+      "NameWrapper.setApprovalForAll(newEnsJobPages, true)",
+      "AGIJobManager.setEnsJobPages(newEnsJobPages)",
+    ],
+  };
+  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  return filePath;
 }
 
 async function main() {
@@ -190,7 +248,28 @@ async function main() {
   const finalOwner = await ensJobPages.owner();
   const isLocked = await ensJobPages.configLocked();
 
-  console.log("\n=== Post-deploy verification snapshot ===");
+  const deploymentBlockNumber = deploymentTx ? (await ethers.provider.getTransactionReceipt(deploymentTx.hash)).blockNumber : 0;
+  const receiptPath = writeDeploymentReceipt({
+    networkName: network.name,
+    chainId,
+    deployer: deployer.address,
+    confirmations,
+    verifyDelayMs,
+    ensJobPagesAddress,
+    deploymentTxHash: deploymentTx ? deploymentTx.hash : null,
+    deploymentBlockNumber,
+    constructorArgs,
+    currentRootOwner,
+    configuredManager,
+    configuredRootName,
+    configuredRootNode,
+    finalOwner,
+    ownerOverride,
+    lockConfig,
+    verificationSucceeded,
+  });
+
+  console.log("\n=== Post-deploy verification snapshot (ENSJobPages) ===");
   console.log("ENSJobPages:", ensJobPagesAddress);
   console.log("constructorArgs:", JSON.stringify(constructorArgs));
   console.log("current root owner:", currentRootOwner);
@@ -201,6 +280,7 @@ async function main() {
   console.log("ownership transferred:", ownerOverride ? "yes" : "no");
   console.log("configLocked:", isLocked ? "yes" : "no");
   console.log("verificationSucceeded:", verificationSucceeded ? "yes" : "no");
+  console.log("receipt:", receiptPath);
 
   console.log("\nManual cutover steps (not automated by this script):");
   console.log("1) On NameWrapper, WRAPPED-ROOT OWNER signer calls setApprovalForAll(newEnsJobPages, true).");
