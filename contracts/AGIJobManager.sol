@@ -508,6 +508,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event RequiredValidatorApprovalsUpdated(uint256 indexed oldApprovals, uint256 indexed newApprovals);
     event RequiredValidatorDisapprovalsUpdated(uint256 indexed oldDisapprovals, uint256 indexed newDisapprovals);
     event ValidationRewardPercentageUpdated(uint256 indexed oldPercentage, uint256 indexed newPercentage);
+    event EmployerBurnBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event AgentBondParamsUpdated(
         uint256 indexed oldBps,
         uint256 indexed oldMin,
@@ -1201,7 +1202,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
         _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
+        uint256 oldBps = employerBurnBps;
         employerBurnBps = bps;
+        emit EmployerBurnBpsUpdated(oldBps, bps);
     }
 
     function getJobCore(uint256 jobId)
