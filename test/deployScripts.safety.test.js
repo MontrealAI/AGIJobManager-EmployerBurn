@@ -39,5 +39,7 @@ contract('Hardhat deploy scripts safety checks', () => {
     assert(ensDeployScript.includes('Manual cutover steps (not automated by this script):'));
     assert(ensDeployScript.includes('setApprovalForAll(newEnsJobPages, true)'));
     assert(ensDeployScript.includes('setEnsJobPages(newEnsJobPages)'));
+    assert(ensDeployScript.includes('lockConfiguration called in this run:'));
+    assert(ensDeployScript.includes('WARNING: LOCK_CONFIG=1 will call lockConfiguration() inside this deployment run.'));
   });
 });

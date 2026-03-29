@@ -139,8 +139,10 @@ I_UNDERSTAND_MAINNET_DEPLOYMENT
 ## 4) Compiler and profile source of truth
 
 - Hardhat config: `hardhat.config.js`.
-- Default constructor profile: `deploy.config.example.js`.
+- Default constructor profile: `deploy.config.example.js` (**non-mainnet helper only**).
 - Optional profile override: set `DEPLOY_CONFIG=<path-to-js-config>`.
+
+> On chainId `1`, `deploy.js` refuses to proceed unless `DEPLOY_CONFIG` is explicitly provided and is not `deploy.config.example.js`.
 
 `deploy.js` resolves constructor args from the profile for the current network and validates address/bytes32 shapes before broadcasting.
 

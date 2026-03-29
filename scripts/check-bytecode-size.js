@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const MAX_RUNTIME_BYTES = 24576; // EIP-170
-const MAX_INITCODE_BYTES = 49152; // EIP-3860
+const EIP170_URL = 'https://eips.ethereum.org/EIPS/eip-170';
+const EIP3860_URL = 'https://eips.ethereum.org/EIPS/eip-3860';
+const MAX_RUNTIME_BYTES = 24576; // EIP-170 MAX_CODE_SIZE
+const MAX_INITCODE_BYTES = 49152; // EIP-3860 MAX_INITCODE_SIZE
 const TARGET_RUNTIME_BYTES = 23000;
 const TARGET_INITCODE_BYTES = 46000;
 
@@ -51,6 +53,8 @@ const overInitcode = [];
 const overGrowth = [];
 
 console.log(`Checking bytecode using artifact format: ${artifactFormat}`);
+console.log(`Mainnet runtime size limit source: EIP-170 (${EIP170_URL}) => ${MAX_RUNTIME_BYTES} bytes`);
+console.log(`Mainnet initcode size limit source: EIP-3860 (${EIP3860_URL}) => ${MAX_INITCODE_BYTES} bytes`);
 for (const contractName of targets) {
   const artifactPath = resolveArtifactPath(contractName);
   if (!artifactPath) throw new Error(`Missing artifact for ${contractName} in ${artifactFormat} layout`);

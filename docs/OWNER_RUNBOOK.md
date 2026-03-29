@@ -46,8 +46,8 @@ Expected result before lock calls:
 
 ## 1) Deployment checklist
 
-1. Compile with repository defaults (Truffle + optimizer settings from `truffle-config.js`).
-2. Link external libraries exactly as deployment scripts/Truffle artifacts require.
+1. Compile with repository defaults via Hardhat (`npm run build:hardhat`) using `hardhat/hardhat.config.js`.
+2. Link external libraries exactly as canonical Hardhat deployment script output requires (`hardhat/scripts/deploy.js`).
 3. Deploy constructor args carefully:
    - AGI token address,
    - base IPFS URL,

@@ -88,6 +88,8 @@ async function main() {
   const verify = isTruthy(env("VERIFY"));
   const lockConfig = isTruthy(env("LOCK_CONFIG"));
   const dryRun = isTruthy(env("DRY_RUN"));
+  let lockConfigurationCalled = false;
+  let ownershipTransferred = false;
 
   const ownerOverride = env("NEW_OWNER") || env("FINAL_OWNER") || "";
   if (ownerOverride && !ethers.isAddress(ownerOverride)) {
@@ -125,6 +127,11 @@ async function main() {
   console.log("root tokenId decimal:", BigInt(jobsRootNode).toString());
   console.log("JOB_MANAGER:", jobManager, usedDefaultJobManager ? "(default)" : "(explicit)");
   console.log("LOCK_CONFIG:", lockConfig);
+  if (lockConfig) {
+    console.log("WARNING: LOCK_CONFIG=1 will call lockConfiguration() inside this deployment run. This is irreversible.");
+  } else {
+    console.log("WARNING: lockConfiguration() is NOT called by default. Keep configuration unlocked until manual cutover + migration validation is complete.");
+  }
   console.log("resolved owner override:", ownerOverride || "(none)");
   console.log("VERIFY:", verify);
   console.log("CONFIRMATIONS:", confirmations);
@@ -160,12 +167,14 @@ async function main() {
     console.log("Locking configuration...");
     const lockTx = await ensJobPages.lockConfiguration();
     await lockTx.wait(confirmations);
+    lockConfigurationCalled = true;
   }
 
   if (ownerOverride) {
     console.log("Transferring ownership to:", ownerOverride);
     const transferTx = await ensJobPages.transferOwnership(ownerOverride);
     await transferTx.wait(confirmations);
+    ownershipTransferred = true;
   }
 
   let verificationSucceeded = false;
@@ -198,7 +207,8 @@ async function main() {
   console.log("jobsRootName:", configuredRootName);
   console.log("jobsRootNode:", configuredRootNode);
   console.log("owner:", finalOwner);
-  console.log("ownership transferred:", ownerOverride ? "yes" : "no");
+  console.log("ownership transferred:", ownershipTransferred ? "yes" : "no");
+  console.log("lockConfiguration called in this run:", lockConfigurationCalled ? "yes" : "no");
   console.log("configLocked:", isLocked ? "yes" : "no");
   console.log("verificationSucceeded:", verificationSucceeded ? "yes" : "no");
 
