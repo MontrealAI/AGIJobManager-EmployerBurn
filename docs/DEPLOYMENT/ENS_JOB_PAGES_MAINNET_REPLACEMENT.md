@@ -36,6 +36,20 @@ For chainId `1`, `hardhat/scripts/deploy-ens-job-pages.js` requires explicit val
 
 The script requires `JOBS_ROOT_NAME` to already be normalized (it compares input vs `ethers.ensNormalize(input)` and fails on drift), recomputes namehash, and rejects any mismatch with `JOBS_ROOT_NODE`.
 
+
+### On-chain root-name safety subset (important)
+
+`ENSJobPages` intentionally accepts a strict, bounded root-name subset on-chain:
+- lowercase ASCII LDH labels (`a-z`, `0-9`, `-`) separated by dots,
+- no empty labels,
+- no label longer than 63 bytes,
+- no leading or trailing hyphen per label,
+- max supported root length that still leaves room for `<label>.<root>` under the 253-byte full-name presentation limit.
+
+The contract recomputes `namehash(rootName)` on-chain for this subset and requires exact equality with `rootNode`; mismatched pairs revert in constructor and `setJobsRoot`.
+
+This is intentionally stricter than full ENS Unicode normalization. Use `ethers.ensNormalize(...)` in deployment tooling and pass the already-normalized lowercase root string.
+
 ## 1) Purpose and scope
 
 `ENSJobPages` manages ENS job page naming and metadata writes for AGIJobManager hooks.

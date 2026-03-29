@@ -68,3 +68,12 @@ When `burnFuses=true` and root is wrapped, `ENSJobPages` attempts to burn `CANNO
 4. If using ENS token URIs for minted job NFTs, enable both sides:
    - `AGIJobManager.setUseEnsJobTokenURI(true)`
    - optional `ENSJobPages.setUseEnsJobTokenURI(true)` (local flag on companion contract).
+
+
+## Root-name validation model
+
+For mainnet safety, `ENSJobPages` does not accept arbitrary ENS Unicode names on-chain. It enforces a deterministic lowercase ASCII LDH subset (labels split by `.`, no empty labels, 1..63 bytes per label, no leading/trailing `-`).
+
+Constructor and `setJobsRoot` recompute `namehash(rootName)` on-chain for that subset and require equality with `rootNode`; mismatched config reverts with `InvalidParameters`.
+
+Operationally, deploy scripts still enforce `ethers.ensNormalize(rootName)` first, so operators pass canonical normalized root names and avoid ambiguous/mismatched configurations.
