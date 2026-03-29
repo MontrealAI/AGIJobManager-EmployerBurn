@@ -13,11 +13,11 @@
     "docs:ens:check": "node scripts/docs/check-ens-docs.mjs",
     "docs:interface": "node scripts/generate-interface-doc.js",
     "lint": "solhint \"contracts/**/*.sol\"",
-    "test": "npm run test:core",
+    "test": "npm run test:canonical",
     "test:core": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && npm run size:legacy",
     "test:legacy:core": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && npm run size:legacy",
     "test:release-gates": "npm run release:readiness",
-    "test:legacy:employerburn": "truffle test test/employerBurn.finalization.test.js --network test",
+    "test:legacy:employerburn": "npm run test:employerburn",
     "test:ui": "node scripts/ui/run_ui_smoke_test.js",
     "ui:abi": "node scripts/ui/export_abi.js",
     "ui:abi:check": "node scripts/ui/check_ui_abi.js",
@@ -40,7 +40,9 @@
     "release:verify": "node scripts/hardhat/verify-latest-deployment.mjs",
     "release:postdeploy": "node scripts/hardhat/postdeploy-validate.mjs",
     "release:readiness": "node scripts/hardhat/release-readiness.mjs",
-    "deploy:agijobmanager:legacy": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6"
+    "deploy:agijobmanager:legacy": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6",
+    "test:canonical": "npm run release:readiness",
+    "test:employerburn": "truffle test test/employerBurn.finalization.test.js --network test"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6"

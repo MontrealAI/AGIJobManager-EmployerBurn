@@ -1,25 +1,23 @@
 # Test Status
 
-## Latest deterministic validation snapshot
+## Latest deterministic validation snapshot (2026-03-29)
 
-The repository's canonical local/CI-parity checks were executed from repo root and all completed successfully.
+Canonical checks were executed from repository root and completed successfully.
 
 ### Commands and outcomes
 
-- `npm install` ✅
-- `npm run build` ✅
-- `npm test` ✅ (`260 passing`)
+- `npm run release:readiness` ✅
+- `npm test` ✅ (routes to the canonical release-readiness gate)
 - `npm run size` ✅
 
 ### Environment notes
 
-- `npm` reports deprecation and vulnerability warnings from transitive dependencies during install; these did not block build or test execution.
-- `npm test` is the canonical test command and already uses Truffle's in-process `test` network (`truffle test --network test`), so no external Ganache process is required.
+- `npm` may print non-blocking environment/deprecation warnings depending on local configuration.
+- Canonical testing is Hardhat-first orchestration (`release:readiness`) and no longer presents Truffle as the primary operator-facing path.
 
-### Size guard snapshot
+### Size gate snapshot (Hardhat artifacts)
 
-`npm test` runs `scripts/check-contract-sizes.js` and reports:
+- `AGIJobManager` runtime: **24,339 bytes** (EIP-170 hard limit: 24,576; headroom 237 bytes).
+- `AGIJobManager` initcode: **26,667 bytes** (EIP-3860 hard limit: 49,152; headroom 22,485 bytes).
 
-- `AGIJobManager deployedBytecode size: 24574 bytes`
-
-This remains under the EIP-170 limit of 24,576 bytes.
+This passes hard mainnet deployability limits and remains guarded by the checked-in no-growth baseline policy.

@@ -1,16 +1,24 @@
-# Deployment guide (Truffle)
+# Deployment guide (Legacy Truffle compatibility)
 
-This guide documents the deployment and verification workflow defined in `truffle-config.js` and the migration scripts in `migrations/`.
-For the **configure-once, minimal-governance** deployment profile, see [`docs/DEPLOYMENT_PROFILE.md`](DEPLOYMENT_PROFILE.md).
+> **Canonical production deployment path is Hardhat, not Truffle.**
+> Use `hardhat/README.md` and `docs/DEPLOYMENT/README.md` for mainnet release operations.
 
-## Prerequisites
+This document is retained only for historical reproducibility and compatibility with existing Truffle-based environments.
+
+## Canonical vs legacy summary
+
+- **Canonical production deploy/verify/release:** Hardhat wrappers from repo root (`npm run doctor`, `npm run release:build`, `npm run release:deploy:mainnet`, `npm run release:verify`, `npm run release:postdeploy`, `npm run release:readiness`).
+- **Legacy compatibility path:** Truffle scripts and migrations in this document.
+- **Production artifact source of truth:** `hardhat/artifacts/**`.
+
+## Legacy prerequisites
 - Node.js and npm (CI uses Node 20).
-- Truffle (installed via `npm install`).
-- RPC access for Sepolia or Mainnet (or a local Ganache instance).
+- Truffle installed via repository dependencies.
+- RPC access for Sepolia/Mainnet (or a local Ganache instance).
 
-## Environment variables
+## Legacy environment variables
 
-The configuration supports both direct RPC URLs and provider keys. `PRIVATE_KEYS` is required for Sepolia/Mainnet deployments.
+The legacy Truffle configuration supports both direct RPC URLs and provider keys. `PRIVATE_KEYS` is required for Sepolia/Mainnet Truffle deployments.
 
 | Variable | Purpose | Notes |
 | --- | --- | --- |
@@ -32,91 +40,57 @@ The configuration supports both direct RPC URLs and provider keys. `PRIVATE_KEYS
 
 A template lives in [`.env.example`](../.env.example).
 
-> **Compiler note**: `AGIJobManager.sol` uses `pragma solidity ^0.8.19`, while the Truffle compiler is pinned to `0.8.23` in `truffle-config.js`. For reproducible verification, keep the solc version and optimizer runs consistent with the original deployment.
+## Runtime bytecode limits (reference)
 
-## Runtime bytecode size (EIP-170)
+Ethereum mainnet hard limits:
+- Runtime bytecode: 24,576 bytes (EIP-170).
+- Initcode: 49,152 bytes (EIP-3860).
 
-Ethereum mainnet enforces the Spurious Dragon / EIP-170 limit of **24,576 bytes** for deployed runtime bytecode. To measure the runtime size locally after compiling:
-
-```bash
-node -e "const a=require('./build/contracts/AGIJobManager.json'); const b=(a.deployedBytecode||'').replace(/^0x/,''); console.log('AGIJobManager deployedBytecode bytes:', b.length/2)"
-```
-
-The mainnet-safe compiler settings used in `truffle-config.js` are:
-- Optimizer enabled with **runs = 50**.
-- `viaIR = false` by default.
-- `debug.revertStrings = 'strip'`.
-- `metadata.bytecodeHash = 'none'`.
-
-For a deterministic size gate that covers `AGIJobManager`, use:
+Use canonical size gate from repo root:
 
 ```bash
-node scripts/check-bytecode-size.js
+npm run size
 ```
 
-## Networks configured
-- **test**: in‑process Ganache provider for `truffle test`.
-- **development**: local RPC at `127.0.0.1:8545` (Ganache).
-- **sepolia**: remote deployment via RPC (HDWalletProvider).
-- **mainnet**: remote deployment via RPC (HDWalletProvider).
+## Legacy Truffle network notes
+- `test`: in‑process Ganache provider for `truffle test`.
+- `development`: local RPC at `127.0.0.1:8545`.
+- `sepolia`: remote deployment via RPC (HDWalletProvider).
+- `mainnet`: remote deployment via RPC (HDWalletProvider).
 
-The default `npm test` script compiles with `--all`, runs `truffle test --network test`, and then executes an additional JavaScript test harness. Use the `test` network for deterministic local runs.
+Canonical test command from repo root is now `npm test` (`npm run test:canonical`), which executes the Hardhat-first release-readiness gate.
 
-## Migration script notes
+## Legacy migration notes
 
-The deployment script in `migrations/1_deploy_contracts.js` reads constructor parameters from environment variables (token address, ENS registry, NameWrapper address, root nodes, Merkle roots). **Set these values** before deploying to any production network.
-The constructor now accepts a grouped config tuple (token, base IPFS URL, `[ENS, NameWrapper]`, `[club, agent, alpha club, alpha agent]`, `[validator Merkle, agent Merkle]`), so custom deployments should mirror the migration script’s ordering.
+The migration scripts in `migrations/` remain for compatibility. For production releases, use Hardhat scripts in `hardhat/scripts/` and root `release:*` wrappers.
 
-## Local deployment (Ganache)
+## Legacy local deployment (Ganache)
 
-1. Start Ganache:
-   ```bash
-   npx ganache -p 8545
-   ```
-2. Deploy:
-   ```bash
-   npm run build
-   npx truffle migrate --network development
-   ```
+```bash
+npx ganache -p 8545
+npm run build:legacy
+npx truffle migrate --network development
+```
 
-## Sepolia deployment
+## Legacy Sepolia deployment
 
-1. Set environment variables (`PRIVATE_KEYS` plus RPC configuration).
-2. Deploy:
-   ```bash
-   npm run build
-   npx truffle migrate --network sepolia
-   ```
+```bash
+npm run build:legacy
+npx truffle migrate --network sepolia
+```
 
-## Mainnet deployment
+## Legacy Mainnet deployment
 
-1. Set environment variables (`PRIVATE_KEYS` plus RPC configuration).
-2. Deploy:
-   ```bash
-   npm run build
-   npx truffle migrate --network mainnet
-   ```
+```bash
+npm run build:legacy
+npx truffle migrate --network mainnet
+```
 
-## Verification (Etherscan)
-
-When `ETHERSCAN_API_KEY` is set:
+## Legacy Truffle verification (if explicitly needed)
 
 ```bash
 npx truffle run verify AGIJobManager --network sepolia
-```
-
-```bash
 npx truffle run verify AGIJobManager --network mainnet
 ```
 
-### Verification tips
-- Keep the compiler settings from `truffle-config.js` identical to the original deployment (solc `0.8.23`, runs `50`, `evmVersion` `london`).
-- Ensure your migration constructor parameters match the deployed contract.
-- If the Etherscan plugin fails, re‑run with `--debug` to capture full output.
-- Etherscan’s **Standard-Json-Input** flow should include `viaIR: false`, `optimizer.runs: 50`, and `metadata.bytecodeHash: "none"` if you verify manually.
-
-## Troubleshooting
-- **Missing RPC URL**: set `SEPOLIA_RPC_URL` or `MAINNET_RPC_URL`, or provide `ALCHEMY_KEY` / `ALCHEMY_KEY_MAIN` / `INFURA_KEY`.
-- **Missing private keys**: ensure `PRIVATE_KEYS` is set and comma‑separated.
-- **Verification failures**: confirm compiler version and optimizer runs match the deployed bytecode.
-- **Nonce conflicts**: avoid running multiple deployment processes with the same keys.
+For production verification workflow, use `npm run release:verify` (Hardhat canonical).

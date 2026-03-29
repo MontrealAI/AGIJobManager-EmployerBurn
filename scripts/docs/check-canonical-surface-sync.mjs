@@ -11,7 +11,10 @@ const canonicalFiles = [
   'docs/DEPLOYMENT/OWNER_MAINNET_DEPLOYMENT_AND_OPERATIONS_GUIDE.md',
   'docs/OWNER_RUNBOOK.md',
   'docs/ETHERSCAN_GUIDE.md',
-  'MAINNET_DEPLOYMENT_CHECKLIST.md'
+  'MAINNET_DEPLOYMENT_CHECKLIST.md',
+  'docs/TESTING.md',
+  'docs/TEST_STATUS.md',
+  'docs/Deployment.md'
 ];
 
 const forbiddenSnippets = [
@@ -21,13 +24,19 @@ const forbiddenSnippets = [
   'resolveDispute(uint256',
   'DisputeResolved(',
   'EmployerBurned(',
-  'safeMintCompletionNFT('
+  'safeMintCompletionNFT(',
+  'npm test` is the canonical test command and already uses Truffle',
+  'The default `npm test` script compiles with `--all`, runs `truffle test --network test`',
+  '# Deployment guide (Truffle)'
 ];
 
 const requiredSnippetsByFile = {
   'README.md': ['release:readiness', 'release:deploy:mainnet'],
   'MAINNET_DEPLOYMENT_CHECKLIST.md': ['npm run release:build', 'npm run release:readiness'],
-  'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT']
+  'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT'],
+  'docs/TESTING.md': ['Canonical release gate (Hardhat-first orchestration)', 'npm run test:employerburn'],
+  'docs/TEST_STATUS.md': ['Latest deterministic validation snapshot (2026-03-29)', 'AGIJobManager` runtime: **24,339 bytes**'],
+  'docs/Deployment.md': ['Canonical production deployment path is Hardhat, not Truffle.', 'Deployment guide (Legacy Truffle compatibility)']
 };
 
 let failed = false;
