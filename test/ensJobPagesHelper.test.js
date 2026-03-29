@@ -605,21 +605,20 @@ contract("ENSJobPages helper", (accounts) => {
     await expectRevert.unspecified(helper.setJobLabelPrefix("job-", { from: owner }));
   });
 
-  it("fails closed when full ENS name would exceed 253 characters", async () => {
+  it("rejects root names that can produce oversized full job ENS names", async () => {
     const ens = await MockENSRegistry.new({ from: owner });
     const resolver = await MockPublicResolver.new({ from: owner });
     const longRoot = `${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(48)}`;
-    const helper = await ENSJobPages.new(
-      ens.address,
-      "0x0000000000000000000000000000000000000000",
-      resolver.address,
-      namehash(longRoot),
-      longRoot,
-      { from: owner }
+    await expectConstructorFailure(
+      ENSJobPages.new(
+        ens.address,
+        "0x0000000000000000000000000000000000000000",
+        resolver.address,
+        namehash(longRoot),
+        longRoot,
+        { from: owner }
+      )
     );
-
-    await helper.setJobLabelPrefix("agijob-prefix-", { from: owner });
-    await expectRevert.unspecified(helper.jobEnsName("999999999999999999999999"));
   });
 
   it("snapshots created labels so old jobs remain stable after prefix changes", async () => {

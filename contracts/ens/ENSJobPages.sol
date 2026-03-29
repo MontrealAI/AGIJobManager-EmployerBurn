@@ -56,6 +56,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
     uint256 private constant MAX_FULL_ENS_NAME_LENGTH = 253;
     uint256 private constant MAX_JOB_LABEL_PREFIX_LENGTH = 32;
     uint256 private constant MAX_ENS_LABEL_LENGTH = 63;
+    uint256 private constant MAX_ROOT_NAME_FOR_JOB_LABEL = MAX_FULL_ENS_NAME_LENGTH - 1 - MAX_ENS_LABEL_LENGTH;
     uint256 private constant ENS_READ_GAS_LIMIT = 50_000;
 
     bytes4 private constant ENS_OWNER_SELECTOR = bytes4(keccak256("owner(bytes32)"));
@@ -740,7 +741,12 @@ contract ENSJobPages is Ownable, ERC1155Holder {
     function _isValidRootName(string memory rootName) internal pure returns (bool) {
         bytes memory raw = bytes(rootName);
         uint256 len = raw.length;
-        if (len == 0 || len > MAX_ROOT_NAME_LENGTH || len > MAX_FULL_ENS_NAME_LENGTH) return false;
+        if (
+            len == 0
+                || len > MAX_ROOT_NAME_LENGTH
+                || len > MAX_FULL_ENS_NAME_LENGTH
+                || len > MAX_ROOT_NAME_FOR_JOB_LABEL
+        ) return false;
         if (raw[0] == bytes1(".") || raw[len - 1] == bytes1(".")) return false;
 
         uint256 labelLen = 0;
@@ -872,6 +878,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
     }
 
     function _snapshotJobLabel(uint256 jobId, string memory label) internal {
+        if (!_isValidFullNameLength(label, jobsRootName)) revert InvalidParameters();
         bytes32 labelHash = keccak256(bytes(label));
         uint256 existing = _jobIdPlusOneByLabelHash[labelHash];
         if (existing != 0 && existing != jobId + 1) revert InvalidParameters();
