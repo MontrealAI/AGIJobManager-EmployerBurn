@@ -243,7 +243,7 @@ On Ethereum mainnet (`chainId=1`) the script requires explicit operator-provided
 - `JOBS_ROOT_NAME`
 - `JOBS_ROOT_NODE`
 
-Script still validates that `JOBS_ROOT_NODE === namehash(ensNormalize(JOBS_ROOT_NAME))` and rejects mismatches.
+Script enforces strict ENS hygiene: `JOBS_ROOT_NAME` must already be normalized (`ethers.ensNormalize` no-op), and `JOBS_ROOT_NODE` must equal `namehash(JOBS_ROOT_NAME)`.
 
 > ⚠️ Mainnet-sensitive: if you set `LOCK_CONFIG=1`, ENSJobPages config setters become permanently unavailable.
 
@@ -348,4 +348,4 @@ Troubleshooting reference:
 
 ## Mainnet ENS deploy explicit values on chainId 1
 
-`deploy-ens-job-pages.js` blocks mainnet deploys unless `JOB_MANAGER`, `JOBS_ROOT_NAME`, and `JOBS_ROOT_NODE` are set explicitly. Defaults are legacy non-mainnet helpers only.
+`deploy-ens-job-pages.js` blocks mainnet deploys unless `JOB_MANAGER`, `JOBS_ROOT_NAME`, and `JOBS_ROOT_NODE` are set explicitly. Defaults are legacy non-mainnet helpers only. The script also hard-fails if `JOBS_ROOT_NAME` is not already normalized.
