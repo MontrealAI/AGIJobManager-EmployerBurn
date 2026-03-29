@@ -90,6 +90,7 @@ So names are:
 - ...
 
 Prefix changes apply only to unsnapshotted/future jobs. Already snapshotted labels stay unchanged.
+Owner can change prefix through `setJobLabelPrefix(string)` before `lockConfiguration()`. After `lockConfiguration()`, prefix changes are intentionally frozen.
 
 ---
 
@@ -137,6 +138,7 @@ Expected result:
 - New ENSJobPages address deployed.
 - `setJobManager(JOB_MANAGER)` already executed by script.
 - Optional verification submitted.
+- Deployment receipt emitted to `hardhat/deployments/<network>/ens-job-pages-deployment.<chainId>.<blockNumber>.json`.
 
 
 ### Common cutover mistakes

@@ -179,6 +179,7 @@ DRY_RUN=1 DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run deploy:
 
 Expected result:
 - Script prints full plan.
+- Script prints deterministic `planHash` for preflight review/diffing.
 - Script exits before broadcasting transactions.
 
 ---
@@ -244,6 +245,8 @@ On Ethereum mainnet (`chainId=1`) the script requires explicit operator-provided
 - `JOBS_ROOT_NODE`
 
 Script enforces strict ENS hygiene: `JOBS_ROOT_NAME` must already be normalized (`ethers.ensNormalize` no-op), and `JOBS_ROOT_NODE` must equal `namehash(JOBS_ROOT_NAME)`.
+It also writes an operator receipt after deployment to:
+- `hardhat/deployments/<network>/ens-job-pages-deployment.<chainId>.<blockNumber>.json`
 
 > ⚠️ Mainnet-sensitive: if you set `LOCK_CONFIG=1`, ENSJobPages config setters become permanently unavailable.
 

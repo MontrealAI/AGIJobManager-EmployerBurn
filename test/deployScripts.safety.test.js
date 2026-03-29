@@ -40,4 +40,10 @@ contract('Hardhat deploy scripts safety checks', () => {
     assert(ensDeployScript.includes('setApprovalForAll(newEnsJobPages, true)'));
     assert(ensDeployScript.includes('setEnsJobPages(newEnsJobPages)'));
   });
+
+  it('deploy-ens-job-pages.js writes a deployment receipt with validation snapshot fields', () => {
+    assert(ensDeployScript.includes('ens-job-pages-deployment.${chainId}.${deploymentBlockNumber}.json'));
+    assert(ensDeployScript.includes('=== Post-deploy verification snapshot (ENSJobPages) ==='));
+    assert(ensDeployScript.includes('verificationSucceeded'));
+  });
 });
