@@ -8,6 +8,7 @@ const canonicalFiles = [
   'README.md',
   'hardhat/README.md',
   'docs/DEPLOYMENT/README.md',
+  'docs/DEPLOYMENT/ENS_JOB_PAGES_MAINNET_REPLACEMENT.md',
   'docs/DEPLOYMENT/OWNER_MAINNET_DEPLOYMENT_AND_OPERATIONS_GUIDE.md',
   'docs/OWNER_RUNBOOK.md',
   'docs/ETHERSCAN_GUIDE.md',
