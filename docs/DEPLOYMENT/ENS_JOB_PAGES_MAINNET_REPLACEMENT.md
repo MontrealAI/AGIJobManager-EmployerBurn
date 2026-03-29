@@ -34,7 +34,7 @@ For chainId `1`, `hardhat/scripts/deploy-ens-job-pages.js` requires explicit val
 - `JOBS_ROOT_NAME`
 - `JOBS_ROOT_NODE`
 
-The script normalizes `JOBS_ROOT_NAME` with `ethers.ensNormalize`, recomputes namehash, and rejects any mismatch with `JOBS_ROOT_NODE`.
+The script requires `JOBS_ROOT_NAME` to already be normalized (it compares input vs `ethers.ensNormalize(input)` and fails on drift), recomputes namehash, and rejects any mismatch with `JOBS_ROOT_NODE`.
 
 ## 1) Purpose and scope
 

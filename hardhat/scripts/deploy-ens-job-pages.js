@@ -47,6 +47,14 @@ function parseIntEnv(key, fallback, min = 0) {
   return parsed;
 }
 
+function requireExplicitMainnetEnv(key) {
+  const value = env(key, "");
+  if (!value) {
+    throw new Error(`Mainnet deploy requires explicit ${key} environment variable (no implicit default on chainId=1).`);
+  }
+  return value;
+}
+
 async function main() {
   const net = await ethers.provider.getNetwork();
   const chainId = Number(net.chainId);
@@ -64,24 +72,18 @@ async function main() {
   const ensRegistry = env("ENS_REGISTRY", MAINNET_ENS_REGISTRY);
   const nameWrapper = env("NAME_WRAPPER", MAINNET_NAME_WRAPPER);
   const publicResolver = env("PUBLIC_RESOLVER", MAINNET_PUBLIC_RESOLVER);
-  const jobsRootNameInput = env("JOBS_ROOT_NAME", DEFAULT_ROOT_NAME);
+  const jobsRootNameInput = chainId === 1 ? requireExplicitMainnetEnv("JOBS_ROOT_NAME") : env("JOBS_ROOT_NAME", DEFAULT_ROOT_NAME);
   const jobsRootName = ethers.ensNormalize(jobsRootNameInput);
+  if (jobsRootName !== jobsRootNameInput) {
+    throw new Error(`JOBS_ROOT_NAME must already be ENS-normalized. Provided "${jobsRootNameInput}", normalized "${jobsRootName}"`);
+  }
   const computedJobsRootNode = namehash(jobsRootName);
-  const jobsRootNode = env("JOBS_ROOT_NODE", computedJobsRootNode);
-  const jobManager = env("JOB_MANAGER", DEFAULT_JOB_MANAGER);
+  const jobsRootNode = chainId === 1 ? requireExplicitMainnetEnv("JOBS_ROOT_NODE") : env("JOBS_ROOT_NODE", computedJobsRootNode);
+  const jobManager = chainId === 1 ? requireExplicitMainnetEnv("JOB_MANAGER") : env("JOB_MANAGER", DEFAULT_JOB_MANAGER);
 
   const usedDefaultJobManager = !process.env.JOB_MANAGER;
   const usedDefaultRootName = !process.env.JOBS_ROOT_NAME;
   const usedDefaultRootNode = !process.env.JOBS_ROOT_NODE;
-
-  if (chainId === 1) {
-    if (usedDefaultJobManager) {
-      throw new Error("Mainnet deploy requires explicit JOB_MANAGER environment variable (default is blocked on chainId=1).");
-    }
-    if (usedDefaultRootName || usedDefaultRootNode) {
-      throw new Error("Mainnet deploy requires explicit JOBS_ROOT_NAME and JOBS_ROOT_NODE (defaults are blocked on chainId=1).");
-    }
-  }
 
   const verify = isTruthy(env("VERIFY"));
   const lockConfig = isTruthy(env("LOCK_CONFIG"));
@@ -110,7 +112,7 @@ async function main() {
   const ens = await ethers.getContractAt(["function owner(bytes32 node) view returns (address)"], ensRegistry, deployer);
   const currentRootOwner = await ens.owner(jobsRootNode);
 
-  console.log("\n=== ENSJobPages EmployerBurn cutover deployment plan ===");
+  console.log("\n=== ENSJobPages EmployerBurn cutover deployment plan (Hardhat canonical) ===");
   console.log("network:", network.name);
   console.log("chainId:", chainId);
   console.log("deployer:", deployer.address);
@@ -128,6 +130,9 @@ async function main() {
   console.log("CONFIRMATIONS:", confirmations);
   console.log("VERIFY_DELAY_MS:", verifyDelayMs);
   console.log("DRY_RUN:", dryRun);
+  console.log("default on-chain jobLabelPrefix:", "aijob");
+  console.log("\nAUTOMATED by this script: deploy ENSJobPages, setJobManager, optional lockConfiguration, optional transferOwnership, optional verify.");
+  console.log("MANUAL cutover remains required: NameWrapper setApprovalForAll + AGIJobManager.setEnsJobPages + migration/validation checks.");
 
   if (dryRun) {
     console.log("\nDRY_RUN enabled. Exiting before broadcasting transactions.");
@@ -202,7 +207,7 @@ async function main() {
   console.log("2) On AGIJobManager, AGIJOBMANAGER OWNER signer calls setEnsJobPages(newEnsJobPages).");
   console.log("3) Validate at least one future ENS hook path on AGIJobManager.");
   console.log("4) Migrate legacy jobs (migrateLegacyWrappedJobPage) when exact historical labels must be retained.");
-  console.log("5) Only after all checks decide whether to call lockConfiguration() (irreversible freeze for root/prefix/manager settings).");
+  console.log("5) Only after all checks decide whether to call lockConfiguration() (irreversible freeze for root/prefix/manager settings, including setJobLabelPrefix).");
 }
 
 main().catch((err) => {

@@ -177,14 +177,14 @@ Identity lock effect summary:
 - Lock blocks: `updateAGITokenAddress`, `updateEnsRegistry`, `updateNameWrapper`, `updateRootNodes`, `setEnsJobPages`.
 - Lock does not block: pause controls, Merkle roots, direct allowlists, blacklists, thresholds, bonds, payout and timing parameters.
 
-## 6) Deployment Overview
+## 6) Deployment Overview (Hardhat canonical, Truffle legacy)
 
 ```mermaid
 flowchart TD
-    A[Prepare wallets and approved config] --> B[Configure migrations/config/agijobmanager.config.js]
-    B --> C[Dry run validation]
+    A[Prepare wallets and approved config] --> B[Configure hardhat/deploy.config.js]
+    B --> C[DRY_RUN=1 Hardhat preflight]
     C --> D[Testnet rehearsal]
-    D --> E[Mainnet deploy via Truffle migration #6]
+    D --> E[Mainnet deploy via hardhat/scripts/deploy.js]
     E --> F[Verify on Etherscan]
     F --> G[Transfer ownership to final owner]
     G --> H[Configure moderators and authorization roots]
@@ -203,7 +203,31 @@ flowchart TD
     K2 --> L
 ```
 
-## 7) Step-by-Step: Mainnet Deployment via Truffle Migration
+## 7) Step-by-Step: Mainnet Deployment via Hardhat (canonical)
+
+Use `hardhat/scripts/deploy.js` as the official production path for mainnet deploy + verification + receipt output. Truffle content below is retained only for historical reproducibility and should not be used as the primary production flow.
+
+### Canonical command sequence
+
+```bash
+npm run release:build
+npm run release:dry-run
+npm run release:deploy:mainnet
+npm run release:verify
+npm run release:postdeploy
+npm run release:readiness
+```
+
+### Required environment
+
+- `MAINNET_RPC_URL`
+- `PRIVATE_KEY`
+- `ETHERSCAN_API_KEY` (for verification)
+- `DEPLOY_CONFIG` (explicit config file path; mandatory on chainId=1)
+- `FINAL_OWNER` (or `finalOwner` in deploy profile)
+- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT` (only for live chainId=1 send)
+
+## 7A) Legacy compatibility: Truffle migration (non-canonical)
 
 Production migration for mainnet operator workflow: `migrations/6_deploy_agijobmanager_production_operator.js`.
 
