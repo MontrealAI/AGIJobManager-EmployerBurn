@@ -9,6 +9,15 @@ const { expectEvent, expectRevert } = require("@openzeppelin/test-helpers");
 
 const { namehash, subnode } = require("./helpers/ens");
 
+async function expectConstructorFailure(promise) {
+  try {
+    await promise;
+    assert.fail("expected constructor revert");
+  } catch (error) {
+    assert.include(String(error.message), "couldn't be stored");
+  }
+}
+
 contract("ENSJobPages helper", (accounts) => {
   const [owner, employer, agent] = accounts;
   const rootName = "alpha.jobs.agi.eth";
@@ -292,6 +301,51 @@ contract("ENSJobPages helper", (accounts) => {
     assert.equal(uri, "");
   });
 
+  it("rejects constructor rootNode/rootName mismatch", async () => {
+    const ens = await MockENSRegistry.new({ from: owner });
+    const resolver = await MockPublicResolver.new({ from: owner });
+    const wrongNode = namehash("beta.jobs.agi.eth");
+    await expectConstructorFailure(
+      ENSJobPages.new(ens.address, "0x0000000000000000000000000000000000000000", resolver.address, wrongNode, rootName, {
+        from: owner,
+      })
+    );
+  });
+
+  it("rejects malformed root names and uppercase root labels", async () => {
+    const ens = await MockENSRegistry.new({ from: owner });
+    const resolver = await MockPublicResolver.new({ from: owner });
+    for (const invalidRootName of ["", "Alpha.jobs.agi.eth", "alpha..jobs.agi.eth", "-alpha.jobs.agi.eth", "alpha.jobs.agi.eth-"]) {
+      await expectConstructorFailure(
+        ENSJobPages.new(
+          ens.address,
+          "0x0000000000000000000000000000000000000000",
+          resolver.address,
+          namehash(rootName),
+          invalidRootName,
+          { from: owner }
+        )
+      );
+    }
+  });
+
+  it("rejects setJobsRoot when node/name are incoherent", async () => {
+    const ens = await MockENSRegistry.new({ from: owner });
+    const resolver = await MockPublicResolver.new({ from: owner });
+    const helper = await ENSJobPages.new(
+      ens.address,
+      "0x0000000000000000000000000000000000000000",
+      resolver.address,
+      rootNode,
+      rootName,
+      { from: owner }
+    );
+
+    await expectRevert.unspecified(
+      helper.setJobsRoot(namehash("beta.jobs.agi.eth"), rootName, { from: owner })
+    );
+  });
+
   it("locks configuration only when fully configured", async () => {
     const ens = await MockENSRegistry.new({ from: owner });
     const resolver = await MockPublicResolver.new({ from: owner });
@@ -549,6 +603,22 @@ contract("ENSJobPages helper", (accounts) => {
     await helper.setJobManager(hookCaller.address, { from: owner });
     await helper.lockConfiguration({ from: owner });
     await expectRevert.unspecified(helper.setJobLabelPrefix("job-", { from: owner }));
+  });
+
+  it("fails closed when full ENS name would exceed 253 characters", async () => {
+    const ens = await MockENSRegistry.new({ from: owner });
+    const resolver = await MockPublicResolver.new({ from: owner });
+    const longRoot = `${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(48)}`;
+    await expectConstructorFailure(
+      ENSJobPages.new(
+        ens.address,
+        "0x0000000000000000000000000000000000000000",
+        resolver.address,
+        namehash(longRoot),
+        longRoot,
+        { from: owner }
+      )
+    );
   });
 
   it("snapshots created labels so old jobs remain stable after prefix changes", async () => {
