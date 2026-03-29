@@ -24,6 +24,10 @@ if (!managerTarget) {
   console.error('❌ Missing AGIJobManager entry in verify-targets.json targets[]');
   process.exit(1);
 }
+if (!managerTarget.address || typeof managerTarget.address !== 'string') {
+  console.error('❌ AGIJobManager target is missing a usable address in verify-targets.json targets[]');
+  process.exit(1);
+}
 
 console.log(`✅ Loaded verify targets for ${network} (chainId=${verifyTargets.chainId ?? 'unknown'}):`);
 for (const item of targets) {
