@@ -53,7 +53,7 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 - Burn observability: settlement emits `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` when non-zero burn is applied.
 - Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 - Upstream reconciliation note: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
-- Latest audit and blocker report (2026-03-28): `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`.
+- Latest audit and blocker report (2026-03-29): `docs/REFERENCE/MAINNET_RELEASE_RECONCILIATION_2026-03-29.md` (with prior baseline in `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`).
 
 ### Manual vs automated (do not assume)
 
@@ -173,6 +173,22 @@ Expected result after safe cutover:
 Detailed procedures and expected outputs:
 - [`hardhat/README.md`](hardhat/README.md)
 - [`docs/DEPLOYMENT/ENS_JOB_PAGES_MAINNET_REPLACEMENT.md`](docs/DEPLOYMENT/ENS_JOB_PAGES_MAINNET_REPLACEMENT.md)
+
+## Canonical production release commands (Hardhat-first)
+
+```bash
+npm run doctor
+npm run release:build
+npm run release:dry-run
+DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet
+npm run release:verify
+npm run release:postdeploy
+npm run release:readiness
+```
+
+Notes:
+- Canonical production artifacts are built from Hardhat (`hardhat/artifacts`).
+- Truffle remains available as legacy compatibility (`npm run build:legacy`, `npm run size:legacy`, `npm run deploy:agijobmanager:legacy`) and is not the default production release path.
 
 ## Local development checks
 

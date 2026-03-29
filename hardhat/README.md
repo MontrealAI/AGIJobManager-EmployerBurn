@@ -6,6 +6,20 @@ This `hardhat/` project is the official deployment and verification workflow for
 
 UI note: this guide is deployment authority. For the standalone mainnet browser artifact, see `../docs/ui/GENESIS_JOB_MAINNET_HTML_UI.md`; use UI only after deploy/cutover steps are complete.
 
+## Root-level canonical release wrappers
+
+From repository root (preferred for operators):
+
+- `npm run doctor`
+- `npm run release:build`
+- `npm run release:dry-run`
+- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet`
+- `npm run release:verify`
+- `npm run release:postdeploy`
+- `npm run release:readiness`
+
+These wrappers call this Hardhat project and keep production operations on a single canonical path.
+
 ## In one minute (mainnet-safe path)
 
 1. Run compile + `DRY_RUN=1` first.
