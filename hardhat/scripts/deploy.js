@@ -396,8 +396,12 @@ async function main() {
     configHash,
   };
 
-  const receiptPath = path.join(outDir, `employerburn-deployment.${chainId}.${managerDeployment.blockNumber}.json`);
+  const receiptPath = path.join(outDir, `deployment.${chainId}.${managerDeployment.blockNumber}.json`);
   fs.writeFileSync(receiptPath, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+
+  // Backward-compatible alias for human operators/release notes that look for EmployerBurn-labelled files.
+  const employerBurnReceiptPath = path.join(outDir, `employerburn-deployment.${chainId}.${managerDeployment.blockNumber}.json`);
+  fs.writeFileSync(employerBurnReceiptPath, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
 
   const solcInputPath = copySolcInput(outDir);
   const verifyTargetsPath = path.join(outDir, 'verify-targets.json');
@@ -419,6 +423,7 @@ async function main() {
     console.log(`${name}: ${contract.address}${explorerLink} [verify=${verifyStatus}]`);
   });
   console.log(`receipt: ${receiptPath}`);
+  console.log(`receipt (EmployerBurn alias): ${employerBurnReceiptPath}`);
   console.log(`solc-input: ${solcInputPath}`);
   console.log(`verify-targets: ${verifyTargetsPath}`);
   console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, verify attempts, optional transferOwnership(finalOwner).');
