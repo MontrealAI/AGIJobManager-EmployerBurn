@@ -1,0 +1,8 @@
+{
+  "AGIJobManager": {
+    "runtimeBytes": 24339,
+    "initcodeBytes": 26667,
+    "maxRuntimeGrowthBytes": 0,
+    "maxInitcodeGrowthBytes": 128
+  }
+}
