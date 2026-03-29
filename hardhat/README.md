@@ -318,3 +318,36 @@ Troubleshooting reference:
 - [ ] NameWrapper approval is already valid for wrapped root.
 - [ ] You have tested at least one create/write path.
 - [ ] You understand `lockConfiguration()` is irreversible.
+
+---
+
+## Canonical production workflow commands (2026-03-29)
+
+From repository root:
+
+```bash
+npm run release:doctor
+npm run release:build
+npm run release:size
+npm run release:dry-run
+npm run release:deploy:mainnet
+npm run release:verify:receipt
+npm run release:postdeploy
+npm run release:ready
+```
+
+Environment requirements:
+- `PRIVATE_KEY`
+- `ETHERSCAN_API_KEY`
+- `MAINNET_RPC_URL` (for mainnet)
+- `SEPOLIA_RPC_URL` (recommended for rehearsal)
+- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT` for any mainnet send
+- `DEPLOYMENT_RECEIPT` when running `release:verify:receipt`
+- `AGI_JOB_MANAGER_ADDRESS` when running `release:postdeploy`
+
+Compiler source of truth for production release artifacts:
+- Solidity `0.8.23`
+- optimizer enabled, runs `1`
+- `viaIR=true`
+- `evmVersion=shanghai`
+- `metadata.bytecodeHash=none`

@@ -9,9 +9,9 @@ const DEFAULT_CONFIRMATIONS = 3;
 
 const COMPILER_SETTINGS = {
   version: '0.8.23',
-  optimizer: { enabled: true, runs: 40 },
+  optimizer: { enabled: true, runs: 1 },
   evmVersion: 'shanghai',
-  viaIR: false,
+  viaIR: true,
   metadata: { bytecodeHash: 'none' },
   debug: { revertStrings: 'strip' },
 };

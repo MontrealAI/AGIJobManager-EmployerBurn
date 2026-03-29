@@ -4,8 +4,16 @@
   "private": true,
   "description": "AGIJobManager EmployerBurn variant with employer-authorized AGIALPHA burn enforcement",
   "scripts": {
-    "build": "truffle compile",
-    "size": "node scripts/check-bytecode-size.js",
+    "build": "npm run release:build",
+    "release:doctor": "npm --prefix hardhat run doctor",
+    "release:build": "npm --prefix hardhat run compile",
+    "release:size": "node scripts/check-bytecode-size.js",
+    "release:dry-run": "npm --prefix hardhat run deploy:dry-run:mainnet",
+    "release:deploy:mainnet": "npm --prefix hardhat run deploy:mainnet",
+    "release:verify:receipt": "npm --prefix hardhat run verify:receipt",
+    "release:postdeploy": "npm --prefix hardhat run postdeploy:mainnet",
+    "release:ready": "node scripts/release/release-readiness.mjs",
+    "size": "npm run release:size",
     "check:no-binaries": "node scripts/check-no-binaries.mjs",
     "docs:gen": "node scripts/docs/gen-docs.mjs",
     "docs:check": "node scripts/docs/check-docs.mjs && node scripts/docs/check-repo-identity.mjs && node scripts/docs/check-canonical-surface-sync.mjs && node scripts/docs/check-employer-burn-canonical.mjs",
@@ -13,7 +21,9 @@
     "docs:ens:check": "node scripts/docs/check-ens-docs.mjs",
     "docs:interface": "node scripts/generate-interface-doc.js",
     "lint": "solhint \"contracts/**/*.sol\"",
-    "test": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && node scripts/check-contract-sizes.js",
+    "test": "npm run test:burn",
+    "test:burn": "truffle compile --all && truffle test --network test test/employerBurn.finalization.test.js test/employerBurn.readHelper.test.js && node scripts/check-contract-sizes.js",
+    "test:legacy": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && node scripts/check-contract-sizes.js",
     "test:ui": "node scripts/ui/run_ui_smoke_test.js",
     "ui:abi": "node scripts/ui/export_abi.js",
     "ui:abi:check": "node scripts/ui/check_ui_abi.js",
@@ -25,7 +35,7 @@
     "forge:test": "forge test",
     "forge:invariant": "FOUNDRY_PROFILE=ci forge test --match-path forge-test/invariant/*.t.sol",
     "slither": "./scripts/security/run-slither.sh",
-    "deploy:agijobmanager:prod": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6"
+    "deploy:agijobmanager:prod:legacy": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6"

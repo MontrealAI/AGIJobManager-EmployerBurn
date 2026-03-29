@@ -29,13 +29,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
+      - name: Hardhat release build
+        run: npm run release:build
 
       - name: Bytecode size check
-        run: npm run size
+        run: npm run release:size
 
-      - name: Test
+      - name: EmployerBurn tests
         run: npm run test
 
       - name: UI smoke test

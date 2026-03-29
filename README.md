@@ -117,6 +117,27 @@ Irreversible actions (delay until validated):
 - Pinned standalone artifact (repo): [`ui/agijobmanager_genesis_job_mainnet_2026-03-05-v33.html`](ui/agijobmanager_genesis_job_mainnet_2026-03-05-v33.html)
 - UI directory inventory: [`ui/README.md`](ui/README.md)
 
+## Canonical root release commands (Hardhat production)
+
+Use these root commands for production operations:
+
+```bash
+npm run release:doctor
+npm run release:build
+npm run release:size
+npm run release:dry-run
+# mainnet send (requires DEPLOY_CONFIRM_MAINNET)
+npm run release:deploy:mainnet
+# optional explicit verify replay from saved receipt
+npm run release:verify:receipt
+# post-deploy state check
+npm run release:postdeploy
+# aggregate gate
+npm run release:ready
+```
+
+Legacy compatibility commands remain available but are explicitly suffixed with `:legacy` (for example `npm run deploy:agijobmanager:prod:legacy` and `npm run test:legacy`).
+
 ## Recommended vs legacy deployment paths
 
 ### Recommended (official): Hardhat
@@ -179,7 +200,7 @@ Detailed procedures and expected outputs:
 ```bash
 npm ci
 npm run lint
-npm run build
+npm run release:build
 npm run size
 npm test
 npm run docs:check
