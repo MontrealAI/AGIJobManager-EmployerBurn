@@ -11,14 +11,27 @@ if (!fs.existsSync(dir)) {
   process.exit(1);
 }
 
-const deploymentFiles = fs.readdirSync(dir).filter((name) => name.startsWith('deployment.') && name.endsWith('.json')).sort();
+const deploymentFiles = fs
+  .readdirSync(dir)
+  .filter((name) => name.startsWith('deployment.') && name.endsWith('.json'))
+  .map((name) => {
+    const match = /^deployment\.(\d+)\.(\d+)\.json$/.exec(name);
+    return {
+      name,
+      chainId: match ? Number(match[1]) : Number.NaN,
+      blockNumber: match ? Number(match[2]) : Number.NaN,
+    };
+  })
+  .filter((entry) => Number.isFinite(entry.blockNumber))
+  .sort((a, b) => a.blockNumber - b.blockNumber);
+
 if (!deploymentFiles.length) {
-  console.error(`❌ No deployment.*.json files found in ${dir}`);
+  console.error(`❌ No deployment.<chainId>.<blockNumber>.json files found in ${dir}`);
   process.exit(1);
 }
 
 const latest = deploymentFiles[deploymentFiles.length - 1];
-const deployment = JSON.parse(fs.readFileSync(path.join(dir, latest), 'utf8'));
+const deployment = JSON.parse(fs.readFileSync(path.join(dir, latest.name), 'utf8'));
 
 const requiredKeys = ['network', 'chainId', 'deployer', 'contracts'];
 for (const key of requiredKeys) {
@@ -33,9 +46,10 @@ if (!deployment.contracts?.AGIJobManager?.address) {
   process.exit(1);
 }
 
-console.log(`✅ Post-deploy metadata validated from ${latest}`);
+console.log(`✅ Post-deploy metadata validated from ${latest.name}`);
 console.log(`- network: ${deployment.network}`);
 console.log(`- chainId: ${deployment.chainId}`);
+console.log(`- blockNumber: ${latest.blockNumber}`);
 console.log(`- AGIJobManager: ${deployment.contracts.AGIJobManager.address}`);
 
 const verifyTargetsPath = path.join(dir, 'verify-targets.json');
