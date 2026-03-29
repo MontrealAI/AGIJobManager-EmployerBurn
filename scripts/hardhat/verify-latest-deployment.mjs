@@ -13,21 +13,26 @@ if (!fs.existsSync(verifyTargetsPath)) {
 }
 
 const verifyTargets = JSON.parse(fs.readFileSync(verifyTargetsPath, 'utf8'));
-const required = ['AGIJobManager'];
-
-for (const name of required) {
-  if (!verifyTargets[name]) {
-    console.error(`❌ Missing ${name} entry in verify-targets.json`);
-    process.exit(1);
-  }
+const targets = Array.isArray(verifyTargets.targets) ? verifyTargets.targets : [];
+if (!targets.length) {
+  console.error('❌ verify-targets.json has no targets array entries');
+  process.exit(1);
 }
 
-console.log(`✅ Loaded verify targets for ${network}:`);
-for (const [name, item] of Object.entries(verifyTargets)) {
-  console.log(`- ${name}: ${item.address}`);
+const managerTarget = targets.find((item) => item?.name === 'AGIJobManager');
+if (!managerTarget) {
+  console.error('❌ Missing AGIJobManager entry in verify-targets.json targets[]');
+  process.exit(1);
+}
+
+console.log(`✅ Loaded verify targets for ${network} (chainId=${verifyTargets.chainId ?? 'unknown'}):`);
+for (const item of targets) {
+  if (!item?.name || !item?.address) continue;
+  console.log(`- ${item.name}: ${item.address}`);
 }
 
 console.log('\nRun Etherscan verification commands from hardhat/ as needed:');
-for (const [name, item] of Object.entries(verifyTargets)) {
+for (const item of targets) {
+  if (!item?.address) continue;
   console.log(`npx hardhat verify --network ${network} ${item.address}`);
 }

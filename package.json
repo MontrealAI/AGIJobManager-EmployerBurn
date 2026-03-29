@@ -26,7 +26,7 @@
     "forge:invariant": "FOUNDRY_PROFILE=ci forge test --match-path forge-test/invariant/*.t.sol",
     "slither": "./scripts/security/run-slither.sh",
     "doctor": "node scripts/hardhat/release-doctor.mjs",
-    "build:hardhat": "npm --prefix hardhat run compile",
+    "build:hardhat": "node scripts/hardhat/ensure-hardhat-deps.mjs && npm --prefix hardhat run compile",
     "build:legacy": "truffle compile",
     "size:legacy": "ARTIFACT_FORMAT=truffle node scripts/check-bytecode-size.js",
     "test:core": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && npm run size:legacy",
