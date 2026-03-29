@@ -188,6 +188,7 @@ npm run release:readiness
 
 Notes:
 - Canonical production artifacts are built from Hardhat (`hardhat/artifacts`).
+- `npm run size` enforces both active mainnet EIP limits and a no-growth baseline guard (`scripts/size-baseline.json`) for high-pressure contracts.
 - Truffle remains available as legacy compatibility (`npm run build:legacy`, `npm run size:legacy`, `npm run deploy:agijobmanager:legacy`) and is not the default production release path.
 
 ## Local development checks
@@ -198,6 +199,7 @@ npm run lint
 npm run build
 npm run size
 npm test
+npm run test:release-gates
 npm run docs:check
 npm run docs:ens:check
 ```

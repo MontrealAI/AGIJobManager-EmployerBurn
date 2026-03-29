@@ -35,18 +35,18 @@
 - No additional employer-win settlement function bypassing `_refundEmployer` found.
 
 ## 7) External Token Verification Note
-Verified from Sourcify mainnet full-match metadata for `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`:
+Verified from the Ethereum mainnet Etherscan verified source page for `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA` (checked on 2026-03-29 UTC):
 - `burnFrom(address,uint256)` exists.
 - `permit(...)` exists.
 - `pause()`, `unpause()`, `paused()` and `ERC20Pausable` behavior exist.
 - Paused token state can block burn/finalization and safely reverts the settlement path.
 
 ## 8) Deployability / Size Note
-Mainnet hard limits verified from EIP sources:
+Mainnet hard limits verified from canonical EIP specs:
 - EIP-170 `MAX_CODE_SIZE = 0x6000 (24,576 bytes)`.
-- EIP-3860 `MAX_INITCODE_SIZE = 49,152 bytes`.
+- EIP-3860 `MAX_INITCODE_SIZE = 2 * MAX_CODE_SIZE = 49,152 bytes`.
 
-Canonical size gate now runs against Hardhat artifacts by default (`npm run size`).
+Canonical size gate runs against Hardhat artifacts by default (`npm run size`) and now also enforces a checked-in no-growth baseline guard for `AGIJobManager`.
 
 ## 9) Change-Minimization Plan (implemented)
 - Preserve core AGIJobManager settlement semantics.

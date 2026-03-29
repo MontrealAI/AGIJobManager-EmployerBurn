@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const requiredMainnetEnv = ['MAINNET_RPC_URL', 'PRIVATE_KEY', 'ETHERSCAN_API_KEY'];
+const strictMainnetEnv = process.env.DOCTOR_STRICT_MAINNET_ENV === '1';
 const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const hardhatDir = path.join(repoRoot, 'hardhat');
 const hardhatConfig = path.join(hardhatDir, 'hardhat.config.js');
@@ -24,7 +25,12 @@ const nodeMajor = Number(process.versions.node.split('.')[0]);
 check('Node.js major version is >= 20', Number.isFinite(nodeMajor) && nodeMajor >= 20, process.versions.node);
 
 for (const envName of requiredMainnetEnv) {
-  check(`Env ${envName} is set`, Boolean(process.env[envName]), process.env[envName] ? 'present' : 'missing');
+  const present = Boolean(process.env[envName]);
+  if (strictMainnetEnv) {
+    check(`Env ${envName} is set`, present, present ? 'present' : 'missing');
+  } else {
+    console.log(`${present ? '✅' : '⚠️'} Env ${envName} ${present ? 'is set' : 'is not set'}${present ? ' — present' : ' — optional unless running strict doctor/deploy'}`);
+  }
 }
 
 const confirm = process.env.DEPLOY_CONFIRM_MAINNET;

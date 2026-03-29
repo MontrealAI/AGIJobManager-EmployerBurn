@@ -6,7 +6,8 @@
 - Confirm `employerBurnBps` policy is decided and documented before production traffic.
 - Confirm employer guidance includes separate burn allowance/balance requirements beyond payout escrow.
 - Confirm event monitoring includes `EmployerBurnEnforced` for employer-win burn observability.
-- Confirm `npm run size` passes EIP-170 runtime cap (24,576 bytes) for `AGIJobManager` before deploying on Ethereum mainnet.
+- Confirm `npm run size` passes EIP-170 runtime cap (24,576 bytes) and EIP-3860 initcode cap (49,152 bytes) before deploying on Ethereum mainnet.
+- Confirm `npm run size` also passes the no-growth guard in `scripts/size-baseline.json` (AGIJobManager runtime growth currently locked to +0 bytes unless intentionally re-baselined).
 
 - Transfer contract ownership to a multisig (e.g., Safe), not an EOA.
 - Decide whether to keep `useEnsJobTokenURI` disabled at launch; if enabling, confirm `ensJobPages` is the intended contract.

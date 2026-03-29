@@ -8,6 +8,8 @@ const TARGET_INITCODE_BYTES = 46000;
 
 const artifactFormat = process.env.ARTIFACT_FORMAT || 'hardhat';
 const defaultContracts = ['AGIJobManager', 'EmployerBurnReadHelper', 'ENSJobPages', 'AGIJobPages'];
+const baselinePath = path.join(__dirname, 'size-baseline.json');
+const baseline = fs.existsSync(baselinePath) ? JSON.parse(fs.readFileSync(baselinePath, 'utf8')) : {};
 
 function resolveArtifactPath(contractName) {
   if (artifactFormat === 'truffle') {
@@ -46,6 +48,7 @@ const targets = process.env.BYTECODE_CONTRACTS
 
 const oversized = [];
 const overInitcode = [];
+const overGrowth = [];
 
 console.log(`Checking bytecode using artifact format: ${artifactFormat}`);
 for (const contractName of targets) {
@@ -63,6 +66,27 @@ for (const contractName of targets) {
   if (runtimeBytes > TARGET_RUNTIME_BYTES || initcodeBytes > TARGET_INITCODE_BYTES) {
     console.warn(`Warning: ${contractName} is above preferred budget (runtime ${runtimeBytes}/${TARGET_RUNTIME_BYTES}, initcode ${initcodeBytes}/${TARGET_INITCODE_BYTES})`);
   }
+
+  const sizeBaseline = baseline[contractName];
+  if (sizeBaseline) {
+    const maxRuntimeGrowth = Number(sizeBaseline.maxRuntimeGrowthBytes ?? 0);
+    const maxInitcodeGrowth = Number(sizeBaseline.maxInitcodeGrowthBytes ?? 0);
+    const runtimeGrowth = runtimeBytes - Number(sizeBaseline.runtimeBytes);
+    const initcodeGrowth = initcodeBytes - Number(sizeBaseline.initcodeBytes);
+    if (runtimeGrowth > maxRuntimeGrowth || initcodeGrowth > maxInitcodeGrowth) {
+      overGrowth.push({
+        name: contractName,
+        runtimeBytes,
+        initcodeBytes,
+        runtimeBaseline: sizeBaseline.runtimeBytes,
+        initcodeBaseline: sizeBaseline.initcodeBytes,
+        runtimeGrowth,
+        initcodeGrowth,
+        maxRuntimeGrowth,
+        maxInitcodeGrowth,
+      });
+    }
+  }
 }
 
 if (oversized.length) {
@@ -73,5 +97,13 @@ if (oversized.length) {
 if (overInitcode.length) {
   console.error(`Initcode exceeds ${MAX_INITCODE_BYTES} bytes:`);
   for (const { name, sizeBytes } of overInitcode) console.error(`- ${name}: ${sizeBytes} bytes`);
+  process.exit(1);
+}
+if (overGrowth.length) {
+  console.error('Bytecode growth policy violation(s):');
+  for (const g of overGrowth) {
+    console.error(`- ${g.name}: runtime ${g.runtimeBytes} (baseline ${g.runtimeBaseline}, growth ${g.runtimeGrowth}, allowed ${g.maxRuntimeGrowth}); initcode ${g.initcodeBytes} (baseline ${g.initcodeBaseline}, growth ${g.initcodeGrowth}, allowed ${g.maxInitcodeGrowth})`);
+  }
+  console.error(`If this growth is intentional, update ${path.relative(process.cwd(), baselinePath)} with audited new baselines.`);
   process.exit(1);
 }
