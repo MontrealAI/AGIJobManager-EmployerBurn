@@ -5,6 +5,8 @@ const path = require('path');
 contract('Hardhat deploy scripts safety checks', () => {
   const deployScript = fs.readFileSync(path.join(__dirname, '..', 'hardhat', 'scripts', 'deploy.js'), 'utf8');
   const ensDeployScript = fs.readFileSync(path.join(__dirname, '..', 'hardhat', 'scripts', 'deploy-ens-job-pages.js'), 'utf8');
+  const releaseReadinessScript = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'hardhat', 'release-readiness.mjs'), 'utf8');
+  const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 
   it('deploy.js keeps explicit mainnet confirmation gate', () => {
     assert(deployScript.includes('DEPLOY_CONFIRM_MAINNET'));
@@ -45,5 +47,16 @@ contract('Hardhat deploy scripts safety checks', () => {
     assert(ensDeployScript.includes('ens-job-pages-deployment.${chainId}.${deploymentBlockNumber}.json'));
     assert(ensDeployScript.includes('=== Post-deploy verification snapshot (ENSJobPages) ==='));
     assert(ensDeployScript.includes('verificationSucceeded'));
+  });
+
+  it('release-readiness includes verify and post-deploy metadata gates', () => {
+    assert(releaseReadinessScript.includes("['npm', ['run', 'release:verify']]"));
+    assert(releaseReadinessScript.includes("['npm', ['run', 'release:postdeploy']]"));
+  });
+
+  it('package scripts preserve canonical release gate commands', () => {
+    assert(packageJson.scripts['release:dry-run'].includes('DRY_RUN=1'));
+    assert(packageJson.scripts['release:dry-run'].includes('DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT'));
+    assert(packageJson.scripts['release:readiness']);
   });
 });
