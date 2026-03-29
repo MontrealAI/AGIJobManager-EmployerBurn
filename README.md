@@ -35,6 +35,7 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 ## Canonical operator answers (quick reference)
 
 - **Canonical deployment path:** Hardhat (`hardhat/README.md`). Truffle is legacy/supported.
+- **Foundry role:** audit/fuzz testing only (non-canonical for deployment/verification artifacts).
 - **Canonical ENS replacement flow:** deploy new ENSJobPages -> NameWrapper approval -> `setEnsJobPages` -> legacy migration if needed -> lock only after validation.
 - **Canonical ENS naming format:** `<prefix><jobId>.<jobsRootName>` with default prefix `agijob`.
 - **Canonical ownership split:**
@@ -188,8 +189,9 @@ npm run release:readiness
 
 Notes:
 - Canonical production artifacts are built from Hardhat (`hardhat/artifacts`).
-- `npm run size` enforces both active mainnet EIP limits and a no-growth baseline guard (`scripts/size-baseline.json`) for high-pressure contracts.
+- Foundry remains audit/fuzz-only and is not a deployment source of truth.
 - Truffle remains available as legacy compatibility (`npm run build:legacy`, `npm run size:legacy`, `npm run deploy:agijobmanager:legacy`) and is not the default production release path.
+- `npm run size` enforces both active mainnet EIP limits and a no-growth baseline guard (`scripts/size-baseline.json`) for high-pressure contracts.
 
 ## Local development checks
 

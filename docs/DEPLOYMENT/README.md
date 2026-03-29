@@ -7,7 +7,9 @@
 
 ## Canonical answers for operators
 - Recommended deployment path: **Hardhat**.
-- Truffle status: **legacy/supported** for backward compatibility.
+- Source-of-truth production artifact: Hardhat build output (`hardhat/artifacts`).
+- Foundry status: audit/fuzz testing only (non-canonical for deployment artifacts).
+- Truffle status: legacy/supported for backward compatibility.
 - ENS replacement is additive and requires manual post-deploy wiring.
 - Do not lock ENS/identity configuration until cutover + migration checks pass.
 
