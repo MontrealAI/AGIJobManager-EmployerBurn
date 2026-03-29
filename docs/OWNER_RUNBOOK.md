@@ -28,7 +28,7 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 - **ENSJobPages owner (if needed)**: `migrateLegacyWrappedJobPage(jobId, exactLabel)` for legacy jobs missing snapshots.
 
 Expected result:
-- Future jobs resolve using `<prefix><jobId>.<jobsRootName>` (default prefix `agijob`).
+- Future jobs resolve using `<prefix><jobId>.<jobsRootName>` (default prefix `aijob`).
 - Legacy snapshotted labels remain stable unless explicitly migrated/imported.
 
 
@@ -147,3 +147,5 @@ Before `lockIdentityConfiguration()` or `lockConfiguration()`:
 - `updateEnsRegistry`/`updateNameWrapper`/`updateRootNodes`/`setEnsJobPages`: identity-critical; only before lock.
 - Parameter setters affecting incentives (`setValidatorBondParams`, `setAgentBondParams`, `setValidatorSlashBps`, `setVoteQuorum`, etc.) should use change tickets and announced effective times.
 - `setEmployerBurnBps`: economic-impact setting; announce before changing and verify employer-facing runbooks are updated.
+
+- `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.

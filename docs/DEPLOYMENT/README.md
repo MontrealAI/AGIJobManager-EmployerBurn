@@ -11,6 +11,7 @@
 - Foundry status: audit/fuzz testing only (non-canonical for deployment artifacts).
 - Truffle status: legacy/supported for backward compatibility.
 - ENS replacement is additive and requires manual post-deploy wiring.
+- ENS default job label prefix in current code/docs is `aijob` (owner-changeable before ENSJobPages `lockConfiguration()`).
 - Do not lock ENS/identity configuration until cutover + migration checks pass.
 
 ## EmployerBurn variant deployment identity

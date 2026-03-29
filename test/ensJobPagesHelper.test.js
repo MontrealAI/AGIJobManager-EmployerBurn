@@ -42,7 +42,7 @@ contract("ENSJobPages helper", (accounts) => {
     const specURI = "ipfs://spec.json";
     await helper.createJobPage(jobId, employer, specURI, { from: owner });
 
-    const node = subnode(rootNode, `agijob${jobId}`);
+    const node = subnode(rootNode, `aijob${jobId}`);
     const storedOwner = await ens.owner(node);
     const storedResolver = await ens.resolver(node);
     assert.equal(storedOwner, helper.address, "subnode owner should be helper");
@@ -93,7 +93,7 @@ contract("ENSJobPages helper", (accounts) => {
     const jobId = 7;
     await helper.createJobPage(jobId, employer, "ipfs://spec.json", { from: owner });
 
-    const node = subnode(rootNode, `agijob${jobId}`);
+    const node = subnode(rootNode, `aijob${jobId}`);
     const wrappedOwner = await nameWrapper.ownerOf(web3.utils.toBN(node));
     assert.equal(wrappedOwner, helper.address, "wrapped subnode should be owned by helper");
     const isWrapped = await nameWrapper.isWrapped(node);
@@ -104,7 +104,7 @@ contract("ENSJobPages helper", (accounts) => {
     assert.equal(await nameWrapper.lastParentNode(), rootNode, "parent node should be jobs root");
     assert.equal(
       await nameWrapper.lastLabelhash(),
-      web3.utils.keccak256(`agijob${jobId}`),
+      web3.utils.keccak256(`aijob${jobId}`),
       "labelhash should match job label"
     );
   });
@@ -151,7 +151,7 @@ contract("ENSJobPages helper", (accounts) => {
 
     assert.equal((await nameWrapper.setChildFusesCalls()).toString(), "1", "should set child fuses");
     assert.equal(await nameWrapper.lastParentNode(), rootNode, "parent node should be jobs root");
-    assert.equal(await nameWrapper.lastLabelhash(), web3.utils.keccak256(`agijob${jobId}`), "labelhash should match");
+    assert.equal(await nameWrapper.lastLabelhash(), web3.utils.keccak256(`aijob${jobId}`), "labelhash should match");
     assert.equal((await nameWrapper.lastChildExpiry()).toString(), web3.utils.toBN(2).pow(web3.utils.toBN(64)).subn(1).toString(), "expiry should be max uint64");
   });
 
@@ -208,7 +208,7 @@ contract("ENSJobPages helper", (accounts) => {
     await nameWrapper.setApprovalForAll(helper.address, true, { from: owner });
 
     await helper.createJobPage(13, employer, "ipfs://spec-approved", { from: owner });
-    const node = subnode(rootNode, "agijob13");
+    const node = subnode(rootNode, "aijob13");
     assert.equal(await resolver.text(node, "agijobs.spec.public"), "ipfs://spec-approved");
   });
 
@@ -230,7 +230,7 @@ contract("ENSJobPages helper", (accounts) => {
     await resolver.setRevertSetText(true, { from: owner });
 
     await helper.createJobPage(14, employer, "ipfs://spec", { from: owner });
-    const node = subnode(rootNode, "agijob14");
+    const node = subnode(rootNode, "aijob14");
     assert.equal(await ens.owner(node), helper.address, "critical subname creation should still succeed");
   });
 
@@ -503,7 +503,7 @@ contract("ENSJobPages helper", (accounts) => {
       { from: owner }
     );
 
-    const node = subnode(rootNode, "agijob80");
+    const node = subnode(rootNode, "aijob80");
     await ens.setOwner(rootNode, wrapper.address, { from: owner });
     await ens.setOwner(node, wrapper.address, { from: owner });
     await wrapper.setOwner(web3.utils.toBN(node), owner, { from: owner });
@@ -530,7 +530,7 @@ contract("ENSJobPages helper", (accounts) => {
 
     const jobId = 81;
     await helper.createJobPage(jobId, employer, "ipfs://spec81", { from: owner });
-    const node = subnode(rootNode, `agijob${jobId}`);
+    const node = subnode(rootNode, `aijob${jobId}`);
 
     assert.equal((await wrapper.setResolverCalls()).toString(), "1", "should set resolver through wrapper");
     assert.equal(await wrapper.lastResolverNode(), node, "resolver node should match wrapped subnode");
@@ -562,7 +562,7 @@ contract("ENSJobPages helper", (accounts) => {
   });
 
 
-  it("uses agijob as default prefix and lets owner update prefix previews", async () => {
+  it("uses aijob as default prefix and lets owner update prefix previews", async () => {
     const ens = await MockENSRegistry.new({ from: owner });
     const resolver = await MockPublicResolver.new({ from: owner });
     const helper = await ENSJobPages.new(
@@ -574,8 +574,8 @@ contract("ENSJobPages helper", (accounts) => {
       { from: owner }
     );
 
-    assert.equal(await helper.jobLabelPrefix(), "agijob");
-    assert.equal(await helper.jobEnsLabel(1), "agijob1");
+    assert.equal(await helper.jobLabelPrefix(), "aijob");
+    assert.equal(await helper.jobEnsLabel(1), "aijob1");
 
     await helper.setJobLabelPrefix("job-", { from: owner });
     assert.equal(await helper.jobLabelPrefix(), "job-");
@@ -595,7 +595,7 @@ contract("ENSJobPages helper", (accounts) => {
       { from: owner }
     );
 
-    for (const invalid of ["", "-job", "Job", "job.", "job_", "agijob1", "a".repeat(33)]) {
+    for (const invalid of ["", "-job", "Job", "job.", "job_", "aijob1", "a".repeat(33)]) {
       await expectRevert.unspecified(helper.setJobLabelPrefix(invalid, { from: owner }));
     }
 
@@ -639,12 +639,12 @@ contract("ENSJobPages helper", (accounts) => {
     await wrapper.setOwner(web3.utils.toBN(rootNode), helper.address, { from: owner });
 
     await helper.createJobPage(91, employer, "ipfs://spec91", { from: owner });
-    const oldNode = subnode(rootNode, "agijob91");
-    assert.equal(await helper.jobEnsLabel(91), "agijob91");
+    const oldNode = subnode(rootNode, "aijob91");
+    assert.equal(await helper.jobEnsLabel(91), "aijob91");
     assert.equal(await helper.jobEnsNode(91), oldNode);
 
     await helper.setJobLabelPrefix("job-", { from: owner });
-    assert.equal(await helper.jobEnsLabel(91), "agijob91");
+    assert.equal(await helper.jobEnsLabel(91), "aijob91");
     assert.equal(await helper.jobEnsNode(91), oldNode);
 
     await helper.onAgentAssigned(91, agent, { from: owner });
@@ -654,7 +654,7 @@ contract("ENSJobPages helper", (accounts) => {
     assert.equal(await resolver.isAuthorised(oldNode, agent), false, "revoke should target snapshotted node");
 
     await helper.lockJobENS(91, employer, agent, true, { from: owner });
-    assert.equal(await wrapper.lastLabelhash(), web3.utils.keccak256("agijob91"), "lock should use snapshotted label");
+    assert.equal(await wrapper.lastLabelhash(), web3.utils.keccak256("aijob91"), "lock should use snapshotted label");
 
     assert.equal(await helper.jobEnsLabel(92), "job-92", "future jobs should preview new prefix");
     await helper.createJobPage(92, employer, "ipfs://spec92", { from: owner });
@@ -683,7 +683,7 @@ contract("ENSJobPages helper", (accounts) => {
     await helper.setJobLabelPrefix("job-", { from: owner });
     await wrapper.setSubnodeOwner(
       rootNode,
-      "agijob200",
+      "aijob200",
       helper.address,
       0,
       web3.utils.toBN(2).pow(web3.utils.toBN(64)).subn(1),
@@ -710,13 +710,13 @@ contract("ENSJobPages helper", (accounts) => {
 
     await ens.setOwner(rootNode, helper.address, { from: owner });
     await helper.createJobPage(93, employer, "ipfs://spec93", { from: owner });
-    const originalNode = subnode(rootNode, "agijob93");
+    const originalNode = subnode(rootNode, "aijob93");
 
     await helper.setJobLabelPrefix("job-", { from: owner });
     await ens.setOwner(originalNode, "0x0000000000000000000000000000000000000000", { from: owner });
 
     await helper.createJobPage(93, employer, "ipfs://spec93b", { from: owner });
-    assert.equal(await helper.jobEnsLabel(93), "agijob93", "snapshot should remain unchanged");
+    assert.equal(await helper.jobEnsLabel(93), "aijob93", "snapshot should remain unchanged");
     assert.equal(await helper.jobEnsNode(93), originalNode, "recreated node should keep original label");
     assert.equal(await ens.owner(originalNode), helper.address, "missing original node should be recreated");
   });
@@ -735,10 +735,10 @@ contract("ENSJobPages helper", (accounts) => {
 
     await ens.setOwner(rootNode, helper.address, { from: owner });
     await helper.createJobPage(12, employer, "ipfs://spec12", { from: owner });
-    await expectRevert.unspecified(helper.setJobLabelPrefix("agijob1", { from: owner }));
-    assert.equal(await helper.jobEnsLabel(12), "agijob12", "job 12 label remains canonical");
-    assert.equal(await helper.jobEnsLabel(2), "agijob2", "default prefix remains active for future jobs");
-    assert.equal(await resolver.text(subnode(rootNode, "agijob12"), "agijobs.spec.public"), "ipfs://spec12");
+    await expectRevert.unspecified(helper.setJobLabelPrefix("aijob1", { from: owner }));
+    assert.equal(await helper.jobEnsLabel(12), "aijob12", "job 12 label remains canonical");
+    assert.equal(await helper.jobEnsLabel(2), "aijob2", "default prefix remains active for future jobs");
+    assert.equal(await resolver.text(subnode(rootNode, "aijob12"), "agijobs.spec.public"), "ipfs://spec12");
   });
 
   it("preserves auth for disputed-but-unresolved jobs during legacy migration", async () => {
@@ -832,7 +832,7 @@ contract("ENSJobPages helper", (accounts) => {
     const snapshot = await helper.jobLabelSnapshot(0);
     assert.equal(snapshot[0], true, "label should be snapshotted");
     assert.equal(snapshot[1], "job-0", "snapshot should match imported label");
-    assert.equal(await helper.jobLabelPrefix(), "agijob", "global prefix should remain unchanged");
+    assert.equal(await helper.jobLabelPrefix(), "aijob", "global prefix should remain unchanged");
     assert.equal(await helper.jobEnsLabel(0), "job-0", "job should resolve to imported exact label");
     assert.equal(await wrapper.ownerOf(web3.utils.toBN(node)), helper.address, "wrapped node should be owned by helper");
     assert.equal(await resolver.text(node, "agijobs.spec.public"), "ipfs://legacy-spec-0", "spec should be repaired from manager");

@@ -56,7 +56,7 @@ If another document conflicts with these in an operational detail, follow the ca
 ## Canonical ENS behavior (single source of truth)
 
 - **Name format:** `<prefix><jobId>.<jobsRootName>`
-- **Current defaults:** prefix `agijob` with names like `agijob0.alpha.jobs.agi.eth`, `agijob1.alpha.jobs.agi.eth`
+- **Current defaults:** prefix `aijob` with names like `aijob0.alpha.jobs.agi.eth`, `aijob1.alpha.jobs.agi.eth`
 - **Responsibility split:** AGIJobManager decides numeric `jobId`; ENSJobPages decides prefix/root + snapshotting + ENS writes
 - **Cutover order:** deploy new ENSJobPages -> NameWrapper approval -> `setEnsJobPages` -> legacy migration (if needed) -> lock only after validation
 - **Safety model:** ENS hooks are best-effort and non-fatal to settlement/dispute outcomes
@@ -159,3 +159,6 @@ If another document conflicts with these in an operational detail, follow the ca
 - Safe and expected on Etherscan: owner reads, owner governance writes, NameWrapper approval, `setEnsJobPages`, migration calls.
 - Script-first actions: contract deployment and source verification workflow.
 - Never assume automation: NameWrapper approval and AGIJobManager pointer switch are always explicit manual transactions.
+
+
+- ENS ADR (root validation subset + `aijob` default): `docs/REFERENCE/ADR_2026-03_ENS_ROOT_VALIDATION_AND_PREFIX.md`
