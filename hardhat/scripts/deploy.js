@@ -1,13 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-const { ethers, network, run } = require('hardhat');
+const hre = require('hardhat');
+const { ethers, network, run } = hre;
 
 const MAINNET_CONFIRMATION_VALUE = 'I_UNDERSTAND_MAINNET_DEPLOYMENT';
 const DEFAULT_VERIFY_DELAY_MS = 3500;
 const DEFAULT_VERIFY_RETRIES = 3;
 const DEFAULT_CONFIRMATIONS = 3;
 
-const COMPILER_SETTINGS = {
+const REQUIRED_COMPILER_SETTINGS = {
   version: '0.8.23',
   optimizer: { enabled: true, runs: 1 },
   evmVersion: 'shanghai',
@@ -76,7 +77,14 @@ function validateBytes32(label, value) {
   if (!ethers.isHexString(value, 32)) throw new Error(`${label} must be bytes32: ${String(value)}`);
 }
 
-function loadDeployConfig() {
+function loadDeployConfig(chainId) {
+  const isMainnet = chainId === 1;
+  if (isMainnet && !process.env.DEPLOY_CONFIG) {
+    throw new Error(
+      'Mainnet deployment requires an explicit DEPLOY_CONFIG file path. Example config fallback is blocked on chainId=1.'
+    );
+  }
+
   const configPath = process.env.DEPLOY_CONFIG
     ? path.resolve(process.cwd(), process.env.DEPLOY_CONFIG)
     : path.resolve(__dirname, '..', 'deploy.config.example.js');
@@ -88,7 +96,39 @@ function loadDeployConfig() {
   delete require.cache[configPath];
   // eslint-disable-next-line global-require, import/no-dynamic-require
   const config = require(configPath);
+  if (isMainnet && path.basename(configPath) === 'deploy.config.example.js') {
+    throw new Error('Mainnet deployment cannot use deploy.config.example.js. Provide a production DEPLOY_CONFIG.');
+  }
   return { config, configPath };
+}
+
+function assertCompilerMatchesHardhatConfig() {
+  const hardhatSolidity = hre.config.solidity;
+  const canonicalCompiler = Array.isArray(hardhatSolidity?.compilers) ? hardhatSolidity.compilers[0] : hardhatSolidity;
+  if (!canonicalCompiler) {
+    throw new Error('Unable to resolve compiler settings from hardhat.config.js');
+  }
+
+  const actual = stableObject({
+    version: canonicalCompiler.version,
+    optimizer: canonicalCompiler.settings?.optimizer || {},
+    evmVersion: canonicalCompiler.settings?.evmVersion || null,
+    viaIR: canonicalCompiler.settings?.viaIR || false,
+    metadata: canonicalCompiler.settings?.metadata || {},
+    debug: canonicalCompiler.settings?.debug || {},
+  });
+  const expected = stableObject(REQUIRED_COMPILER_SETTINGS);
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(
+      [
+        'Hardhat compiler mismatch detected. Deployment halted.',
+        `Expected: ${JSON.stringify(expected)}`,
+        `Actual:   ${JSON.stringify(actual)}`,
+        'Fix hardhat.config.js or REQUIRED_COMPILER_SETTINGS in deploy.js to exact parity.',
+      ].join('\n')
+    );
+  }
+  return actual;
 }
 
 function resolveConstructor(networkName, profile) {
@@ -226,11 +266,12 @@ async function main() {
   const explorerBase = getExplorerBase(chainId);
   const explorerAddressBase = getExplorerAddressBase(chainId);
 
-  const { config, configPath } = loadDeployConfig();
+  const { config, configPath } = loadDeployConfig(chainId);
   const profile = config[network.name];
   const constructorArgs = resolveConstructor(network.name, profile);
   const resolvedFinalOwner = resolveFinalOwner(profile);
   const dryRun = process.env.DRY_RUN === '1';
+  const compilerProfile = assertCompilerMatchesHardhatConfig();
 
   if (chainId === 1) {
     if (process.env.DEPLOY_CONFIRM_MAINNET !== MAINNET_CONFIRMATION_VALUE) {
@@ -251,15 +292,15 @@ async function main() {
     verifyDelayMs,
     constructorArgs,
     libraries: LIBRARIES,
-    compiler: COMPILER_SETTINGS,
+    compiler: compilerProfile,
     dryRun,
   };
 
-  console.log('=== Deployment Plan ===');
+  console.log('=== AGIJobManager EmployerBurn deployment plan ===');
   console.log(JSON.stringify(plan, null, 2));
 
   if (dryRun) {
-    console.log('DRY_RUN=1 set; no transactions were broadcast.');
+    console.log('DRY_RUN=1 set; no transactions were broadcast. This was a preflight only.');
     return;
   }
 
@@ -355,7 +396,7 @@ async function main() {
     configHash,
   };
 
-  const receiptPath = path.join(outDir, `deployment.${chainId}.${managerDeployment.blockNumber}.json`);
+  const receiptPath = path.join(outDir, `employerburn-deployment.${chainId}.${managerDeployment.blockNumber}.json`);
   fs.writeFileSync(receiptPath, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
 
   const solcInputPath = copySolcInput(outDir);
@@ -371,7 +412,7 @@ async function main() {
   };
   fs.writeFileSync(verifyTargetsPath, `${JSON.stringify(verifyTargets, null, 2)}\n`, 'utf8');
 
-  console.log('\n=== Deployment Summary ===');
+  console.log('\n=== AGIJobManager EmployerBurn deployment summary ===');
   Object.entries(record.contracts).forEach(([name, contract]) => {
     const explorerLink = explorerAddressBase ? ` ${explorerAddressBase}${contract.address}` : '';
     const verifyStatus = verificationResults[name]?.status || 'not_attempted';
@@ -380,8 +421,8 @@ async function main() {
   console.log(`receipt: ${receiptPath}`);
   console.log(`solc-input: ${solcInputPath}`);
   console.log(`verify-targets: ${verifyTargetsPath}`);
-  console.log('Post-deploy on-chain actions performed: deployment + optional transferOwnership(finalOwner) only.');
-  console.log('All other operational configuration is manual via Etherscan runbook.');
+  console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, verify attempts, optional transferOwnership(finalOwner).');
+  console.log('Manual operator actions remain required (governance parameters, ENS cutover wiring, production lock decisions).');
 }
 
 main().catch((error) => {

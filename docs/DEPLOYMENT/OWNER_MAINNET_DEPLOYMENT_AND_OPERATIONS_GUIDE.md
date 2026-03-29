@@ -58,7 +58,7 @@ Expected result of a safe cutover:
 - Required burn evidence event when non-zero burn is applied: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
 
-> **Path clarity:** Hardhat is the official/recommended deployment workflow for current production operations. The Truffle deployment section in this document remains for legacy/supported environments and institutional reproducibility.
+> **Path clarity:** Hardhat is the official/recommended deployment workflow for current production operations. Any Truffle deployment section in this document is legacy compatibility-only and must not be used as the primary mainnet release path.
 
 ## 1) Purpose and Audience
 
