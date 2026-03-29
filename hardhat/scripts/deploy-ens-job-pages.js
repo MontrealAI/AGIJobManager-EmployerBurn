@@ -5,8 +5,8 @@ const { ethers, run, network } = hre;
 const MAINNET_ENS_REGISTRY = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
 const MAINNET_NAME_WRAPPER = "0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401";
 const MAINNET_PUBLIC_RESOLVER = "0xF29100983E058B709F3D539b0c765937B804AC15";
-const DEFAULT_JOB_MANAGER = "0xB3AAeb69b630f0299791679c063d68d6687481d1";
-const DEFAULT_ROOT_NAME = "alpha.jobs.agi.eth";
+const DEFAULT_JOB_MANAGER = "0xB3AAeb69b630f0299791679c063d68d6687481d1"; // legacy non-mainnet fallback only
+const DEFAULT_ROOT_NAME = "alpha.jobs.agi.eth"; // legacy non-mainnet fallback only
 const MAINNET_SAFETY_PHRASE = "I_UNDERSTAND_MAINNET_DEPLOYMENT";
 
 function env(k, d = "") {
@@ -57,9 +57,7 @@ async function main() {
   if (chainId === 1) {
     const confirm = env("DEPLOY_CONFIRM_MAINNET");
     if (confirm !== MAINNET_SAFETY_PHRASE) {
-      throw new Error(
-        `Refusing chainId 1 deploy without DEPLOY_CONFIRM_MAINNET=${MAINNET_SAFETY_PHRASE}`,
-      );
+      throw new Error(`Refusing chainId 1 deploy without DEPLOY_CONFIRM_MAINNET=${MAINNET_SAFETY_PHRASE}`);
     }
   }
 
@@ -72,12 +70,16 @@ async function main() {
   const jobsRootNode = env("JOBS_ROOT_NODE", computedJobsRootNode);
   const jobManager = env("JOB_MANAGER", DEFAULT_JOB_MANAGER);
 
+  const usedDefaultJobManager = !process.env.JOB_MANAGER;
+  const usedDefaultRootName = !process.env.JOBS_ROOT_NAME;
+  const usedDefaultRootNode = !process.env.JOBS_ROOT_NODE;
+
   if (chainId === 1) {
-    if (!process.env.JOB_MANAGER) {
-      throw new Error("Mainnet deploy requires explicit JOB_MANAGER environment variable (no default fallback).");
+    if (usedDefaultJobManager) {
+      throw new Error("Mainnet deploy requires explicit JOB_MANAGER environment variable (default is blocked on chainId=1).");
     }
-    if (!process.env.JOBS_ROOT_NAME || !process.env.JOBS_ROOT_NODE) {
-      throw new Error("Mainnet deploy requires explicit JOBS_ROOT_NAME and JOBS_ROOT_NODE (no default fallback).");
+    if (usedDefaultRootName || usedDefaultRootNode) {
+      throw new Error("Mainnet deploy requires explicit JOBS_ROOT_NAME and JOBS_ROOT_NODE (defaults are blocked on chainId=1).");
     }
   }
 
@@ -86,7 +88,6 @@ async function main() {
   const dryRun = isTruthy(env("DRY_RUN"));
 
   const ownerOverride = env("NEW_OWNER") || env("FINAL_OWNER") || "";
-
   if (ownerOverride && !ethers.isAddress(ownerOverride)) {
     throw new Error(`Resolved owner override is not a valid address: ${ownerOverride}`);
   }
@@ -95,9 +96,7 @@ async function main() {
     throw new Error(`JOBS_ROOT_NODE must be bytes32. Received: ${jobsRootNode}`);
   }
   if (jobsRootNode.toLowerCase() !== computedJobsRootNode.toLowerCase()) {
-    throw new Error(
-      `JOBS_ROOT_NODE mismatch for JOBS_ROOT_NAME (${jobsRootName}). Expected ${computedJobsRootNode}, got ${jobsRootNode}`,
-    );
+    throw new Error(`JOBS_ROOT_NODE mismatch for JOBS_ROOT_NAME (${jobsRootName}). Expected ${computedJobsRootNode}, got ${jobsRootNode}`);
   }
 
   await requireCode(ensRegistry, "ENS_REGISTRY");
@@ -108,11 +107,7 @@ async function main() {
   }
 
   const [deployer] = await ethers.getSigners();
-  const ens = await ethers.getContractAt(
-    ["function owner(bytes32 node) view returns (address)"],
-    ensRegistry,
-    deployer,
-  );
+  const ens = await ethers.getContractAt(["function owner(bytes32 node) view returns (address)"], ensRegistry, deployer);
   const currentRootOwner = await ens.owner(jobsRootNode);
 
   console.log("\n=== ENSJobPages EmployerBurn cutover deployment plan ===");
@@ -122,11 +117,11 @@ async function main() {
   console.log("ENS_REGISTRY:", ensRegistry);
   console.log("NAME_WRAPPER:", nameWrapper);
   console.log("PUBLIC_RESOLVER:", publicResolver);
-  console.log("JOBS_ROOT_NAME:", jobsRootName);
-  console.log("JOBS_ROOT_NODE:", jobsRootNode);
+  console.log("JOBS_ROOT_NAME:", jobsRootName, usedDefaultRootName ? "(default)" : "(explicit)");
+  console.log("JOBS_ROOT_NODE:", jobsRootNode, usedDefaultRootNode ? "(derived/implicit)" : "(explicit)");
   console.log("current root owner:", currentRootOwner);
   console.log("root tokenId decimal:", BigInt(jobsRootNode).toString());
-  console.log("JOB_MANAGER:", jobManager);
+  console.log("JOB_MANAGER:", jobManager, usedDefaultJobManager ? "(default)" : "(explicit)");
   console.log("LOCK_CONFIG:", lockConfig);
   console.log("resolved owner override:", ownerOverride || "(none)");
   console.log("VERIFY:", verify);
@@ -136,6 +131,7 @@ async function main() {
 
   if (dryRun) {
     console.log("\nDRY_RUN enabled. Exiting before broadcasting transactions.");
+    console.log("Mainnet operator note: validate this plan output first, then rerun without DRY_RUN.");
     return;
   }
 
@@ -167,6 +163,7 @@ async function main() {
     await transferTx.wait(confirmations);
   }
 
+  let verificationSucceeded = false;
   if (verify && network.name !== "hardhat") {
     try {
       console.log(`\nWaiting ${verifyDelayMs}ms before verify...`);
@@ -175,6 +172,7 @@ async function main() {
         address: ensJobPagesAddress,
         constructorArguments: constructorArgs,
       });
+      verificationSucceeded = true;
       console.log("Verification submitted.");
     } catch (err) {
       console.warn("Verification skipped/failed:", err && err.message ? err.message : err);
@@ -184,19 +182,27 @@ async function main() {
   const configuredRootNode = await ensJobPages.jobsRootNode();
   const configuredRootName = await ensJobPages.jobsRootName();
   const configuredManager = await ensJobPages.jobManager();
+  const finalOwner = await ensJobPages.owner();
+  const isLocked = await ensJobPages.configLocked();
+
   console.log("\n=== Post-deploy verification snapshot ===");
   console.log("ENSJobPages:", ensJobPagesAddress);
+  console.log("constructorArgs:", JSON.stringify(constructorArgs));
+  console.log("current root owner:", currentRootOwner);
   console.log("jobManager:", configuredManager);
   console.log("jobsRootName:", configuredRootName);
   console.log("jobsRootNode:", configuredRootNode);
-  console.log("configLocked:", await ensJobPages.configLocked());
+  console.log("owner:", finalOwner);
+  console.log("ownership transferred:", ownerOverride ? "yes" : "no");
+  console.log("configLocked:", isLocked ? "yes" : "no");
+  console.log("verificationSucceeded:", verificationSucceeded ? "yes" : "no");
 
-  console.log("\nManual next steps required before lockConfiguration():");
-  console.log("1) On NameWrapper, wrapped-root owner calls setApprovalForAll(newEnsJobPages, true).");
-  console.log("2) On AGIJobManager, owner calls setEnsJobPages(newEnsJobPages).");
+  console.log("\nManual cutover steps (not automated by this script):");
+  console.log("1) On NameWrapper, WRAPPED-ROOT OWNER signer calls setApprovalForAll(newEnsJobPages, true).");
+  console.log("2) On AGIJobManager, AGIJOBMANAGER OWNER signer calls setEnsJobPages(newEnsJobPages).");
   console.log("3) Validate at least one future ENS hook path on AGIJobManager.");
   console.log("4) Migrate legacy jobs (migrateLegacyWrappedJobPage) when exact historical labels must be retained.");
-  console.log("5) Only then decide whether to call lockConfiguration().");
+  console.log("5) Only after all checks decide whether to call lockConfiguration() (irreversible freeze for root/prefix/manager settings).");
 }
 
 main().catch((err) => {

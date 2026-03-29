@@ -344,3 +344,8 @@ Troubleshooting reference:
 - [ ] NameWrapper approval is already valid for wrapped root.
 - [ ] You have tested at least one create/write path.
 - [ ] You understand `lockConfiguration()` is irreversible.
+
+
+## Mainnet ENS deploy explicit values on chainId 1
+
+`deploy-ens-job-pages.js` blocks mainnet deploys unless `JOB_MANAGER`, `JOBS_ROOT_NAME`, and `JOBS_ROOT_NODE` are set explicitly. Defaults are legacy non-mainnet helpers only.

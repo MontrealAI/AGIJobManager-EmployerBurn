@@ -37,7 +37,7 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 - **Canonical deployment path:** Hardhat (`hardhat/README.md`). Truffle is legacy/supported.
 - **Foundry role:** audit/fuzz testing only (non-canonical for deployment/verification artifacts).
 - **Canonical ENS replacement flow:** deploy new ENSJobPages -> NameWrapper approval -> `setEnsJobPages` -> legacy migration if needed -> lock only after validation.
-- **Canonical ENS naming format:** `<prefix><jobId>.<jobsRootName>` with default prefix `agijob`.
+- **Canonical ENS naming format:** `<prefix><jobId>.<jobsRootName>` with default prefix `aijob`.
 - **Canonical ownership split:**
   - `AGIJobManager owner` controls `setEnsJobPages(...)` and AGIJobManager governance.
   - `wrapped-root owner` controls NameWrapper approval needed for wrapped-root ENS writes.
@@ -136,11 +136,11 @@ Legacy docs:
 ## ENSJobPages in one minute
 
 - `AGIJobManager` provides the numeric `jobId`.
-- `ENSJobPages` provides the label prefix (`jobLabelPrefix`, default `agijob`) and root suffix (`jobsRootName`, e.g. `alpha.jobs.agi.eth`).
+- `ENSJobPages` provides the label prefix (`jobLabelPrefix`, default `aijob`) and root suffix (`jobsRootName`, e.g. `alpha.jobs.agi.eth`).
 - Effective ENS name format is: `<prefix><jobId>.<jobsRootName>`.
 - With current defaults, names are:
-  - `agijob0.alpha.jobs.agi.eth`
-  - `agijob1.alpha.jobs.agi.eth`
+  - `aijob0.alpha.jobs.agi.eth`
+  - `aijob1.alpha.jobs.agi.eth`
 - Prefix updates only affect jobs whose labels are not yet snapshotted.
 - ENS hooks are best-effort and non-fatal to core settlement; protocol settlement can succeed even when ENS writes fail.
 
@@ -160,7 +160,7 @@ See full behavior details: [`docs/ENS/ENS_JOB_PAGES_OVERVIEW.md`](docs/ENS/ENS_J
 8. Only lock configuration after validation is complete.
 
 Expected result after safe cutover:
-- New jobs use `<prefix><jobId>.<jobsRootName>` (default `agijob...alpha.jobs.agi.eth`).
+- New jobs use `<prefix><jobId>.<jobsRootName>` (default `aijob...alpha.jobs.agi.eth`).
 - AGIJobManager lifecycle and settlement continue even if an ENS side-effect fails.
 - Legacy labels remain stable unless explicitly migrated/imported.
 
@@ -240,3 +240,5 @@ Alias note: `check-no-binaries` is exposed as `npm run check:no-binaries`.
 [security-url]: ./SECURITY.md
 [license-badge]: https://img.shields.io/github/license/MontrealAI/AGIJobManager?style=flat-square
 [license-url]: ./LICENSE
+
+- `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.

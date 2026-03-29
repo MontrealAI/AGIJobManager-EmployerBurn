@@ -145,7 +145,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
         publicResolver = IPublicResolver(publicResolverAddress);
         jobsRootNode = rootNode;
         jobsRootName = rootName;
-        jobLabelPrefix = "agijob";
+        jobLabelPrefix = "aijob";
     }
 
     /// @notice Updates the default prefix used for unsnapshotted/future job ENS labels.

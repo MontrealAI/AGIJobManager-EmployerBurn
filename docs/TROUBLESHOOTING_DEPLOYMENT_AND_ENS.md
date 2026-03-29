@@ -229,7 +229,7 @@ ENS hook operations are designed as best-effort side effects. AGIJobManager can 
 ### Why can settlement succeed while ENS fails?
 Protocol escrow settlement is intentionally decoupled from ENS writes so metadata outages do not block payouts/dispute outcomes.
 
-### Why do some jobs use `agijob...` and others `job-...`?
+### Why do some jobs use `aijob...` and others `job-...`?
 Legacy jobs may carry previously snapshotted historical labels. Prefix changes only affect unsnapshotted/future jobs in the current ENSJobPages context.
 
 ### What should I check before calling `lockConfiguration()`?

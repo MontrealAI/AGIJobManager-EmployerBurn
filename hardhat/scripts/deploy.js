@@ -275,7 +275,7 @@ async function main() {
 
   if (chainId === 1) {
     if (process.env.DEPLOY_CONFIRM_MAINNET !== MAINNET_CONFIRMATION_VALUE) {
-      throw new Error(`Mainnet deployment blocked. Set DEPLOY_CONFIRM_MAINNET=${MAINNET_CONFIRMATION_VALUE}.`);
+      throw new Error(`Mainnet deployment blocked. Set DEPLOY_CONFIRM_MAINNET exactly to ${MAINNET_CONFIRMATION_VALUE} after completing DRY_RUN=1 preflight.`);
     }
     if (resolvedFinalOwner.toLowerCase() === ethers.ZeroAddress.toLowerCase()) {
       throw new Error('Mainnet deployment requires a non-zero finalOwner.');
@@ -296,11 +296,12 @@ async function main() {
     dryRun,
   };
 
-  console.log('=== AGIJobManager EmployerBurn deployment plan ===');
+  console.log('=== AGIJobManager EmployerBurn deployment plan (Hardhat canonical) ===');
   console.log(JSON.stringify(plan, null, 2));
 
   if (dryRun) {
     console.log('DRY_RUN=1 set; no transactions were broadcast. This was a preflight only.');
+    console.log('Mainnet guidance: validate this plan output, then rerun without DRY_RUN and with DEPLOY_CONFIRM_MAINNET phrase for live deployment.');
     return;
   }
 
@@ -422,6 +423,7 @@ async function main() {
   console.log(`solc-input: ${solcInputPath}`);
   console.log(`verify-targets: ${verifyTargetsPath}`);
   console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, verify attempts, optional transferOwnership(finalOwner).');
+  console.log('Mainnet dry-run reminder: run with DRY_RUN=1 first on every config change before live broadcast.');
   console.log('Manual operator actions remain required (governance parameters, ENS cutover wiring, production lock decisions).');
 }
 

@@ -31,7 +31,7 @@ const forbiddenSnippets = [
 ];
 
 const requiredSnippetsByFile = {
-  'README.md': ['release:readiness', 'release:deploy:mainnet'],
+  'README.md': ['release:readiness', 'release:deploy:mainnet', 'default prefix `aijob`'],
   'MAINNET_DEPLOYMENT_CHECKLIST.md': ['npm run release:build', 'npm run release:readiness'],
   'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT'],
   'docs/TESTING.md': ['Canonical release gate (Hardhat-first orchestration)', 'npm run test:employerburn'],

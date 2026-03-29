@@ -42,7 +42,8 @@
     "release:readiness": "node scripts/hardhat/release-readiness.mjs",
     "deploy:agijobmanager:legacy": "AGIJOBMANAGER_DEPLOY=1 npx truffle migrate --f 6 --to 6",
     "test:canonical": "npm run release:readiness",
-    "test:employerburn": "truffle test test/employerBurn.finalization.test.js --network test"
+    "test:employerburn": "truffle test test/employerBurn.finalization.test.js --network test",
+    "deploy:legacy:truffle": "npm run deploy:agijobmanager:legacy"
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6"

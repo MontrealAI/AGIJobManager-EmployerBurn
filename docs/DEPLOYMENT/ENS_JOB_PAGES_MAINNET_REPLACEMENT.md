@@ -26,12 +26,22 @@ Canonical cutover flow:
 
 ---
 
+
+## 1.2) Mainnet explicit env requirements (hard gate)
+
+For chainId `1`, `hardhat/scripts/deploy-ens-job-pages.js` requires explicit values (no silent defaults):
+- `JOB_MANAGER`
+- `JOBS_ROOT_NAME`
+- `JOBS_ROOT_NODE`
+
+The script normalizes `JOBS_ROOT_NAME` with `ethers.ensNormalize`, recomputes namehash, and rejects any mismatch with `JOBS_ROOT_NODE`.
+
 ## 1) Purpose and scope
 
 `ENSJobPages` manages ENS job page naming and metadata writes for AGIJobManager hooks.
 
 It determines:
-- job label prefix (`jobLabelPrefix`, default `agijob`),
+- job label prefix (`jobLabelPrefix`, default `aijob`),
 - job root suffix (`jobsRootName`, default in deploy script: `alpha.jobs.agi.eth`),
 - and stores snapshotted exact labels for each job.
 
@@ -57,12 +67,12 @@ Typical replacement/migration drivers from current contract behavior:
 
 
 With script defaults + contract defaults:
-- `jobLabelPrefix = "agijob"`
+- `jobLabelPrefix = "aijob"`
 - `jobsRootName = "alpha.jobs.agi.eth"`
 
 So names are:
-- `agijob0.alpha.jobs.agi.eth`
-- `agijob1.alpha.jobs.agi.eth`
+- `aijob0.alpha.jobs.agi.eth`
+- `aijob1.alpha.jobs.agi.eth`
 - ...
 
 Prefix changes apply only to unsnapshotted/future jobs. Already snapshotted labels stay unchanged.
@@ -185,7 +195,7 @@ Expected result:
 
 ## 8.1) Future jobs vs legacy jobs after cutover (expected behavior)
 
-- **Future/unsnapshotted jobs:** new creates use `<prefix><jobId>.<jobsRootName>` (default prefix `agijob`) and should proceed once wiring is complete.
+- **Future/unsnapshotted jobs:** new creates use `<prefix><jobId>.<jobsRootName>` (default prefix `aijob`) and should proceed once wiring is complete.
 - **Legacy snapshotted jobs:** keep their historical label; they do not auto-rename on prefix changes.
 - **Legacy unsnapshotted jobs:** may need `migrateLegacyWrappedJobPage(jobId, exactLabel)` before deterministic write hooks succeed.
 
@@ -252,3 +262,5 @@ Event checks:
 - Calling `setEnsJobPages(new)` before wrapped-root approval is in place, then misreading hook failures as total protocol failure.
 - Locking ENSJobPages configuration before future-job hook validation and legacy migration checks.
 - Using approximate labels for migration; `exactLabel` must match historical on-chain label.
+
+- `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.
