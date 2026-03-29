@@ -472,3 +472,12 @@ No. Standard `approve` is supported and is the default Etherscan-first path.
 - **Paused:** emergency stop state where protected functions revert.
 - **Revert:** transaction fails and all state changes in that tx are undone.
 - **Event:** log emitted by a contract, used as verifiable evidence of what happened.
+
+## Before you click Write (Employer quick checklist)
+
+1. Check `Read Contract -> agiToken` equals `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
+2. Check your wallet AGIALPHA balance covers escrow + potential burn.
+3. Check `allowance(employer, AGIJobManager)` at token contract is enough for burn amount.
+4. If allowance is low, submit a separate token `approve(spender=AGIJobManager, amount=...)` transaction first.
+5. Expect employer-win finalization to revert if token is paused, allowance is insufficient, or balance is insufficient.
+6. Verify success by checking `EmployerBurnEnforced` event and AGIALPHA `Transfer` to burn address behavior on token explorer events.

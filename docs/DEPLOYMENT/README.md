@@ -39,3 +39,18 @@
   - `../ui/GENESIS_JOB_MAINNET_HTML_UI.md`
   - `../../ui/README.md`
 - For deployment/cutover decisions, this index and `../../hardhat/README.md` remain canonical.
+
+## Canonical release command surface (root)
+
+Production operators should use the root Hardhat-routed commands:
+
+- `npm run release:doctor`
+- `npm run release:build`
+- `npm run release:size`
+- `npm run release:dry-run`
+- `npm run release:deploy:mainnet`
+- `npm run release:verify:receipt`
+- `npm run release:postdeploy`
+- `npm run release:ready`
+
+Legacy Truffle commands are compatibility-only and intentionally suffixed with `:legacy` in `package.json`.
