@@ -13,7 +13,7 @@
     "docs:ens:check": "node scripts/docs/check-ens-docs.mjs",
     "docs:interface": "node scripts/generate-interface-doc.js",
     "lint": "solhint \"contracts/**/*.sol\"",
-    "test": "npm run test:canonical",
+    "test": "npm run test:core && npm run test:canonical",
     "test:core": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && npm run size:legacy",
     "test:legacy:core": "truffle compile --all && truffle test --network test && node test/AGIJobManager.test.js && npm run size:legacy",
     "test:release-gates": "npm run release:readiness",

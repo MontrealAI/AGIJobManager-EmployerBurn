@@ -35,7 +35,7 @@ const requiredSnippetsByFile = {
   'MAINNET_DEPLOYMENT_CHECKLIST.md': ['npm run release:build', 'npm run release:readiness'],
   'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT'],
   'docs/TESTING.md': ['Canonical release gate (Hardhat-first orchestration)', 'npm run test:employerburn'],
-  'docs/TEST_STATUS.md': ['Latest deterministic validation snapshot (2026-03-29)', 'AGIJobManager` runtime: **24,339 bytes**'],
+  'docs/TEST_STATUS.md': ['Latest deterministic validation snapshot', 'Size gate snapshot (Hardhat artifacts)'],
   'docs/Deployment.md': ['Canonical production deployment path is Hardhat, not Truffle.', 'Deployment guide (Legacy Truffle compatibility)']
 };
 

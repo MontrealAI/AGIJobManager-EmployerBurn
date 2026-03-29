@@ -7,13 +7,14 @@ Canonical checks were executed from repository root and completed successfully.
 ### Commands and outcomes
 
 - `npm run release:readiness` ✅
+- `npm run test:core` ✅ (legacy full regression suite retained as a merge gate)
 - `npm test` ✅ (routes to the canonical release-readiness gate)
 - `npm run size` ✅
 
 ### Environment notes
 
 - `npm` may print non-blocking environment/deprecation warnings depending on local configuration.
-- Canonical testing is Hardhat-first orchestration (`release:readiness`) and no longer presents Truffle as the primary operator-facing path.
+- Canonical release orchestration is Hardhat-first (`release:readiness`), while default `npm test` still includes the full `test:core` regression lane before readiness checks.
 
 ### Size gate snapshot (Hardhat artifacts)
 

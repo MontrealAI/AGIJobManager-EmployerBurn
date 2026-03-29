@@ -58,6 +58,6 @@ Canonical size gate runs against Hardhat artifacts by default (`npm run size`) a
 - Move release workflow improvements into scripts/docs/checks rather than core-contract growth.
 
 ## 10) Canonical Test/Release Command Reconciliation
-- Root `npm test` now routes to `test:canonical` (`release:readiness`) so operator-facing default testing is Hardhat-first orchestration.
+- Root `npm test` now runs full `test:core` regression first, then `test:canonical` (`release:readiness`) so CI keeps broad regression coverage while preserving Hardhat-first release orchestration.
 - EmployerBurn settlement assertions remain explicitly executed via `test:employerburn`; `test:legacy:employerburn` remains as compatibility alias only.
 - Legacy Truffle deployment guide was relabeled to compatibility-only (`docs/Deployment.md`) to prevent production-path ambiguity.
