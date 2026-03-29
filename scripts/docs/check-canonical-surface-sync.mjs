@@ -33,7 +33,8 @@ const forbiddenSnippets = [
 const requiredSnippetsByFile = {
   'README.md': ['release:readiness', 'release:deploy:mainnet', 'default prefix `aijob`'],
   'MAINNET_DEPLOYMENT_CHECKLIST.md': ['npm run release:build', 'npm run release:readiness'],
-  'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT'],
+  'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT', 'planHash'],
+  'docs/DEPLOYMENT/ENS_JOB_PAGES_MAINNET_REPLACEMENT.md': ['setJobLabelPrefix(string)', 'ens-job-pages-deployment.<chainId>.<blockNumber>.json'],
   'docs/TESTING.md': ['Canonical release gate (Hardhat-first orchestration)', 'npm run test:employerburn'],
   'docs/TEST_STATUS.md': ['Latest deterministic validation snapshot', 'Size gate snapshot (Hardhat artifacts)'],
   'docs/Deployment.md': ['Canonical production deployment path is Hardhat, not Truffle.', 'Deployment guide (Legacy Truffle compatibility)']
