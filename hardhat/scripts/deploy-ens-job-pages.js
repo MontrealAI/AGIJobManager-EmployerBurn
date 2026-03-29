@@ -72,6 +72,15 @@ async function main() {
   const jobsRootNode = env("JOBS_ROOT_NODE", computedJobsRootNode);
   const jobManager = env("JOB_MANAGER", DEFAULT_JOB_MANAGER);
 
+  if (chainId === 1) {
+    if (!process.env.JOB_MANAGER) {
+      throw new Error("Mainnet deploy requires explicit JOB_MANAGER environment variable (no default fallback).");
+    }
+    if (!process.env.JOBS_ROOT_NAME || !process.env.JOBS_ROOT_NODE) {
+      throw new Error("Mainnet deploy requires explicit JOBS_ROOT_NAME and JOBS_ROOT_NODE (no default fallback).");
+    }
+  }
+
   const verify = isTruthy(env("VERIFY"));
   const lockConfig = isTruthy(env("LOCK_CONFIG"));
   const dryRun = isTruthy(env("DRY_RUN"));
@@ -106,7 +115,7 @@ async function main() {
   );
   const currentRootOwner = await ens.owner(jobsRootNode);
 
-  console.log("\n=== ENSJobPages deployment plan ===");
+  console.log("\n=== ENSJobPages EmployerBurn cutover deployment plan ===");
   console.log("network:", network.name);
   console.log("chainId:", chainId);
   console.log("deployer:", deployer.address);
@@ -172,9 +181,22 @@ async function main() {
     }
   }
 
-  console.log("\nManual next steps (not automated):");
+  const configuredRootNode = await ensJobPages.jobsRootNode();
+  const configuredRootName = await ensJobPages.jobsRootName();
+  const configuredManager = await ensJobPages.jobManager();
+  console.log("\n=== Post-deploy verification snapshot ===");
+  console.log("ENSJobPages:", ensJobPagesAddress);
+  console.log("jobManager:", configuredManager);
+  console.log("jobsRootName:", configuredRootName);
+  console.log("jobsRootNode:", configuredRootNode);
+  console.log("configLocked:", await ensJobPages.configLocked());
+
+  console.log("\nManual next steps required before lockConfiguration():");
   console.log("1) On NameWrapper, wrapped-root owner calls setApprovalForAll(newEnsJobPages, true).");
   console.log("2) On AGIJobManager, owner calls setEnsJobPages(newEnsJobPages).");
+  console.log("3) Validate at least one future ENS hook path on AGIJobManager.");
+  console.log("4) Migrate legacy jobs (migrateLegacyWrappedJobPage) when exact historical labels must be retained.");
+  console.log("5) Only then decide whether to call lockConfiguration().");
 }
 
 main().catch((err) => {

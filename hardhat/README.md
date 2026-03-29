@@ -124,7 +124,7 @@ Common optional controls:
 - `CONFIRMATIONS` (default `3`)
 - `VERIFY_DELAY_MS` (default `3500`)
 - `DRY_RUN=1`
-- `DEPLOY_CONFIG` (path override for deploy profile)
+- `DEPLOY_CONFIG` (required on mainnet; path to explicit production profile)
 
 Mainnet confirmation gate value:
 
@@ -235,10 +235,15 @@ Defaults in the script for mainnet context:
 - ENS registry: `0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e`
 - NameWrapper: `0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401`
 - Public resolver: `0xF29100983E058B709F3D539b0c765937B804AC15`
-- `JOB_MANAGER`: `0xB3AAeb69b630f0299791679c063d68d6687481d1`
-- `JOBS_ROOT_NAME`: `alpha.jobs.agi.eth`
+- `JOB_MANAGER`: `0xB3AAeb69b630f0299791679c063d68d6687481d1` (**must still be explicitly provided on mainnet**)
+- `JOBS_ROOT_NAME`: `alpha.jobs.agi.eth` (**must still be explicitly provided on mainnet with `JOBS_ROOT_NODE`**)
 
-You may override with `.env` values if needed (`JOB_MANAGER`, `JOBS_ROOT_NAME`, `JOBS_ROOT_NODE`, `ENS_REGISTRY`, `NAME_WRAPPER`, `PUBLIC_RESOLVER`).
+On Ethereum mainnet (`chainId=1`) the script requires explicit operator-provided values for:
+- `JOB_MANAGER`
+- `JOBS_ROOT_NAME`
+- `JOBS_ROOT_NODE`
+
+Script still validates that `JOBS_ROOT_NODE === namehash(ensNormalize(JOBS_ROOT_NAME))` and rejects mismatches.
 
 > ⚠️ Mainnet-sensitive: if you set `LOCK_CONFIG=1`, ENSJobPages config setters become permanently unavailable.
 

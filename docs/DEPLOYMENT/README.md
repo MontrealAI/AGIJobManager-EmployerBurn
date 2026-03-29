@@ -26,13 +26,13 @@
 - [Ethereum Mainnet Beta Deployment Record](./MAINNET_BETA_DEPLOYMENT_RECORD.md)
 - [Official Mainnet Deployment Record](./MAINNET_OFFICIAL_DEPLOYMENT_RECORD.md)
 
-## 2) Truffle (legacy / supported)
+## 2) Truffle (legacy / compatibility-only)
 
 - [Ethereum Mainnet Deployment, Verification & Ownership Transfer Guide (Truffle)](./MAINNET_TRUFFLE_DEPLOYMENT.md)
 - [Truffle Mainnet Deploy](./TRUFFLE_MAINNET_DEPLOY.md)
 - [Truffle Production Deploy](./TRUFFLE_PRODUCTION_DEPLOY.md)
 
-> Truffle migrations remain supported for backward compatibility and historical reproducibility.
+> Truffle migrations remain available for backward compatibility and historical reproducibility only. They are not the canonical production release path.
 
 ## UI boundary during deployment operations
 
