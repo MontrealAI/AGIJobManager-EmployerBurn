@@ -18,3 +18,18 @@
 - Run Slither and unit tests; include at least one invariant-style test focused on solvency
   (contract balance >= lockedEscrow + locked*Bonds) and settlement flows.
 - Obtain an external audit or review before deploying funds at scale.
+
+## Canonical Hardhat release gate commands
+
+Run these from repository root before any Ethereum mainnet deployment:
+
+- `npm run doctor`
+- `npm run release:build`
+- `npm run release:dry-run`
+- `npm run release:readiness`
+
+For live deploy, require explicit confirmation phrase:
+
+- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet`
+- `npm run release:verify`
+- `npm run release:postdeploy`

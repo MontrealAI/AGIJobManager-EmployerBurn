@@ -15,6 +15,7 @@ const canonicalFiles = [
 ];
 
 const forbiddenSnippets = [
+  'deploy:agijobmanager:prod',
   'contributeToRewardPool(',
   'RewardPoolContribution(',
   'resolveDispute(uint256',
@@ -22,6 +23,12 @@ const forbiddenSnippets = [
   'EmployerBurned(',
   'safeMintCompletionNFT('
 ];
+
+const requiredSnippetsByFile = {
+  'README.md': ['release:readiness', 'release:deploy:mainnet'],
+  'MAINNET_DEPLOYMENT_CHECKLIST.md': ['npm run release:build', 'npm run release:readiness'],
+  'hardhat/README.md': ['DEPLOY_CONFIRM_MAINNET', 'I_UNDERSTAND_MAINNET_DEPLOYMENT']
+};
 
 let failed = false;
 
@@ -39,10 +46,16 @@ for (const relativeFile of canonicalFiles) {
       failed = true;
     }
   }
+
+  const required = requiredSnippetsByFile[relativeFile] || [];
+  for (const snippet of required) {
+    if (!content.includes(snippet)) {
+      console.error(`❌ Missing canonical reference in ${relativeFile}: ${snippet}`);
+      failed = true;
+    }
+  }
 }
 
-if (failed) {
-  process.exit(1);
-}
+if (failed) process.exit(1);
 
 console.log('✅ Canonical surface sync checks passed');

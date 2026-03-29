@@ -19,4 +19,4 @@ Rationale: renaming the on-chain contract or established ABI identifiers would a
 
 ## Latest verification artifact
 
-- See `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md` for the latest full audit matrix, architecture validation, source verification note, and release-blocker status snapshot.
+- See `docs/REFERENCE/MAINNET_RELEASE_RECONCILIATION_2026-03-29.md (current) and docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md (prior)` for the latest full audit matrix, architecture validation, source verification note, and release-blocker status snapshot.
