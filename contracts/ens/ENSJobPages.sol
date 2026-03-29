@@ -53,8 +53,10 @@ contract ENSJobPages is Ownable, ERC1155Holder {
     error JobLabelNotSnapshotted();
 
     uint256 private constant MAX_ROOT_NAME_LENGTH = 240;
+    uint256 private constant MAX_FULL_ENS_NAME_LENGTH = 253;
     uint256 private constant MAX_JOB_LABEL_PREFIX_LENGTH = 32;
     uint256 private constant MAX_ENS_LABEL_LENGTH = 63;
+    uint256 private constant MAX_ROOT_NAME_FOR_JOB_LABEL = MAX_FULL_ENS_NAME_LENGTH - 1 - MAX_ENS_LABEL_LENGTH;
     uint256 private constant ENS_READ_GAS_LIMIT = 50_000;
 
     bytes4 private constant ENS_OWNER_SELECTOR = bytes4(keccak256("owner(bytes32)"));
@@ -135,7 +137,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
         bool hasRootNode = rootNode != bytes32(0);
         bool hasRootName = bytes(rootName).length != 0;
         if (hasRootNode != hasRootName) revert InvalidParameters();
-        if (hasRootName && !_isValidRootName(rootName)) revert InvalidParameters();
+        if (hasRootName && !_isValidRootConfig(rootNode, rootName)) revert InvalidParameters();
 
         ens = IENSRegistry(ensAddress);
         nameWrapper = INameWrapper(nameWrapperAddress);
@@ -186,7 +188,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
         bytes32 oldNode = jobsRootNode;
         string memory oldName = jobsRootName;
         if (rootNode == bytes32(0)) revert InvalidParameters();
-        if (!_isValidRootName(rootName)) revert InvalidParameters();
+        if (!_isValidRootConfig(rootNode, rootName)) revert InvalidParameters();
         jobsRootNode = rootNode;
         jobsRootName = rootName;
         emit JobsRootUpdated(oldNode, rootNode, oldName, rootName);
@@ -231,7 +233,9 @@ contract ENSJobPages is Ownable, ERC1155Holder {
 
     function jobEnsName(uint256 jobId) public view returns (string memory) {
         if (!_isRootConfigured()) return "";
-        return string(abi.encodePacked(_resolvedJobLabel(jobId), ".", jobsRootName));
+        string memory label = _resolvedJobLabel(jobId);
+        if (!_isValidFullNameLength(label, jobsRootName)) revert InvalidParameters();
+        return string(abi.encodePacked(label, ".", jobsRootName));
     }
 
     function jobLabelSnapshot(uint256 jobId) external view returns (bool isSet, string memory label) {
@@ -728,9 +732,70 @@ contract ENSJobPages is Ownable, ERC1155Holder {
         return jobsRootNode != bytes32(0) && bytes(jobsRootName).length != 0;
     }
 
+    function _isValidRootConfig(bytes32 rootNode, string memory rootName) internal pure returns (bool) {
+        if (!_isValidRootName(rootName)) return false;
+        if (_namehashAsciiLower(rootName) != rootNode) return false;
+        return true;
+    }
+
     function _isValidRootName(string memory rootName) internal pure returns (bool) {
-        uint256 len = bytes(rootName).length;
-        return len > 0 && len <= MAX_ROOT_NAME_LENGTH;
+        bytes memory raw = bytes(rootName);
+        uint256 len = raw.length;
+        if (
+            len == 0
+                || len > MAX_ROOT_NAME_LENGTH
+                || len > MAX_FULL_ENS_NAME_LENGTH
+                || len > MAX_ROOT_NAME_FOR_JOB_LABEL
+        ) return false;
+        if (raw[0] == bytes1(".") || raw[len - 1] == bytes1(".")) return false;
+
+        uint256 labelLen = 0;
+        bool labelStartsWithHyphen = false;
+        for (uint256 i = 0; i < len; i++) {
+            bytes1 ch = raw[i];
+            if (ch == bytes1(".")) {
+                if (labelLen == 0 || labelStartsWithHyphen || raw[i - 1] == bytes1("-")) return false;
+                labelLen = 0;
+                labelStartsWithHyphen = false;
+                continue;
+            }
+
+            bool isDigit = ch >= bytes1("0") && ch <= bytes1("9");
+            bool isLower = ch >= bytes1("a") && ch <= bytes1("z");
+            bool isHyphen = ch == bytes1("-");
+            if (!isDigit && !isLower && !isHyphen) return false;
+            if (labelLen == 0) labelStartsWithHyphen = isHyphen;
+            labelLen += 1;
+            if (labelLen > MAX_ENS_LABEL_LENGTH) return false;
+        }
+        if (labelLen == 0 || labelStartsWithHyphen || raw[len - 1] == bytes1("-")) return false;
+        return true;
+    }
+
+    function _isValidFullNameLength(string memory label, string memory rootName) internal pure returns (bool) {
+        return bytes(label).length + 1 + bytes(rootName).length <= MAX_FULL_ENS_NAME_LENGTH;
+    }
+
+    function _namehashAsciiLower(string memory name) internal pure returns (bytes32 node) {
+        bytes memory raw = bytes(name);
+        if (raw.length == 0) return bytes32(0);
+
+        uint256 labelEndExclusive = raw.length;
+        while (labelEndExclusive > 0) {
+            uint256 labelStart = labelEndExclusive;
+            while (labelStart > 0 && raw[labelStart - 1] != bytes1(".")) {
+                labelStart--;
+            }
+
+            bytes32 labelHash;
+            assembly {
+                labelHash := keccak256(add(add(raw, 0x20), labelStart), sub(labelEndExclusive, labelStart))
+            }
+            node = keccak256(abi.encodePacked(node, labelHash));
+
+            if (labelStart == 0) break;
+            labelEndExclusive = labelStart - 1;
+        }
     }
 
     function _isValidJobLabelPrefix(string memory prefix) internal pure returns (bool) {
@@ -813,6 +878,7 @@ contract ENSJobPages is Ownable, ERC1155Holder {
     }
 
     function _snapshotJobLabel(uint256 jobId, string memory label) internal {
+        if (!_isValidFullNameLength(label, jobsRootName)) revert InvalidParameters();
         bytes32 labelHash = keccak256(bytes(label));
         uint256 existing = _jobIdPlusOneByLabelHash[labelHash];
         if (existing != 0 && existing != jobId + 1) revert InvalidParameters();
