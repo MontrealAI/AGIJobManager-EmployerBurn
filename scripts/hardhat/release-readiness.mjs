@@ -8,7 +8,9 @@ const commands = [
   ['npm', ['run', 'docs:check']],
   ['npm', ['run', 'docs:ens:check']],
   ['npm', ['run', 'test:employerburn']],
-  ['npx', ['truffle', 'test', 'test/deployScripts.safety.test.js', '--network', 'test']]
+  ['npx', ['truffle', 'test', 'test/deployScripts.safety.test.js', '--network', 'test']],
+  ['npm', ['run', 'release:verify']],
+  ['npm', ['run', 'release:postdeploy']]
 ];
 
 for (const [cmd, args] of commands) {
