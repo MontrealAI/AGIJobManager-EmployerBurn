@@ -199,7 +199,7 @@ npm run lint
 npm run build
 npm run size
 npm test
-npm run test:legacy:core   # legacy compatibility suite
+npm run test:release-gates
 npm run docs:check
 npm run docs:ens:check
 ```
