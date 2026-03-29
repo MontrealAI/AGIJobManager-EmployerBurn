@@ -298,6 +298,10 @@ async function main() {
 
   console.log('=== AGIJobManager EmployerBurn deployment plan (Hardhat canonical) ===');
   console.log(JSON.stringify(plan, null, 2));
+  if (chainId === 1) {
+    console.log('MAINNET SAFETY: this script will broadcast live transactions unless DRY_RUN=1.');
+    console.log('MAINNET SAFETY: run DRY_RUN=1 first on every config change and verify the plan hash and constructor args.');
+  }
 
   if (dryRun) {
     console.log('DRY_RUN=1 set; no transactions were broadcast. This was a preflight only.');
@@ -424,7 +428,10 @@ async function main() {
   console.log(`verify-targets: ${verifyTargetsPath}`);
   console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, verify attempts, optional transferOwnership(finalOwner).');
   console.log('Mainnet dry-run reminder: run with DRY_RUN=1 first on every config change before live broadcast.');
-  console.log('Manual operator actions remain required (governance parameters, ENS cutover wiring, production lock decisions).');
+  console.log('Manual operator actions remain required:');
+  console.log('  1) Confirm owner/governance parameters on AGIJobManager.');
+  console.log('  2) Complete ENS cutover manually where required (NameWrapper approval + AGIJobManager.setEnsJobPages).');
+  console.log('  3) Decide and execute lock actions only after validation evidence is complete.');
 }
 
 main().catch((error) => {
