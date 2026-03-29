@@ -24,7 +24,9 @@
 ## 4) Repo-Wide Stale Reference Inventory
 - Legacy script alias removed from canonical docs: `deploy:agijobmanager:prod`.
 - Legacy Truffle path preserved under explicit `*:legacy` script names.
+- Foundry role explicitly fenced as audit/fuzz-only in canonical docs and config comments.
 - Canonical docs now reference `release:*` Hardhat-first wrappers.
+- Toolchain split documented in `docs/REFERENCE/TOOLCHAIN_CANONICALITY.md`.
 
 ## 5) Docs Canonicality Audit
 - Canonical docs contain Hardhat-first commands (`README.md`, `hardhat/README.md`, `MAINNET_DEPLOYMENT_CHECKLIST.md`).
@@ -45,8 +47,9 @@ Verified from the Ethereum mainnet Etherscan verified source page for `0xA61a3B3
 Mainnet hard limits verified from canonical EIP specs:
 - EIP-170 `MAX_CODE_SIZE = 0x6000 (24,576 bytes)`.
 - EIP-3860 `MAX_INITCODE_SIZE = 2 * MAX_CODE_SIZE = 49,152 bytes`.
+- Candidate successor proposals (for example EIP-7907 and EIP-7954) are drafts and are **not active mainnet rules** as of 2026-03-29 UTC.
 
-Canonical size gate runs against Hardhat artifacts by default (`npm run size`) and now also enforces a checked-in no-growth baseline guard for `AGIJobManager`.
+Canonical size gate runs against Hardhat artifacts by default (`npm run size`) and enforces a checked-in no-growth baseline guard for `AGIJobManager`.
 
 ## 9) Change-Minimization Plan (implemented)
 - Preserve core AGIJobManager settlement semantics.

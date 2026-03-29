@@ -1,3 +1,4 @@
+# Non-canonical deployment toolchain: audit/fuzz testing only.
 [profile.default]
 solc = "0.8.19"
 src = "contracts"
