@@ -4,6 +4,7 @@ const hre = require('hardhat');
 const { ethers, network, run } = hre;
 
 const MAINNET_CONFIRMATION_VALUE = 'I_UNDERSTAND_MAINNET_DEPLOYMENT';
+const AGIALPHA_MAINNET = '0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA';
 const DEFAULT_VERIFY_DELAY_MS = 3500;
 const DEFAULT_VERIFY_RETRIES = 3;
 const DEFAULT_CONFIRMATIONS = 3;
@@ -137,7 +138,7 @@ function assertCompilerMatchesHardhatConfig() {
   return actual;
 }
 
-function resolveConstructor(networkName, profile) {
+function resolveConstructor(networkName, profile, chainId) {
   if (!profile || typeof profile !== 'object') {
     throw new Error(`Missing deployment profile for network "${networkName}".`);
   }
@@ -151,6 +152,9 @@ function resolveConstructor(networkName, profile) {
   };
 
   validateAddress('agiTokenAddress', constructorArgs.agiTokenAddress);
+  if (chainId === 1 && constructorArgs.agiTokenAddress.toLowerCase() !== AGIALPHA_MAINNET.toLowerCase()) {
+    throw new Error(`Mainnet successor requires AGIALPHA token ${AGIALPHA_MAINNET}.`);
+  }
   if (typeof constructorArgs.baseIpfsUrl !== 'string' || constructorArgs.baseIpfsUrl.trim() === '') {
     throw new Error('baseIpfsUrl must be a non-empty string.');
   }
@@ -274,7 +278,7 @@ async function main() {
 
   const { config, configPath } = loadDeployConfig(chainId);
   const profile = config[network.name];
-  const constructorArgs = resolveConstructor(network.name, profile);
+  const constructorArgs = resolveConstructor(network.name, profile, chainId);
   const resolvedFinalOwner = resolveFinalOwner(profile);
   const dryRun = process.env.DRY_RUN === '1';
   const compilerProfile = assertCompilerMatchesHardhatConfig();

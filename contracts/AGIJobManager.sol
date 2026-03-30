@@ -335,6 +335,8 @@ interface IAGIALPHABurnable is IERC20 {
 
 
 contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
+    address public constant AGIALPHA_MAINNET_TOKEN = 0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA;
+
     // -----------------------
     // Custom errors (smaller bytecode than revert strings)
     // -----------------------
@@ -563,6 +565,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         bytes32[2] memory merkleRoots
     ) ERC721("AGIJobs", "Job") {
         if (agiTokenAddress.code.length == 0) revert InvalidParameters();
+        if (block.chainid == 1 && agiTokenAddress != AGIALPHA_MAINNET_TOKEN) revert InvalidParameters();
         if (bytes(baseIpfs).length > MAX_BASE_IPFS_URL_BYTES) revert InvalidParameters();
         if ((rootNodes[0] | rootNodes[1] | rootNodes[2] | rootNodes[3]) != bytes32(0)) {
             if (ensConfig[0] == address(0) || ensConfig[0].code.length == 0) revert InvalidParameters();

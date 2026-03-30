@@ -24,7 +24,10 @@ If either transfer or burn fails, the entire transaction reverts atomically.
 ## Auditability
 Per-job snapshot is persisted at create time:
 - `employerBurnBpsSnapshot`
-- `employerBurnAmount`
+- `burnTokenSnapshot`
+
+Burn amount is deterministically derived later as:
+- `burnAmount = payout * employerBurnBpsSnapshot / 10_000`.
 
 Event emitted at create time:
 - `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
@@ -34,6 +37,12 @@ Helper views:
 - `getCreateJobFundingRequirement(uint256 payout)`
 - `getCreateJobAllowanceRequirement(uint256 payout)`
 - `getJobEconomicSnapshot(uint256 jobId)`
+
+## Token pinning and mutability hardening
+- Successor mainnet deployments are pinned to AGIALPHA:
+  - `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`
+- Constructor rejects non-AGIALPHA token on chain id 1.
+- `updateAGITokenAddress(...)` is retained as compatibility stub and always reverts with `AGIALPHATokenPinned`.
 
 ## Disclosures
 - AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
