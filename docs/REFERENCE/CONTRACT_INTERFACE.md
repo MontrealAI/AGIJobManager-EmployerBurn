@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `c46437195ed0`.
-- Source snapshot fingerprint: `c46437195ed0`.
+- Generated at (deterministic source fingerprint): `d3a67959c31d`.
+- Source snapshot fingerprint: `d3a67959c31d`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -62,7 +62,6 @@
 | `blacklistAgent(address _agent, bool _status)` | external | nonpayable | — |
 | `blacklistValidator(address _validator, bool _status)` | external | nonpayable | — |
 | `burn(uint256 value)` | external | nonpayable | — |
-| `burnFrom(address account, uint256 value)` | external | nonpayable | — |
 | `cancelJob(uint256 _jobId)` | external | nonpayable | — |
 | `createJob(string memory _jobSpecURI, uint256 _payout, uint256 _duration, string memory _details)` | external | nonpayable | — |
 | `delistJob(uint256 _jobId)` | external | nonpayable | — |

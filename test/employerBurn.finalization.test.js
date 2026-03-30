@@ -208,7 +208,7 @@ contract('AGIJobManager completion-only employer burn reserve', (accounts) => {
     assert.equal(readiness.validatorApproved, true);
   });
 
-  it('rejects creating burn-reserve jobs when AGI token burn() is not callable', async () => {
+  it('reverts successful completion settlement when token burn does not reduce supply', async () => {
     const plain = await ERC20NoReturn.new({ from: owner });
     const manager2 = await AGIJobManager.new(
       plain.address,
@@ -218,10 +218,36 @@ contract('AGIJobManager completion-only employer burn reserve', (accounts) => {
       [ZERO_ROOT, ZERO_ROOT],
       { from: owner }
     );
+    await manager2.addAdditionalAgent(agent, { from: owner });
+    await manager2.addAdditionalValidator(validatorA, { from: owner });
+    await manager2.addAdditionalValidator(validatorB, { from: owner });
+    await manager2.setRequiredValidatorApprovals(2, { from: owner });
+    await manager2.setChallengePeriodAfterApproval(1, { from: owner });
+    await manager2.setCompletionReviewPeriod(1, { from: owner });
+    const agiType = await MockERC721.new({ from: owner });
+    await agiType.mint(agent, { from: owner });
+    await manager2.addAGIType(agiType.address, 92, { from: owner });
+
     await manager2.setEmployerBurnBps(100, { from: owner });
     const payout = toBN(toWei('10'));
-    await plain.mint(employer, payout, { from: owner });
-    await plain.approve(manager2.address, payout, { from: employer });
-    await expectRevert.unspecified(manager2.createJob('ipfs-job', payout, 3600, 'details', { from: employer }));
+    const burn = payout.muln(100).divn(10_000);
+    await plain.mint(employer, payout.add(burn), { from: owner });
+    await plain.mint(agent, toWei('100'), { from: owner });
+    await plain.mint(validatorA, toWei('100'), { from: owner });
+    await plain.mint(validatorB, toWei('100'), { from: owner });
+    await plain.approve(manager2.address, payout.add(burn), { from: employer });
+    await plain.approve(manager2.address, toWei('100'), { from: agent });
+    await plain.approve(manager2.address, toWei('100'), { from: validatorA });
+    await plain.approve(manager2.address, toWei('100'), { from: validatorB });
+
+    const tx = await manager2.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await manager2.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
+    await manager2.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
+    await manager2.validateJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager2.validateJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await time.increase(2);
+
+    await expectRevert.unspecified(manager2.finalizeJob(jobId, { from: owner }));
   });
 });
