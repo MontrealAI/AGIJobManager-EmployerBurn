@@ -115,8 +115,8 @@ contract EmployerBurnReadHelper {
     function _isSuccessPathReady(uint256 jobId, bool disputed) internal view returns (bool ready, uint8 settlementPathCode) {
         if (disputed) {
             (, ,,, uint256 disputedAt) = manager.getJobValidation(jobId);
-            if (block.timestamp > disputedAt + manager.disputeReviewPeriod()) return (true, 13);
-            return (true, 12);
+            if (block.timestamp > disputedAt + manager.disputeReviewPeriod()) return (false, 13);
+            return (false, 12);
         }
 
         (

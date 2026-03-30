@@ -12,7 +12,7 @@ const ZERO_ADDRESS = '0x' + '00'.repeat(20);
 const EMPTY_PROOF = [];
 
 contract('EmployerBurnReadHelper', (accounts) => {
-  const [owner, employer, agent, validatorA, validatorB] = accounts;
+  const [owner, employer, agent, validatorA, validatorB, moderator] = accounts;
 
   let token;
   let manager;
@@ -33,6 +33,7 @@ contract('EmployerBurnReadHelper', (accounts) => {
     await manager.addAdditionalAgent(agent, { from: owner });
     await manager.addAdditionalValidator(validatorA, { from: owner });
     await manager.addAdditionalValidator(validatorB, { from: owner });
+    await manager.addModerator(moderator, { from: owner });
     await manager.setRequiredValidatorApprovals(2, { from: owner });
     await manager.setChallengePeriodAfterApproval(1, { from: owner });
     await manager.setCompletionReviewPeriod(1, { from: owner });
@@ -93,5 +94,17 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(readiness.ready, true);
     assert.equal(readiness.settlementPathCode.toString(), '11');
     assert.equal(await helper.canFinalizeSuccessfulCompletion(jobId), true);
+  });
+
+  it('does not mark disputed jobs as finalize-callable readiness', async () => {
+    const { jobId } = await setup();
+    await token.mint(employer, toWei('5'), { from: owner });
+    await token.approve(manager.address, toWei('5'), { from: employer });
+    await manager.disputeJob(jobId, { from: employer });
+
+    const readiness = await helper.getSuccessfulCompletionFinalizationReadiness(jobId);
+    assert.equal(readiness.ready, false);
+    assert.equal(readiness.settlementPathCode.toString(), '12');
+    assert.equal(await helper.canFinalizeSuccessfulCompletion(jobId), false);
   });
 });
