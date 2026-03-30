@@ -1,3 +1,5 @@
+> Completion-only burn migration addendum: `docs/MIGRATION_TO_V0_2_0_COMPLETION_BURN_ONLY.md`.
+
 # Mainnet migration from legacy AGIJobManager snapshot
 
 This runbook deploys `contracts/AGIJobManager.sol` from a deterministic, committed snapshot of the live legacy mainnet contract `0x0178B6baD606aaF908f72135B8eC32Fc1D5bA477`.

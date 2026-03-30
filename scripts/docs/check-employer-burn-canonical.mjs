@@ -6,51 +6,16 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const AGIALPHA_MAINNET = '0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA';
 
 const requiredSnippets = [
-  [
-    'README.md',
-    [
-      AGIALPHA_MAINNET,
-      'EmployerBurnReadHelper',
-      'EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)'
-    ]
-  ],
-  [
-    'docs/ETHERSCAN_GUIDE.md',
-    [
-      AGIALPHA_MAINNET,
-      'approve **AGIJobManager** as spender',
-      'Before you click **Write** (Employer burn transactions)',
-      'Employer burn readiness reason codes (plain English)'
-    ]
-  ],
-  [
-    'docs/OWNER_RUNBOOK.md',
-    [
-      AGIALPHA_MAINNET,
-      'Employer-burn owner checks'
-    ]
-  ],
-  [
-    'docs/DEPLOYMENT/OWNER_MAINNET_DEPLOYMENT_AND_OPERATIONS_GUIDE.md',
-    [
-      AGIALPHA_MAINNET,
-      'EmployerBurnReadHelper'
-    ]
-  ],
-  [
-    'MAINNET_DEPLOYMENT_CHECKLIST.md',
-    [
-      AGIALPHA_MAINNET,
-      'EmployerBurnEnforced'
-    ]
-  ],
-  [
-    'docs/REFERENCE/EMPLOYER_BURN_DESIGN.md',
-    [
-      'burnFrom(job.employer, burnAmount)',
-      'No protocol subsidy'
-    ]
-  ]
+  ['README.md', ['v0.2.0', 'CompletionBurnExecuted', 'quoteCompletionBurn(jobId)']],
+  ['docs/ETHERSCAN_GUIDE.md', ['CompletionBurnExecuted', 'CompletionBurnReserveRefunded', 'canFinalizeSuccessfulCompletion(jobId)']],
+  ['docs/OWNER_RUNBOOK.md', ['lockedBurnReserve', 'CompletionBurnReserveRefunded']],
+  ['docs/DEPRECATION_NOTICE_v0.1.x_EMPLOYER_WIN_BURN.md', ['v0.1.x', 'wrong for completion-only requirement']],
+  ['docs/REFERENCE/ADR_2026-03-30_COMPLETION_ONLY_BURN_RESERVE.md', ['Option B', 'liveness']],
+  ['docs/RELEASE_NOTES_v0.2.0_COMPLETION_BURN_ONLY.md', ['completion-only', 'v0.1.x is deprecated']],
+  ['docs/REFERENCE/BUG_AUDIT_COMPLETION_BURN_2026-03-30.md', ['_refundEmployer', 'liveness griefing']],
+  ['docs/DEPLOYMENT/CORRECTED_SUCCESSOR_v0.2.0_RUNBOOK.md', ['release:build', 'release:postdeploy']],
+  ['docs/MIGRATION_TO_V0_2_0_COMPLETION_BURN_ONLY.md', ['setJobManager(newManager)', 'setEnsJobPages(existingEnsJobPages)']],
+  ['docs/ETHERSCAN_GUIDE.md', [AGIALPHA_MAINNET]]
 ];
 
 let failed = false;
@@ -78,4 +43,4 @@ if (failed) {
   process.exit(1);
 }
 
-pass('EmployerBurn canonical docs checks passed');
+pass('Completion-only employer-burn canonical docs checks passed');

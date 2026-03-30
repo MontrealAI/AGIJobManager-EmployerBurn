@@ -1,3 +1,5 @@
+> v0.2.0 corrective deployment runbook: `docs/DEPLOYMENT/CORRECTED_SUCCESSOR_v0.2.0_RUNBOOK.md`
+
 # Deployment Documentation Index
 
 ## Start here by deployment task
