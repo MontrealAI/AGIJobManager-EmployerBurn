@@ -1,5 +1,8 @@
 # Mainnet migration from legacy AGIJobManager snapshot
 
+> [!WARNING]
+> The legacy deployment path described below preserves historical semantics and does **not** satisfy the corrected createJob-only burn requirement. For corrected deployments, use successor release `v0.2.0` with create-job burn only, and keep old paused release deprecated.
+
 This runbook deploys `contracts/AGIJobManager.sol` from a deterministic, committed snapshot of the live legacy mainnet contract `0x0178B6baD606aaF908f72135B8eC32Fc1D5bA477`.
 
 Artifacts in this repo:
