@@ -145,6 +145,7 @@ node scripts/etherscan/prepare_inputs.js --action convert --amount 1.5 --duratio
 - Later settlement/refund/dispute/cancel/delist/expiry paths return escrow/bonds only and never burn.
 - AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
 - Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
+- The corrected successor deployment is AGIALPHA-pinned; `updateAGITokenAddress(...)` is intentionally disabled and reverts.
 
 ### Etherscan input formatting
 - `bytes32`: `0x` + 64 hex chars.
@@ -451,3 +452,4 @@ No. Standard `approve` is supported and is the default Etherscan-first path.
 - **Paused:** emergency stop state where protected functions revert.
 - **Revert:** transaction fails and all state changes in that tx are undone.
 - **Event:** log emitted by a contract, used as verifiable evidence of what happened.
+

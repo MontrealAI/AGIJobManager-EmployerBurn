@@ -59,7 +59,7 @@ The Employer is solely and exclusively responsible for:
 - The legality, accuracy, and completeness of the Job description, Job Spec URI, details, and any referenced content.
 - Ensuring the Job does not solicit or require unlawful acts, regulated acts without permits, infringement, malware, fraud, or rights violations.
 - Determining whether a Job creates (or could be interpreted as creating) an employment relationship, and satisfying all obligations associated with such classification, including payroll, withholding, insurance, benefits, reporting, and worker protections.
-- All tax obligations relating to posting the Job, escrowing $AGIALPHA, receiving any refunds, or any other token transfers.
+- All tax obligations relating to posting the Job, escrowing $AGIALPHA, paying the non-refundable createJob burn, receiving any refunds, or any other token transfers.
 - Any off-chain contracting, NDAs, IP assignments/licenses, confidentiality terms, acceptance criteria, warranties, or service levels for the Job.
 
 4.2 Agent Responsibilities (Exclusive)
@@ -92,7 +92,7 @@ This section summarizes expected mechanics; the deployed code controls.
 
 5.1 Posting a Job (Employer)
 
-- To post a Job, the Employer escrows the full payout amount in $AGIALPHA into the Protocol.
+- To post a Job, the Employer funds two amounts in $AGIALPHA in one atomic transaction: (i) payout escrow transferred into the Protocol, and (ii) a non-refundable posting burn charged only at job creation.
 - The Employer provides a Job Spec URI and optional details.
 - Jobs may have maximum payout and duration limits set by the Protocol.
 
@@ -149,6 +149,11 @@ This section summarizes expected mechanics; the deployed code controls.
 5) Gas fees. Users pay their own gas/transaction fees and accept the risk of network congestion, failed transactions, MEV, reorgs, and other chain-level issues.
 
 8. Taxes, Withholding, Reporting (Exclusive User Responsibility)
+
+Economic disclosure for createJob-only burn semantics:
+
+- AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+- Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
 
 The Employer, Agent, and each Validator are exclusively responsible for:
 
@@ -347,6 +352,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     error InsolventEscrowBalance();
     error ConfigLocked();
     error SettlementPaused();
+    error AGIALPHATokenPinned();
 
     IERC20 public agiToken;
     string private baseIpfsUrl;
@@ -1065,12 +1071,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function removeModerator(address _moderator) external onlyOwner {
         _setAddressFlag(moderators, _moderator, false);
     }
-    function updateAGITokenAddress(address _newTokenAddress) external onlyOwner whenIdentityConfigurable {
-        if (_newTokenAddress.code.length == 0) revert InvalidParameters();
-        _requireEmptyEscrow();
-        address oldToken = address(agiToken);
-        agiToken = IERC20(_newTokenAddress);
-        emit AGITokenAddressUpdated(oldToken, _newTokenAddress);
+    /// @notice Disabled in the corrected successor release; AGIALPHA token is pinned for trust minimization.
+    function updateAGITokenAddress(address) external pure {
+        revert AGIALPHATokenPinned();
     }
     function updateEnsRegistry(address _newEnsRegistry) external onlyOwner whenIdentityConfigurable {
         if (_newEnsRegistry.code.length == 0) revert InvalidParameters();

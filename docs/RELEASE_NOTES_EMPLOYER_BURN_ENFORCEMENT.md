@@ -10,7 +10,8 @@ The prior paused release enforced burn on employer-win settlement/refund paths. 
 - Burn is funded only from the employer wallet authorization path (`burnFrom(employer, burnAmount)`).
 - Settlement/refund/dispute/cancel/delist/expiry paths no longer burn.
 - Burn and escrow accounting are explicitly separated.
-- Added create-job helper views and per-job economic snapshots for Etherscan-first transparency.
+- Added create-job helper views and per-job economic snapshots for Etherscan-first transparency (`getJobBurnAmountSnapshot` + `getJobEconomicSnapshot`).
+- AGIALPHA token mutability is disabled in the successor; `updateAGITokenAddress(...)` reverts to preserve pinning trust assumptions.
 
 ## Contract interface updates
 - New event: `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
@@ -18,6 +19,7 @@ The prior paused release enforced burn on employer-win settlement/refund paths. 
   - `quoteCreateJobBurn(uint256 payout)`
   - `getCreateJobFundingRequirement(uint256 payout)`
   - `getCreateJobAllowanceRequirement(uint256 payout)`
+  - `getJobBurnAmountSnapshot(uint256 jobId)`
   - `getJobEconomicSnapshot(uint256 jobId)`
 
 ## Behavior guarantees in successor
@@ -31,3 +33,4 @@ The prior paused release enforced burn on employer-win settlement/refund paths. 
 - Use corrected successor deployment path only.
 - Update employer runbooks to approve `payout + burn` before `createJob`.
 - Monitor `EmployerBurnChargedAtJobCreation` at posting time.
+
