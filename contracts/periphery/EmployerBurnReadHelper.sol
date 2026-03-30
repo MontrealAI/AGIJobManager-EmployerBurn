@@ -33,6 +33,17 @@ interface IERC20ReadOnly {
 /// @dev Corrected successor semantics charge burn only at createJob. Settlement-time burn readiness is deprecated.
 contract EmployerBurnReadHelper {
     uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
+    uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
+    uint8 public constant EMPLOYER_WIN_PATH_DISPUTE_MODERATOR = 2;
+    uint8 public constant EMPLOYER_WIN_PATH_STALE_DISPUTE_OWNER = 3;
+
+    uint8 public constant BURN_READINESS_OK = 0;
+    uint8 public constant BURN_READINESS_NOT_EMPLOYER_WIN_PATH = 1;
+    uint8 public constant BURN_READINESS_ALREADY_TERMINAL = 2;
+    uint8 public constant BURN_READINESS_BURN_BPS_ZERO = 3;
+    uint8 public constant BURN_READINESS_INSUFFICIENT_BALANCE = 4;
+    uint8 public constant BURN_READINESS_INSUFFICIENT_ALLOWANCE = 5;
+    uint8 public constant BURN_READINESS_SETTLEMENT_PAUSED = 6;
     uint8 public constant BURN_READINESS_NOT_APPLICABLE_CREATEJOB_ONLY = 7;
 
     IAGIJobManagerBurnView public immutable manager;
