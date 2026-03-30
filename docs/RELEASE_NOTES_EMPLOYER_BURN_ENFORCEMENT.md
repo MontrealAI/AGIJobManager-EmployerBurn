@@ -1,27 +1,33 @@
-# Release Notes — Employer Burn Enforcement Hardening
+# Release Notes — Corrected Successor v0.2.0 (CreateJob-Only Burn)
 
-Date: 2026-03-28
+Date: 2026-03-30
 
-## Summary
-- Added Etherscan-first helper views for employer-burn preflight checks.
-- Kept employer-burn enforcement on authoritative employer-win settlement path in `AGIJobManager`.
-- Reconciled external AGIALPHA token verification notes to dated live-source checks.
-- Added `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` for burn observability on authoritative employer-win paths.
-- Reconfirmed contract-size gate status: `AGIJobManager` runtime and initcode are both within Ethereum mainnet hard limits (EIP-170/EIP-3860).
-- Added explicit regression coverage for paused-token behavior: employer-win settlement now has a dedicated test asserting atomic revert when token pause blocks `burnFrom`.
+## ⚠️ Deprecation notice
+The prior paused release enforced burn on employer-win settlement/refund paths. That behavior is semantically wrong for the corrected requirement and is now deprecated for new deployments.
 
-## Contract interface additions
-- New additive periphery contract: `EmployerBurnReadHelper`.
-- `quoteEmployerBurn(uint256 jobId)`
-- `getEmployerBurnRequirements(uint256 jobId)`
-- `getEmployerBurnReadiness(uint256 jobId)`
-- `canFinalizeEmployerWinWithBurn(uint256 jobId)`
+## Summary of correction
+- Burn now occurs exactly once at `createJob`.
+- Burn is funded only from the employer wallet authorization path (`burnFrom(employer, burnAmount)`).
+- Settlement/refund/dispute/cancel/delist/expiry paths no longer burn.
+- Burn and escrow accounting are explicitly separated.
+- Added create-job helper views and per-job economic snapshots for Etherscan-first transparency.
 
-## Compatibility
-- Backward-compatible with existing employer-burn behavior.
-- No migration of existing job state required.
+## Contract interface updates
+- New event: `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
+- New views:
+  - `quoteCreateJobBurn(uint256 payout)`
+  - `getCreateJobFundingRequirement(uint256 payout)`
+  - `getCreateJobAllowanceRequirement(uint256 payout)`
+  - `getJobEconomicSnapshot(uint256 jobId)`
+
+## Behavior guarantees in successor
+- Burn is an immediate non-refundable posting cost at job creation.
+- Later refunds return escrow/bonds only, never previously burned amount.
+- AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+- Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
 
 ## Operator action
-- Continue approving AGIJobManager on AGIALPHA from employer wallet.
-- Use helper views before attempting employer-win finalization/dispute settlement.
-- Monitor `EmployerBurnEnforced` during employer-win settlements to confirm payer, token, amount, caller, and path code.
+- Keep old deployment paused/deprecated.
+- Use corrected successor deployment path only.
+- Update employer runbooks to approve `payout + burn` before `createJob`.
+- Monitor `EmployerBurnChargedAtJobCreation` at posting time.

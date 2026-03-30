@@ -1,9 +1,13 @@
 # Deployment Documentation Index
 
+> [!WARNING]
+> Old paused release semantics burned on employer-win settlement/refund paths. For corrected requirements, deploy the successor createJob-only burn release (`v0.2.0`) and keep old deployment deprecated.
+
 ## Start here by deployment task
 - Fresh deployment (official path): [../../hardhat/README.md](../../hardhat/README.md)
 - ENSJobPages replacement/cutover: [./ENS_JOB_PAGES_MAINNET_REPLACEMENT.md](./ENS_JOB_PAGES_MAINNET_REPLACEMENT.md)
 - Owner web-only deployment/operations: [./OWNER_MAINNET_DEPLOYMENT_AND_OPERATIONS_GUIDE.md](./OWNER_MAINNET_DEPLOYMENT_AND_OPERATIONS_GUIDE.md)
+- Migration announcement: [../REFERENCE/MIGRATION_ANNOUNCEMENT_V0_2_0.md](../REFERENCE/MIGRATION_ANNOUNCEMENT_V0_2_0.md)
 
 ## Canonical answers for operators
 - Recommended deployment path: **Hardhat**.

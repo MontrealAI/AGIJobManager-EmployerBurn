@@ -10,8 +10,8 @@ const requiredSnippets = [
     'README.md',
     [
       AGIALPHA_MAINNET,
-      'EmployerBurnReadHelper',
-      'EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)'
+      'quoteCreateJobBurn(payout)',
+      'EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)'
     ]
   ],
   [
@@ -19,8 +19,8 @@ const requiredSnippets = [
     [
       AGIALPHA_MAINNET,
       'approve **AGIJobManager** as spender',
-      'Before you click **Write** (Employer burn transactions)',
-      'Employer burn readiness reason codes (plain English)'
+      'Before you click **Write** (createJob with burn)',
+      'EmployerBurnChargedAtJobCreation'
     ]
   ],
   [
@@ -40,14 +40,14 @@ const requiredSnippets = [
   [
     'MAINNET_DEPLOYMENT_CHECKLIST.md',
     [
-      AGIALPHA_MAINNET,
-      'EmployerBurnEnforced'
+      'payout escrow + createJob burn',
+      'EmployerBurnChargedAtJobCreation'
     ]
   ],
   [
     'docs/REFERENCE/EMPLOYER_BURN_DESIGN.md',
     [
-      'burnFrom(job.employer, burnAmount)',
+      'burnFrom(employer, burnAmount)',
       'No protocol subsidy'
     ]
   ]

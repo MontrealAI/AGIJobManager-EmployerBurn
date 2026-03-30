@@ -4,8 +4,9 @@
 
 - Confirm the AGIALPHA mainnet token address is `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Confirm `employerBurnBps` policy is decided and documented before production traffic.
-- Confirm employer guidance includes separate burn allowance/balance requirements beyond payout escrow.
-- Confirm event monitoring includes `EmployerBurnEnforced` for employer-win burn observability.
+- Confirm employer guidance includes one upfront allowance/balance requirement: `payout escrow + createJob burn`.
+- Confirm event monitoring includes `EmployerBurnChargedAtJobCreation` and confirms no settlement-path burn events.
+- Confirm old paused deployment is explicitly marked deprecated and not reused for createJob-only burn requirements.
 - Confirm `npm run size` passes EIP-170 runtime cap (24,576 bytes) and EIP-3860 initcode cap (49,152 bytes) before deploying on Ethereum mainnet.
 - Authoritative limit references: EIP-170 (`https://eips.ethereum.org/EIPS/eip-170`) and EIP-3860 (`https://eips.ethereum.org/EIPS/eip-3860`).
 - Confirm `npm run size` also passes the no-growth guard in `scripts/size-baseline.json` (AGIJobManager runtime growth currently locked to +0 bytes unless intentionally re-baselined).

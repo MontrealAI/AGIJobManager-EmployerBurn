@@ -9,6 +9,7 @@ interface IAGIJobManagerBurnView {
     function challengePeriodAfterApproval() external view returns (uint256);
     function disputeReviewPeriod() external view returns (uint256);
     function settlementPaused() external view returns (bool);
+    function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot);
     function getJobCore(uint256 jobId)
         external
         view
@@ -76,6 +77,44 @@ contract EmployerBurnReadHelper {
         burnBps = manager.employerBurnBps();
         spender = address(manager);
         amount = (payout * burnBps) / 10_000;
+    }
+
+    function quoteCreateJobBurn(uint256 payout) external view returns (uint256 burnAmount, uint256 burnBps) {
+        burnBps = manager.employerBurnBps();
+        burnAmount = (payout * burnBps) / 10_000;
+    }
+
+    function getCreateJobFundingRequirement(uint256 payout)
+        external
+        view
+        returns (uint256 escrowAmount, uint256 burnAmount, uint256 totalUpfront)
+    {
+        escrowAmount = payout;
+        burnAmount = (payout * manager.employerBurnBps()) / 10_000;
+        totalUpfront = escrowAmount + burnAmount;
+    }
+
+    function getCreateJobAllowanceRequirement(uint256 payout) external view returns (uint256 allowanceRequired) {
+        allowanceRequired = payout + ((payout * manager.employerBurnBps()) / 10_000);
+    }
+
+    function getJobEconomicSnapshot(uint256 jobId)
+        external
+        view
+        returns (
+            address employer,
+            address token,
+            uint256 payoutEscrowed,
+            uint256 burnAmountCharged,
+            uint256 totalUpfrontAtCreate,
+            uint256 burnBpsSnapshot
+        )
+    {
+        (employer,, payoutEscrowed,,,,,,) = manager.getJobCore(jobId);
+        token = manager.agiToken();
+        burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
+        burnAmountCharged = (payoutEscrowed * burnBpsSnapshot) / 10_000;
+        totalUpfrontAtCreate = payoutEscrowed + burnAmountCharged;
     }
 
     function getEmployerBurnRequirements(uint256 jobId)
