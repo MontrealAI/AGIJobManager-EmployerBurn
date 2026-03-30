@@ -58,3 +58,41 @@ if (!fs.existsSync(verifyTargetsPath)) {
   process.exit(1);
 }
 console.log('✅ verify-targets.json present.');
+
+if (!deployment.finalOwner) {
+  console.error('❌ Deployment record missing finalOwner');
+  process.exit(1);
+}
+console.log(`✅ finalOwner recorded: ${deployment.finalOwner}`);
+
+if (typeof deployment.constructorArgs?.agiTokenAddress !== 'string') {
+  console.error('❌ Deployment record missing constructorArgs.agiTokenAddress');
+  process.exit(1);
+}
+console.log(`✅ agiTokenAddress recorded: ${deployment.constructorArgs.agiTokenAddress}`);
+
+const verification = deployment.verification?.AGIJobManager?.status;
+if (!verification || (verification !== 'verified' && verification !== 'already_verified')) {
+  console.error(`❌ AGIJobManager verification status not ready: ${verification || 'missing'}`);
+  process.exit(1);
+}
+console.log(`✅ AGIJobManager verification status: ${verification}`);
+
+const artifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'AGIJobManager.sol', 'AGIJobManager.json');
+if (!fs.existsSync(artifactPath)) {
+  console.error(`❌ Missing Hardhat artifact for AGIJobManager: ${artifactPath}`);
+  process.exit(1);
+}
+const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+const selectors = new Set((artifact.abi || []).filter((x) => x.type === 'function').map((x) => x.name));
+const requiredHelpers = [
+  'getJobBurnBpsSnapshot',
+  'setEnsJobPages',
+];
+for (const fn of requiredHelpers) {
+  if (!selectors.has(fn)) {
+    console.error(`❌ Missing required helper/ENS function in ABI: ${fn}`);
+    process.exit(1);
+  }
+}
+console.log('✅ Required create-job burn helpers + ENS wiring function present in ABI.');

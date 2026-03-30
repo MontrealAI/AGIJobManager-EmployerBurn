@@ -6,7 +6,10 @@
 [![Security Policy][security-badge]][security-url]
 [![License][license-badge]][license-url]
 
-AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI work agreements where employer-win settlement paths enforce an employer-authorized AGIALPHA burn, with optional ENS-backed job pages managed by `ENSJobPages`.
+AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI work agreements where the corrected successor release charges an employer-authorized AGIALPHA burn **only at job creation** (never during settlement), with optional ENS-backed job pages managed by `ENSJobPages`.
+
+> [!WARNING]
+> **Deprecation notice (old paused release):** the prior deployment implemented burn on employer-win settlement/refund paths, which is semantically wrong for the corrected requirement. That release is paused/deprecated and must not be used for new deployments requiring createJob-only burn semantics. Use the corrected successor release path (`v0.2.0`) only.
 
 > [!IMPORTANT]
 > **New here? Start with the [Genesis Console](https://montrealai.github.io/agijobmanagerv0.html).**  
@@ -42,16 +45,22 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
   - `AGIJobManager owner` controls `setEnsJobPages(...)` and AGIJobManager governance.
   - `wrapped-root owner` controls NameWrapper approval needed for wrapped-root ENS writes.
 - **Canonical safety rule:** ENS hooks are best-effort side effects; settlement/dispute outcomes remain authoritative on AGIJobManager.
-- **Employer-burn semantics (this repo variant):** employer-favor settlement paths can burn AGIALPHA directly from the employer wallet via `burnFrom`, never from protocol escrow/treasury balances.
+- **Employer-burn semantics (this repo variant):** corrected successor semantics apply: `createJob` burns AGIALPHA directly from the employer wallet via `burnFrom`; no settlement/refund/dispute/cancel/expiry path burns.
 
-### Employer-funded burn quick note (Etherscan-first)
+### Employer-funded burn quick note (Etherscan-first, corrected successor)
 
 - Mainnet AGIALPHA token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
-- Burn executes only on employer-win settlement paths (`_refundEmployer` flow via finalize/dispute resolution), not on agent-win, cancel, or expiry paths.
+- Burn executes only in `createJob`, not on finalization/refund/cancel/delist/expiry/dispute paths.
 - Operator configures burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
-- Etherscan helper views are provided by additive periphery contract `EmployerBurnReadHelper`: `quoteEmployerBurn(jobId)`, `getEmployerBurnRequirements(jobId)`, `getEmployerBurnReadiness(jobId)`, `canFinalizeEmployerWinWithBurn(jobId)`.
-- Employers must keep extra AGIALPHA balance and allowance for the burn, in addition to escrow approval.
-- Burn observability: settlement emits `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` when non-zero burn is applied.
+- Etherscan helper views on additive `EmployerBurnReadHelper`:
+  - `quoteCreateJobBurn(payout)`
+  - `getCreateJobFundingRequirement(payout)`
+  - `getCreateJobAllowanceRequirement(payout)`
+  - `getJobEconomicSnapshot(jobId)`
+- Employers should approve one amount before posting: `escrow + burn`.
+- Burn observability: `createJob` emits `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
+- **Disclosure:** AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+- **Tax disclosure:** Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
 - Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 - Upstream reconciliation note: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
 - Latest audit and blocker report (2026-03-29): `docs/REFERENCE/MAINNET_RELEASE_RECONCILIATION_2026-03-29.md` (with prior baseline in `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`).

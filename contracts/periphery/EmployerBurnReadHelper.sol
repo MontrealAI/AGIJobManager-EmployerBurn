@@ -9,6 +9,8 @@ interface IAGIJobManagerBurnView {
     function challengePeriodAfterApproval() external view returns (uint256);
     function disputeReviewPeriod() external view returns (uint256);
     function settlementPaused() external view returns (bool);
+    function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot);
+    function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address tokenSnapshot);
     function getJobCore(uint256 jobId)
         external
         view
@@ -44,6 +46,8 @@ interface IERC20ReadOnly {
 /// @title EmployerBurnReadHelper
 /// @notice Read-only helper contract for Etherscan-first employer burn preflight checks.
 /// @dev This helper is additive and non-authoritative: AGIJobManager remains settlement source-of-truth.
+/// @dev Settlement readiness methods are kept for backward compatibility but no longer gate on burn funding,
+/// @dev because burn is charged only at createJob in corrected successor semantics.
 contract EmployerBurnReadHelper {
     uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
     uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
@@ -72,10 +76,48 @@ contract EmployerBurnReadHelper {
     {
         uint256 payout;
         (payer,, payout,,,,,,) = manager.getJobCore(jobId);
-        token = manager.agiToken();
-        burnBps = manager.employerBurnBps();
+        token = manager.getJobBurnTokenSnapshot(jobId);
+        burnBps = manager.getJobBurnBpsSnapshot(jobId);
         spender = address(manager);
         amount = (payout * burnBps) / 10_000;
+    }
+
+    function quoteCreateJobBurn(uint256 payout) external view returns (uint256 burnAmount, uint256 burnBps) {
+        burnBps = manager.employerBurnBps();
+        burnAmount = (payout * burnBps) / 10_000;
+    }
+
+    function getCreateJobFundingRequirement(uint256 payout)
+        external
+        view
+        returns (uint256 escrowAmount, uint256 burnAmount, uint256 totalUpfront)
+    {
+        escrowAmount = payout;
+        burnAmount = (payout * manager.employerBurnBps()) / 10_000;
+        totalUpfront = escrowAmount + burnAmount;
+    }
+
+    function getCreateJobAllowanceRequirement(uint256 payout) external view returns (uint256 allowanceRequired) {
+        allowanceRequired = payout + ((payout * manager.employerBurnBps()) / 10_000);
+    }
+
+    function getJobEconomicSnapshot(uint256 jobId)
+        external
+        view
+        returns (
+            address employer,
+            address token,
+            uint256 payoutEscrowed,
+            uint256 burnAmountCharged,
+            uint256 totalUpfrontAtCreate,
+            uint256 burnBpsSnapshot
+        )
+    {
+        (employer,, payoutEscrowed,,,,,,) = manager.getJobCore(jobId);
+        token = manager.getJobBurnTokenSnapshot(jobId);
+        burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
+        burnAmountCharged = (payoutEscrowed * burnBpsSnapshot) / 10_000;
+        totalUpfrontAtCreate = payoutEscrowed + burnAmountCharged;
     }
 
     function getEmployerBurnRequirements(uint256 jobId)
@@ -94,9 +136,10 @@ contract EmployerBurnReadHelper {
     {
         uint256 payout;
         (payer,, payout,,,,,,) = manager.getJobCore(jobId);
-        token = manager.agiToken();
+        token = manager.getJobBurnTokenSnapshot(jobId);
         spender = address(manager);
-        amount = (payout * manager.employerBurnBps()) / 10_000;
+        uint256 burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
+        amount = (payout * burnBpsSnapshot) / 10_000;
         payerBalance = IERC20ReadOnly(token).balanceOf(payer);
         payerAllowance = IERC20ReadOnly(token).allowance(payer, spender);
         balanceSufficient = payerBalance >= amount;
@@ -118,10 +161,11 @@ contract EmployerBurnReadHelper {
     }
 
     function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
-        (bool ready, bool balanceOk, bool allowanceOk,, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
+        (bool ready,,, uint8 reasonCode, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
         bool isFinalizePath = settlementPathCode > EMPLOYER_WIN_PATH_NONE
             && settlementPathCode < EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-        return ready && balanceOk && allowanceOk && isFinalizePath;
+        bool reasonAcceptsFinalize = reasonCode == BURN_READINESS_OK || reasonCode == BURN_READINESS_BURN_BPS_ZERO;
+        return ready && reasonAcceptsFinalize && isFinalizePath;
     }
 
     function _getEmployerBurnReadiness(uint256 jobId) internal view returns (bool, bool, bool, uint8, uint8) {
@@ -157,15 +201,12 @@ contract EmployerBurnReadHelper {
 
     function _getFundingReadiness(address employer, uint256 burnAmount)
         internal
-        view
+        pure
         returns (bool balanceSufficient, bool allowanceSufficient)
     {
-        if (burnAmount == 0) {
-            return (true, true);
-        }
-        address token = manager.agiToken();
-        balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
-        allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
+        employer;
+        burnAmount;
+        return (true, true);
     }
 
     function _readinessForDisputed(

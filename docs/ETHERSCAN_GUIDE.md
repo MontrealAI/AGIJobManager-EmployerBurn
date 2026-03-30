@@ -14,35 +14,26 @@ Use this guide if you only have:
 
 ## Employer burn quick flow (Etherscan-first)
 
-1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` on `EmployerBurnReadHelper`.
-2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender (not the helper).
-3. Execute the eligible settlement path on AGIJobManager (`finalizeJob`, `resolveDisputeWithCode` resolution `2`, or `resolveStaleDispute` with `employerWins=true`).
-4. Verify `EmployerBurnEnforced` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, token, amount, finalizer, and path.
+Corrected successor semantics: burn is createJob-only.
 
-### Before you click **Write** (Employer burn transactions)
+1. Read `getCreateJobFundingRequirement(payout)` on `EmployerBurnReadHelper`.
+2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender for `totalUpfront = payout + burn`.
+3. Call `createJob(jobSpecURI, payout, duration, details)` once; this escrows payout and burns employer-funded amount in one atomic transaction.
+4. Verify event `EmployerBurnChargedAtJobCreation(...)` in the createJob transaction.
+
+### Before you click **Write** (createJob with burn)
 
 1. Confirm you are on the verified AGIJobManager contract page (Write Contract tab).
 2. Confirm the AGIALPHA token is exactly `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
-3. On AGIALPHA, confirm `allowance(employer, AGIJobManager)` is at least the burn quote.
-4. Confirm employer wallet AGIALPHA balance covers the burn quote (this is separate from escrow already posted).
-5. Confirm `getEmployerBurnReadiness(jobId)` is on an employer-win path **before** writing:
-   - `reasonCode` must **not** be `BURN_READINESS_NOT_EMPLOYER_WIN_PATH` (`1`).
-   - `settlementPathCode` must be one of `1`, `2`, or `3` (not `0`).
-6. Confirm `getEmployerBurnReadiness(jobId)` does **not** return:
-   - `BURN_READINESS_INSUFFICIENT_BALANCE` (`4`)
-   - `BURN_READINESS_INSUFFICIENT_ALLOWANCE` (`5`)
-   - `BURN_READINESS_SETTLEMENT_PAUSED` (`6`)
-7. Confirm job status is not already terminal (`completed` or `expired`) from `getJobCore(jobId)`.
-8. Confirm you are calling the intended settlement function:
-   - Permissionless lane: `finalizeJob(jobId)`
-   - Moderator lane: `resolveDisputeWithCode(jobId, 2, reason)`
-   - Owner stale-dispute lane: `resolveStaleDispute(jobId, true)`
-   - Important: `finalizeJob` can be called by any address when conditions are met; if employer-win and burn is non-zero, AGIJobManager still burns from the employer wallet authorization (`burnFrom(employer, amount)`), never from caller funds.
-9. Confirm wallet/network in your browser extension is Ethereum mainnet.
-10. Submit and wait for receipt status `Success`.
-11. Verify burn evidence conditionally:
-   - If `quoteEmployerBurn(jobId).amount > 0`, the settlement tx **must** include `EmployerBurnEnforced`.
-   - If `quoteEmployerBurn(jobId).amount == 0` (for example `BURN_READINESS_BURN_BPS_ZERO` / reason code `3`), settlement can succeed without that event.
+3. Read `getCreateJobFundingRequirement(payout)` on `EmployerBurnReadHelper` and confirm:
+   - `escrowAmount == payout`
+   - `burnAmount` (non-refundable posting burn)
+   - `totalUpfront = escrowAmount + burnAmount`
+4. On AGIALPHA, confirm `allowance(employer, AGIJobManager) >= totalUpfront`.
+5. Confirm employer wallet AGIALPHA `balanceOf(employer) >= totalUpfront`.
+6. Confirm wallet/network in your browser extension is Ethereum mainnet.
+7. Submit `createJob(...)` and wait for receipt `Success`.
+8. Verify `EmployerBurnChargedAtJobCreation` in the receipt logs.
 
 ### Exact approval vs unlimited approval (risk warning)
 
@@ -146,25 +137,12 @@ node scripts/etherscan/prepare_inputs.js --action convert --amount 1.5 --duratio
 | `ConfigLocked` | identity config already locked | cannot change identity config |
 | `finalizeJob` opens dispute | validator outcomes/quorum unresolved | moderator resolution path is required |
 
-### Employer burn readiness reason codes (plain English)
+### Corrected economic disclosures
 
-`getEmployerBurnReadiness(jobId)` returns `reasonCode` + `settlementPathCode`.
-
-| reasonCode | Constant | Plain English |
-|---:|---|---|
-| 0 | `BURN_READINESS_OK` | Job is on an employer-win path and burn funding checks passed. |
-| 1 | `BURN_READINESS_NOT_EMPLOYER_WIN_PATH` | Current job state is not an employer-win settlement path right now. |
-| 2 | `BURN_READINESS_ALREADY_TERMINAL` | Job already completed or expired; no further settlement burn flow. |
-| 3 | `BURN_READINESS_BURN_BPS_ZERO` | Employer burn rate is currently zero; no burn amount required. |
-| 4 | `BURN_READINESS_INSUFFICIENT_BALANCE` | Employer wallet AGIALPHA balance is too low for the burn amount. |
-| 5 | `BURN_READINESS_INSUFFICIENT_ALLOWANCE` | Employer approved amount is too low for AGIJobManager to burn. |
-| 6 | `BURN_READINESS_SETTLEMENT_PAUSED` | Settlement lane is paused; settlement call will revert until unpaused. |
-
-`settlementPathCode` quick reference:
-- `0`: no active employer-win settlement path right now.
-- `1`: employer-win through `finalizeJob`.
-- `2`: employer-win through moderator dispute resolution.
-- `3`: employer-win through stale-dispute owner resolution.
+- Burn is charged only at `createJob`, and is an immediate non-refundable posting cost.
+- Later settlement/refund/dispute/cancel/delist/expiry paths return escrow/bonds only and never burn.
+- AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+- Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
 
 ### Etherscan input formatting
 - `bytes32`: `0x` + 64 hex chars.
@@ -236,8 +214,7 @@ jobId: 42
 ### 4) Finalize after windows
 Write: `finalizeJob(jobId)`
 - `jobId`: numeric ID to settle
-- If the job settles employer-win and `employerBurnBps > 0`, AGIJobManager also executes `burnFrom(employer, burnAmount)` on AGIALPHA; ensure employer allowance/balance includes burn coverage.
-- Verify burn-path observability in logs with `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
+- Finalization never burns in corrected successor semantics.
 
 ```text
 jobId: 42

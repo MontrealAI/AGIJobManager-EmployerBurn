@@ -12,8 +12,8 @@ From repository root (preferred for operators):
 
 - `npm run doctor`
 - `npm run release:build`
-- `npm run release:dry-run`
-- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet`
+- `npm run release:dry-run:successor`
+- `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet:successor`
 - `npm run release:verify`
 - `npm run release:postdeploy`
 - `npm run release:readiness`
