@@ -115,7 +115,7 @@ if (!fs.existsSync(helperArtifactPath)) {
 }
 const helperArtifact = JSON.parse(fs.readFileSync(helperArtifactPath, 'utf8'));
 const helperSelectors = new Set((helperArtifact.abi || []).filter((x) => x.type === 'function').map((x) => x.name));
-for (const fn of ['quoteCreateJobBurn', 'getCreateJobFundingRequirement', 'getCreateJobAllowanceRequirement', 'getJobBurnAmountSnapshot', 'getJobEconomicSnapshot']) {
+for (const fn of ['quoteCreateJobBurn', 'getCreateJobFundingRequirement', 'getCreateJobAllowanceRequirement', 'getCreateJobAllowanceRequirementWithToken', 'getJobBurnAmountSnapshot', 'getJobEconomicSnapshot']) {
   if (!helperSelectors.has(fn)) {
     console.error(`❌ Missing required EmployerBurnReadHelper function in ABI: ${fn}`);
     process.exit(1);
