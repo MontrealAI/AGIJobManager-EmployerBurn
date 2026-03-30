@@ -93,11 +93,11 @@ if (!fs.existsSync(artifactPath)) {
   process.exit(1);
 }
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
-const selectors = new Set((artifact.abi || []).filter((x) => x.type === 'function').map((x) => x.name));
+const abi = artifact.abi || [];
+const selectors = new Set(abi.filter((x) => x.type === 'function').map((x) => x.name));
 const requiredHelpers = [
   'getJobBurnBpsSnapshot',
   'getJobBurnTokenSnapshot',
-  'updateAGITokenAddress',
   'setEnsJobPages',
 ];
 for (const fn of requiredHelpers) {
@@ -107,6 +107,22 @@ for (const fn of requiredHelpers) {
   }
 }
 console.log('✅ Required create-job burn helpers + ENS wiring function present in ABI.');
+
+const updateTokenFn = abi.find((x) => x.type === 'function' && x.name === 'updateAGITokenAddress');
+if (!updateTokenFn) {
+  console.error('❌ Missing updateAGITokenAddress function in ABI.');
+  process.exit(1);
+}
+if (updateTokenFn.stateMutability !== 'pure') {
+  console.error(`❌ updateAGITokenAddress must be pure (disabled pinning stub). Found mutability=${updateTokenFn.stateMutability}`);
+  process.exit(1);
+}
+const errorNames = new Set(abi.filter((x) => x.type === 'error').map((x) => x.name));
+if (!errorNames.has('AGIALPHATokenPinned')) {
+  console.error('❌ Missing AGIALPHATokenPinned custom error in ABI.');
+  process.exit(1);
+}
+console.log('✅ Token pinning behavior surface validated (pure update stub + AGIALPHATokenPinned error).');
 
 const helperArtifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'periphery', 'EmployerBurnReadHelper.sol', 'EmployerBurnReadHelper.json');
 if (!fs.existsSync(helperArtifactPath)) {

@@ -784,8 +784,7 @@ contract("AGIJobManager comprehensive", (accounts) => {
       assert.equal(await manager.validationRewardPercentage(), "12");
 
       const replacementToken = await MockERC20.new({ from: owner });
-      await manager.updateAGITokenAddress(replacementToken.address, { from: owner });
-      assert.equal(await manager.agiToken(), replacementToken.address);
+      await expectRevert.unspecified(manager.updateAGITokenAddress(replacementToken.address, { from: owner }));
     });
 
     it("withdraws AGI within bounds and respects pause", async () => {

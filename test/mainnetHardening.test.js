@@ -537,7 +537,7 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     const wrapper = await MockNameWrapper.new({ from: owner });
     const manager = await deployManager(token, ens.address, wrapper.address);
 
-    await expectCustomError(manager.updateAGITokenAddress.call(owner, { from: owner }), "InvalidParameters");
+    await expectCustomError(manager.updateAGITokenAddress.call(owner, { from: owner }), "AGIALPHATokenPinned");
     await expectCustomError(manager.updateEnsRegistry.call(owner, { from: owner }), "InvalidParameters");
     await expectCustomError(manager.updateNameWrapper.call(owner, { from: owner }), "InvalidParameters");
     await manager.updateNameWrapper("0x0000000000000000000000000000000000000000", { from: owner });
