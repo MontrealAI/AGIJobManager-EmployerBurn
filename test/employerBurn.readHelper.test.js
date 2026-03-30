@@ -107,4 +107,15 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(readiness.settlementPathCode.toString(), '12');
     assert.equal(await helper.canFinalizeSuccessfulCompletion(jobId), false);
   });
+
+  it('reports reserve as not funded after terminal completion', async () => {
+    const { jobId } = await setup();
+    await manager.validateJob(jobId, '', EMPTY_PROOF, { from: validatorA });
+    await manager.validateJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    await time.increase(2);
+    await manager.finalizeJob(jobId, { from: owner });
+
+    const funding = await helper.getCompletionBurnFundingStatus(jobId);
+    assert.equal(funding.reserveFunded, false);
+  });
 });

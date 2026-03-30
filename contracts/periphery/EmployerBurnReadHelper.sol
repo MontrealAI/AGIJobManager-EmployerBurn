@@ -69,10 +69,12 @@ contract EmployerBurnReadHelper {
         returns (uint256 reserveAmount, bool reserveFunded, uint256 lockedReserveTotal)
     {
         uint256 payout;
-        (,, payout,,,,,,) = manager.getJobCore(jobId);
+        bool completed;
+        bool expired;
+        (,, payout,,, completed,, expired,) = manager.getJobCore(jobId);
         uint256 expected = (payout * manager.employerBurnBps()) / 10_000;
         reserveAmount = expected;
-        reserveFunded = true;
+        reserveFunded = !(completed || expired);
         lockedReserveTotal = manager.lockedBurnReserves();
     }
 
