@@ -10,6 +10,7 @@ interface IAGIJobManagerBurnView {
     function disputeReviewPeriod() external view returns (uint256);
     function settlementPaused() external view returns (bool);
     function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot);
+    function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address burnTokenSnapshot);
     function getJobCore(uint256 jobId)
         external
         view
@@ -113,7 +114,7 @@ contract EmployerBurnReadHelper {
         )
     {
         (employer,, payoutEscrowed,,,,,,) = manager.getJobCore(jobId);
-        token = manager.agiToken();
+        token = manager.getJobBurnTokenSnapshot(jobId);
         burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
         burnAmountCharged = (payoutEscrowed * burnBpsSnapshot) / 10_000;
         totalUpfrontAtCreate = payoutEscrowed + burnAmountCharged;
@@ -199,7 +200,7 @@ contract EmployerBurnReadHelper {
 
     function _getFundingReadiness(address employer, uint256 burnAmount)
         internal
-        view
+        pure
         returns (bool balanceSufficient, bool allowanceSufficient)
     {
         employer;

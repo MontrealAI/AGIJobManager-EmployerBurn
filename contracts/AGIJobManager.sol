@@ -413,6 +413,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
 
     struct Job {
         address employer;
+        address burnTokenSnapshot;
         string jobSpecURI;
         string jobCompletionURI;
         uint256 payout;
@@ -781,6 +782,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         }
         Job storage job = jobs[jobId];
         job.employer = msg.sender;
+        job.burnTokenSnapshot = address(agiToken);
         job.jobSpecURI = _jobSpecURI;
         job.payout = _payout;
         job.duration = _duration;
@@ -1285,6 +1287,11 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot) {
         Job storage job = _job(jobId);
         burnBpsSnapshot = job.employerBurnBpsSnapshot;
+    }
+
+    function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address burnTokenSnapshot) {
+        Job storage job = _job(jobId);
+        burnTokenSnapshot = job.burnTokenSnapshot;
     }
 
     /// @notice Returns finalization-gate fields used by off-chain/periphery readiness checks.
