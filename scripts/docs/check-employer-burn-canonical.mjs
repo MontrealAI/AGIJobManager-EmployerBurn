@@ -11,7 +11,7 @@ const requiredSnippets = [
     [
       AGIALPHA_MAINNET,
       'EmployerBurnReadHelper',
-      'EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)'
+      'EmployerBurnChargedAtJobCreation'
     ]
   ],
   [
@@ -19,15 +19,15 @@ const requiredSnippets = [
     [
       AGIALPHA_MAINNET,
       'approve **AGIJobManager** as spender',
-      'Before you click **Write** (Employer burn transactions)',
-      'Employer burn readiness reason codes (plain English)'
+      'createJob',
+      'getCreateJobFundingRequirement'
     ]
   ],
   [
     'docs/OWNER_RUNBOOK.md',
     [
       AGIALPHA_MAINNET,
-      'Employer-burn owner checks'
+      'Deprecated semantic note'
     ]
   ],
   [
@@ -41,13 +41,13 @@ const requiredSnippets = [
     'MAINNET_DEPLOYMENT_CHECKLIST.md',
     [
       AGIALPHA_MAINNET,
-      'EmployerBurnEnforced'
+      'EmployerBurnChargedAtJobCreation'
     ]
   ],
   [
     'docs/REFERENCE/EMPLOYER_BURN_DESIGN.md',
     [
-      'burnFrom(job.employer, burnAmount)',
+      'createJob',
       'No protocol subsidy'
     ]
   ]

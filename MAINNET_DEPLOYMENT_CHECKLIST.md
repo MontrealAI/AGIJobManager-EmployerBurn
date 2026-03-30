@@ -35,3 +35,5 @@ For live deploy, require explicit confirmation phrase:
 - `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet`
 - `npm run release:verify`
 - `npm run release:postdeploy`
+
+- v0.2.0 corrective semantics: verify `EmployerBurnChargedAtJobCreation` during createJob posting.

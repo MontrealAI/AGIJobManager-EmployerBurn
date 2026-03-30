@@ -394,7 +394,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     /// @notice Total AGI locked as dispute bonds for unsettled disputes.
     uint256 public lockedDisputeBonds;
     uint256 public maxActiveJobsPerAgent = 3;
-    /// @notice Employer burn rate for employer-favor finalization paths.
+    /// @notice Employer burn rate charged at job creation.
     /// @dev Denominated in basis points over job payout (10_000 = 100%).
     uint256 public employerBurnBps = 0;
 
@@ -434,11 +434,13 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         bool expired;
         uint8 agentPayoutPct;
         uint8 validatorRewardPctSnapshot;
+        uint16 employerBurnBpsSnapshot;
         bool escrowReleased;
         bool validatorApproved;
         uint256 validatorApprovedAt;
         uint256 validatorBondAmount;
         uint256 agentBondAmount;
+        uint256 employerBurnAmountCharged;
     }
 
     struct AGIType {
@@ -520,13 +522,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event AgentBondMinUpdated(uint256 indexed oldMin, uint256 indexed newMin);
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
-    event EmployerBurnEnforced(
+    event EmployerBurnChargedAtJobCreation(
         uint256 indexed jobId,
         address indexed employer,
         address token,
-        uint256 amount,
-        address finalizer,
-        uint8 settlementPathCode
+        uint256 burnAmount,
+        uint256 payoutAmount,
+        uint256 totalUpfrontRequired,
+        uint256 burnBpsSnapshot
     );
 
     uint8 private constant ENS_HOOK_CREATE = 1;
@@ -774,10 +777,31 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.jobSpecURI = _jobSpecURI;
         job.payout = _payout;
         job.duration = _duration;
+        uint256 burnBpsSnapshot = employerBurnBps;
+        uint256 burnAmount = (_payout * burnBpsSnapshot) / 10_000;
+        uint256 totalUpfrontRequired;
+        unchecked {
+            totalUpfrontRequired = _payout + burnAmount;
+        }
+
+        job.employerBurnBpsSnapshot = uint16(burnBpsSnapshot);
+        job.employerBurnAmountCharged = burnAmount;
         TransferUtils.safeTransferFromExact(address(agiToken), msg.sender, address(this), _payout);
+        if (burnAmount != 0) {
+            IAGIALPHABurnable(address(agiToken)).burnFrom(msg.sender, burnAmount);
+        }
         unchecked {
             lockedEscrow += _payout;
         }
+        emit EmployerBurnChargedAtJobCreation(
+            jobId,
+            msg.sender,
+            address(agiToken),
+            burnAmount,
+            _payout,
+            totalUpfrontRequired,
+            burnBpsSnapshot
+        );
         emit JobCreated(jobId, _jobSpecURI, _payout, _duration, _details);
         _callEnsJobPagesHook(ENS_HOOK_CREATE, jobId);
     }
@@ -1198,9 +1222,8 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         challengePeriodAfterApproval = period;
         emit ChallengePeriodAfterApprovalUpdated(oldPeriod, period);
     }
-    /// @notice Sets employer burn bps charged only on employer-favor settlement.
+    /// @notice Sets employer burn bps charged at job creation for future jobs.
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
-        _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
         uint256 oldBps = employerBurnBps;
         employerBurnBps = bps;
@@ -1261,6 +1284,23 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function getJobFinalizationGate(uint256 jobId) external view returns (bool validatorApproved, uint256 validatorApprovedAt) {
         Job storage job = _job(jobId);
         return (job.validatorApproved, job.validatorApprovedAt);
+    }
+
+    function getJobEconomicSnapshot(uint256 jobId)
+        external
+        view
+        returns (
+            address token,
+            uint256 payoutEscrow,
+            uint256 employerBurnAmountCharged,
+            uint256 employerBurnBpsSnapshot
+        )
+    {
+        Job storage job = _job(jobId);
+        token = address(agiToken);
+        payoutEscrow = job.payout;
+        employerBurnAmountCharged = job.employerBurnAmountCharged;
+        employerBurnBpsSnapshot = job.employerBurnBpsSnapshot;
     }
 
     function getJobSpecURI(uint256 jobId) external view returns (string memory) {
@@ -1523,19 +1563,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.disputed = false;
         _decrementActiveJob(job);
         _releaseEscrow(job);
-        uint256 burnAmount = (job.payout * employerBurnBps) / 10_000;
-        if (burnAmount != 0) {
-            IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
-            uint8 settlementPathCode = _getEmployerBurnPathCode();
-            emit EmployerBurnEnforced(
-                jobId,
-                job.employer,
-                address(agiToken),
-                burnAmount,
-                msg.sender,
-                settlementPathCode
-            );
-        }
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);
         uint256 agentBondPool = _settleAgentBond(job, false, poolToValidators);
@@ -1555,19 +1582,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _t(job.employer, employerRefund);
         _settleDisputeBond(job, false);
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
-    }
-
-    function _getEmployerBurnPathCode() internal pure returns (uint8) {
-        if (msg.sig == this.finalizeJob.selector) {
-            return 1;
-        }
-        if (msg.sig == this.resolveDisputeWithCode.selector) {
-            return 2;
-        }
-        if (msg.sig == this.resolveStaleDispute.selector) {
-            return 3;
-        }
-        return 0;
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {

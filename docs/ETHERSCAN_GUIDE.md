@@ -1,3 +1,6 @@
+> [!WARNING]
+> Deprecated semantic note: pre-v0.2.0 burn-on-settlement behavior is obsolete; old paused deployment must remain deprecated.
+
 # AGIJobManager Etherscan Guide (Read/Write Contract)
 
 Use this guide if you only have:
@@ -14,10 +17,10 @@ Use this guide if you only have:
 
 ## Employer burn quick flow (Etherscan-first)
 
-1. Read `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` on `EmployerBurnReadHelper`.
+1. Read `quoteCreateJobBurn(payout)` and `getCreateJobFundingRequirement(payout)` on `EmployerBurnReadHelper`.
 2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender (not the helper).
 3. Execute the eligible settlement path on AGIJobManager (`finalizeJob`, `resolveDisputeWithCode` resolution `2`, or `resolveStaleDispute` with `employerWins=true`).
-4. Verify `EmployerBurnEnforced` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, token, amount, finalizer, and path.
+4. Verify `EmployerBurnChargedAtJobCreation` and the settlement entrypoint transaction (`finalizeJob` / `resolveDisputeWithCode` / `resolveStaleDispute`) to confirm payer, token, amount, finalizer, and path.
 
 ### Before you click **Write** (Employer burn transactions)
 
@@ -25,10 +28,10 @@ Use this guide if you only have:
 2. Confirm the AGIALPHA token is exactly `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 3. On AGIALPHA, confirm `allowance(employer, AGIJobManager)` is at least the burn quote.
 4. Confirm employer wallet AGIALPHA balance covers the burn quote (this is separate from escrow already posted).
-5. Confirm `getEmployerBurnReadiness(jobId)` is on an employer-win path **before** writing:
+5. Confirm `getCreateJobFundingRequirement(payout)` is on an employer-win path **before** writing:
    - `reasonCode` must **not** be `BURN_READINESS_NOT_EMPLOYER_WIN_PATH` (`1`).
    - `settlementPathCode` must be one of `1`, `2`, or `3` (not `0`).
-6. Confirm `getEmployerBurnReadiness(jobId)` does **not** return:
+6. Confirm `getCreateJobFundingRequirement(payout)` does **not** return:
    - `BURN_READINESS_INSUFFICIENT_BALANCE` (`4`)
    - `BURN_READINESS_INSUFFICIENT_ALLOWANCE` (`5`)
    - `BURN_READINESS_SETTLEMENT_PAUSED` (`6`)
@@ -41,8 +44,8 @@ Use this guide if you only have:
 9. Confirm wallet/network in your browser extension is Ethereum mainnet.
 10. Submit and wait for receipt status `Success`.
 11. Verify burn evidence conditionally:
-   - If `quoteEmployerBurn(jobId).amount > 0`, the settlement tx **must** include `EmployerBurnEnforced`.
-   - If `quoteEmployerBurn(jobId).amount == 0` (for example `BURN_READINESS_BURN_BPS_ZERO` / reason code `3`), settlement can succeed without that event.
+   - If `quoteCreateJobBurn(payout).amount > 0`, the settlement tx **must** include `EmployerBurnChargedAtJobCreation`.
+   - If `quoteCreateJobBurn(payout).amount == 0` (for example `BURN_READINESS_BURN_BPS_ZERO` / reason code `3`), settlement can succeed without that event.
 
 ### Exact approval vs unlimited approval (risk warning)
 
@@ -148,7 +151,7 @@ node scripts/etherscan/prepare_inputs.js --action convert --amount 1.5 --duratio
 
 ### Employer burn readiness reason codes (plain English)
 
-`getEmployerBurnReadiness(jobId)` returns `reasonCode` + `settlementPathCode`.
+`getCreateJobFundingRequirement(payout)` returns `reasonCode` + `settlementPathCode`.
 
 | reasonCode | Constant | Plain English |
 |---:|---|---|
@@ -237,7 +240,7 @@ jobId: 42
 Write: `finalizeJob(jobId)`
 - `jobId`: numeric ID to settle
 - If the job settles employer-win and `employerBurnBps > 0`, AGIJobManager also executes `burnFrom(employer, burnAmount)` on AGIALPHA; ensure employer allowance/balance includes burn coverage.
-- Verify burn-path observability in logs with `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
+- Verify burn-path observability in logs with `EmployerBurnChargedAtJobCreation(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
 ```text
 jobId: 42

@@ -4,21 +4,21 @@ const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const AGIJobManager = artifacts.require('AGIJobManager');
 const MockERC20 = artifacts.require('MockERC20');
 const MockERC721 = artifacts.require('MockERC721');
+const FailTransferToken = artifacts.require('FailTransferToken');
 const ERC20NoReturn = artifacts.require('ERC20NoReturn');
-const MockPausableBurnableERC20 = artifacts.require('MockPausableBurnableERC20');
 
 const ZERO_ROOT = '0x' + '00'.repeat(32);
 const ZERO_ADDRESS = '0x' + '00'.repeat(20);
 const EMPTY_PROOF = [];
 const { toBN, toWei } = web3.utils;
 
-contract('AGIJobManager employer-funded burn settlement', (accounts) => {
-  const [owner, employer, agent, validatorA, validatorB, moderator, relayer] = accounts;
+contract('AGIJobManager createJob-only employer burn', (accounts) => {
+  const [owner, employer, agent, validatorA, validatorB, moderator] = accounts;
   let token;
   let manager;
 
-  async function setup({ burnBps = 100 } = {}) {
-    token = await MockERC20.new({ from: owner });
+  async function deployBase(_token = null) {
+    token = _token || await MockERC20.new({ from: owner });
     manager = await AGIJobManager.new(
       token.address,
       'ipfs://base',
@@ -34,8 +34,9 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await manager.addAdditionalValidator(validatorB, { from: owner });
     await manager.setRequiredValidatorApprovals(2, { from: owner });
     await manager.setRequiredValidatorDisapprovals(2, { from: owner });
+    await manager.setCompletionReviewPeriod(1, { from: owner });
     await manager.setChallengePeriodAfterApproval(1, { from: owner });
-    await manager.setEmployerBurnBps(burnBps, { from: owner });
+    await manager.setEmployerBurnBps(100, { from: owner });
 
     const agiType = await MockERC721.new({ from: owner });
     await agiType.mint(agent, { from: owner });
@@ -49,320 +50,151 @@ contract('AGIJobManager employer-funded burn settlement', (accounts) => {
     await token.approve(manager.address, toWei('1000'), { from: validatorB });
   }
 
-  async function createJobAndRequest(payout, extraAllowance = toBN(0)) {
-    await token.mint(employer, payout.add(extraAllowance), { from: owner });
-    await token.approve(manager.address, payout.add(extraAllowance), { from: employer });
+  async function createAssignedRequestedJob(payout) {
+    const burn = payout.muln(100).divn(10_000);
+    const total = payout.add(burn);
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
     const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
     const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
     await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
     await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
-    return jobId;
+    return { jobId, burn, tx };
   }
 
-  async function moveToEmployerWin(jobId) {
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-    return manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
-  }
-
-  it('burns exact amount on employer-win dispute resolution', async () => {
-    await setup();
+  it('charges burn exactly once at createJob and emits snapshot event', async () => {
+    await deployBase();
     const payout = toBN(toWei('100'));
     const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
+    const total = payout.add(burn);
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
 
     const supplyBefore = await token.totalSupply();
-    const tx = await moveToEmployerWin(jobId);
-
-    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.ok(enforced);
-    assert.equal(enforced.args.jobId.toNumber(), jobId);
-    assert.equal(enforced.args.employer, employer);
-    assert.equal(enforced.args.token, token.address);
-    assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.finalizer, moderator);
-    assert.equal(enforced.args.settlementPathCode.toString(), '2');
-
+    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
+
+    const event = tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation');
+    assert.ok(event);
+    assert.equal(event.args.employer, employer);
+    assert.equal(event.args.burnAmount.toString(), burn.toString());
+    assert.equal(event.args.payoutAmount.toString(), payout.toString());
+    assert.equal(event.args.totalUpfrontRequired.toString(), total.toString());
+    assert.equal(event.args.burnBpsSnapshot.toString(), '100');
   });
 
-  it('burns exact amount on stale-dispute employer-win owner resolution', async () => {
-    await setup();
-    await manager.setDisputeReviewPeriod(1, { from: owner });
+  it('requires createJob allowance for payout + burn', async () => {
+    await deployBase();
     const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
-
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-    await time.increase(2);
-
-    const supplyBefore = await token.totalSupply();
-    const tx = await manager.resolveStaleDispute(jobId, true, { from: owner });
-    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.ok(enforced);
-    assert.equal(enforced.args.jobId.toNumber(), jobId);
-    assert.equal(enforced.args.employer, employer);
-    assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.finalizer, owner);
-    assert.equal(enforced.args.settlementPathCode.toString(), '3');
-    const supplyAfter = await token.totalSupply();
-    assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
+    await token.mint(employer, toWei('101'), { from: owner });
+    await token.approve(manager.address, payout, { from: employer });
+    await expectRevert.unspecified(manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer }));
   });
 
-  it('does not burn on agent-win finalization', async () => {
-    await setup();
+  it('requires createJob balance for payout + burn', async () => {
+    await deployBase();
     const payout = toBN(toWei('100'));
     const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
+    await token.mint(employer, payout, { from: owner });
+    await token.approve(manager.address, payout.add(burn), { from: employer });
+    await expectRevert.unspecified(manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer }));
+  });
 
+  it('reverts createJob atomically if payout transfer fails', async () => {
+    const failingToken = await FailTransferToken.new({ from: owner });
+    await deployBase(failingToken);
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    const total = payout.add(burn);
+    await failingToken.mint(employer, total, { from: owner });
+    await failingToken.approve(manager.address, total, { from: employer });
+
+    await expectRevert.unspecified(manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer }));
+    assert.equal((await manager.nextJobId()).toString(), '0');
+  });
+
+  it('reverts createJob atomically if burn path fails', async () => {
+    const noBurnToken = await ERC20NoReturn.new({ from: owner });
+    await deployBase(noBurnToken);
+    const payout = toBN(toWei('100'));
+    const burn = payout.muln(100).divn(10_000);
+    const total = payout.add(burn);
+    await noBurnToken.mint(employer, total, { from: owner });
+    await noBurnToken.approve(manager.address, total, { from: employer });
+
+    await expectRevert.unspecified(manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer }));
+    assert.equal((await manager.nextJobId()).toString(), '0');
+  });
+
+  it('never burns on finalize, refund, cancellation, delist, expiry, dispute outcomes', async () => {
+    await deployBase();
+    const payout = toBN(toWei('100'));
+
+    // finalize agent-win
+    let { jobId } = await createAssignedRequestedJob(payout);
     await manager.validateJob(jobId, '', EMPTY_PROOF, { from: validatorA });
     await manager.validateJob(jobId, '', EMPTY_PROOF, { from: validatorB });
     await time.increase(2);
-    const tx = await manager.finalizeJob(jobId, { from: employer });
+    let tx = await manager.finalizeJob(jobId, { from: employer });
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation')), false);
 
-    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnEnforced')), false);
-  });
-
-  it('emits EmployerBurnEnforced when finalizeJob settles employer-win', async () => {
-    await setup();
-    await manager.setRequiredValidatorDisapprovals(3, { from: owner });
-    await manager.setVoteQuorum(2, { from: owner });
-    await manager.setCompletionReviewPeriod(1, { from: owner });
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
-
+    // employer refund via dispute resolution
+    ({ jobId } = await createAssignedRequestedJob(payout));
     await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
     await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
+    tx = await manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation')), false);
+
+    // cancellation (unassigned)
+    const burn = payout.muln(100).divn(10_000);
+    const total = payout.add(burn);
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
+    tx = await manager.createJob('ipfs-cancel', payout, 3600, 'details', { from: employer });
+    let cancelId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    tx = await manager.cancelJob(cancelId, { from: employer });
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation')), false);
+
+    // delist (unassigned)
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
+    tx = await manager.createJob('ipfs-delist', payout, 3600, 'details', { from: employer });
+    const delistId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    tx = await manager.delistJob(delistId, { from: owner });
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation')), false);
+
+    // expiry
+    ({ jobId } = await createAssignedRequestedJob(payout));
+    // re-create for expiry without completion request
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
+    tx = await manager.createJob('ipfs-expire', payout, 1, 'details', { from: employer });
+    const expireId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    await manager.applyForJob(expireId, '', EMPTY_PROOF, { from: agent });
     await time.increase(2);
-    const tx = await manager.finalizeJob(jobId, { from: employer });
-    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.ok(enforced);
-    assert.equal(enforced.args.jobId.toNumber(), jobId);
-    assert.equal(enforced.args.employer, employer);
-    assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.finalizer, employer);
-    assert.equal(enforced.args.settlementPathCode.toString(), '1');
+    tx = await manager.expireJob(expireId, { from: validatorA });
+    assert.equal(Boolean(tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation')), false);
   });
 
-  it('reverts employer-win settlement with insufficient burn allowance', async () => {
-    await setup();
+  it('does not double-burn and does not require burn allowance for settlement', async () => {
+    await deployBase();
     const payout = toBN(toWei('100'));
-    const jobId = await createJobAndRequest(payout);
+    const { jobId, burn } = await createAssignedRequestedJob(payout);
+
+    // consume remaining allowance to zero after createJob.
+    await token.approve(manager.address, 0, { from: employer });
+    const supplyAfterCreate = await token.totalSupply();
 
     await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
     await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-    await expectRevert.unspecified(
-      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
+    await manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
+
+    const supplyAfterSettlement = await token.totalSupply();
+    assert.equal(supplyAfterCreate.sub(supplyAfterSettlement).toString(), '0');
+
+    const snapshot = await manager.getJobEconomicSnapshot(jobId);
+    assert.equal(snapshot.employerBurnAmountCharged.toString(), burn.toString());
+    assert.equal(snapshot.employerBurnBpsSnapshot.toString(), '100');
   });
-
-  it('reverts employer-win settlement with insufficient burn balance', async () => {
-    await setup();
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    await token.mint(employer, payout, { from: owner });
-    await token.approve(manager.address, payout.add(burn), { from: employer });
-    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
-    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
-    await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
-    await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-
-    await expectRevert.unspecified(
-      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
-  });
-
-  it('reverts employer-win settlement when AGIALPHA burn path is paused', async () => {
-    const pausableToken = await MockPausableBurnableERC20.new({ from: owner });
-    const m = await AGIJobManager.new(
-      pausableToken.address,
-      'ipfs://base',
-      [ZERO_ADDRESS, ZERO_ADDRESS],
-      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
-      [ZERO_ROOT, ZERO_ROOT],
-      { from: owner }
-    );
-    await m.addModerator(moderator, { from: owner });
-    await m.addAdditionalAgent(agent, { from: owner });
-    await m.addAdditionalValidator(validatorA, { from: owner });
-    await m.addAdditionalValidator(validatorB, { from: owner });
-    await m.setRequiredValidatorApprovals(2, { from: owner });
-    await m.setRequiredValidatorDisapprovals(2, { from: owner });
-    await m.setEmployerBurnBps(100, { from: owner });
-
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    await pausableToken.mint(employer, payout.add(burn), { from: owner });
-    await pausableToken.mint(agent, toWei('1000'), { from: owner });
-    await pausableToken.mint(validatorA, toWei('1000'), { from: owner });
-    await pausableToken.mint(validatorB, toWei('1000'), { from: owner });
-    await pausableToken.approve(m.address, payout.add(burn), { from: employer });
-    await pausableToken.approve(m.address, toWei('1000'), { from: agent });
-    await pausableToken.approve(m.address, toWei('1000'), { from: validatorA });
-    await pausableToken.approve(m.address, toWei('1000'), { from: validatorB });
-
-    const agiType = await MockERC721.new({ from: owner });
-    await agiType.mint(agent, { from: owner });
-    await m.addAGIType(agiType.address, 92, { from: owner });
-
-    const tx = await m.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
-    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
-    await m.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
-    await m.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
-    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-
-    await pausableToken.pause({ from: owner });
-    await expectRevert.unspecified(
-      m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
-
-    await pausableToken.unpause({ from: owner });
-    const tx2 = await m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
-    const enforced = tx2.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.ok(enforced);
-  });
-
-  it('does not let protocol-held AGIALPHA subsidize employer burn', async () => {
-    await setup();
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-
-    // Employer only funds escrow; no extra balance for burn.
-    await token.mint(employer, payout, { from: owner });
-    await token.approve(manager.address, payout.add(burn), { from: employer });
-    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
-    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
-    await manager.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
-    await manager.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-
-    // Even if protocol balance is topped up, burn still must come from employer via burnFrom.
-    await token.mint(manager.address, burn, { from: owner });
-
-    await expectRevert.unspecified(
-      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
-  });
-
-  it('allows third-party finalizer to trigger authorized employer burn on finalizeJob path', async () => {
-    await setup();
-    await manager.setRequiredValidatorDisapprovals(3, { from: owner });
-    await manager.setVoteQuorum(2, { from: owner });
-    await manager.setCompletionReviewPeriod(1, { from: owner });
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
-
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-    await time.increase(2);
-
-    const tx = await manager.finalizeJob(jobId, { from: relayer });
-    const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.ok(enforced);
-    assert.equal(enforced.args.employer, employer);
-    assert.equal(enforced.args.finalizer, relayer);
-    assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.settlementPathCode.toString(), '1');
-  });
-
-  it('zero-burn edge case on tiny payout does not emit burn and keeps supply constant', async () => {
-    await setup();
-    const payout = toBN(1);
-    const jobId = await createJobAndRequest(payout);
-
-    const supplyBefore = await token.totalSupply();
-    const tx = await moveToEmployerWin(jobId);
-    const supplyAfter = await token.totalSupply();
-
-    const event = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
-    assert.equal(Boolean(event), false);
-    assert.equal(supplyAfter.toString(), supplyBefore.toString());
-  });
-
-  it('settlement pause blocks employer-win burn path', async () => {
-    await setup();
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    const jobId = await createJobAndRequest(payout, burn);
-
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await manager.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-    await manager.setSettlementPaused(true, { from: owner });
-
-    await expectRevert.unspecified(
-      manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
-  });
-
-  it('prevents burn-bps changes while escrow is active (no retroactive burn policy)', async () => {
-    await setup({ burnBps: 10 });
-    const payout = toBN(toWei('100'));
-    await createJobAndRequest(payout, payout.muln(10).divn(10_000));
-
-    await expectRevert.unspecified(manager.setEmployerBurnBps(200, { from: owner }));
-  });
-
-  it('emits EmployerBurnBpsUpdated when owner updates burn bps', async () => {
-    await setup({ burnBps: 0 });
-    const tx = await manager.setEmployerBurnBps(125, { from: owner });
-    const event = tx.logs.find((l) => l.event === 'EmployerBurnBpsUpdated');
-    assert.ok(event, 'EmployerBurnBpsUpdated not emitted');
-    assert.equal(event.args.oldBps.toString(), '0');
-    assert.equal(event.args.newBps.toString(), '125');
-    assert.equal((await manager.employerBurnBps()).toString(), '125');
-  });
-
-  it('reverts employer-win settlement when configured token does not implement burnFrom', async () => {
-    const plainToken = await ERC20NoReturn.new({ from: owner });
-    const m = await AGIJobManager.new(
-      plainToken.address,
-      'ipfs://base',
-      [ZERO_ADDRESS, ZERO_ADDRESS],
-      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
-      [ZERO_ROOT, ZERO_ROOT],
-      { from: owner }
-    );
-    await m.addModerator(moderator, { from: owner });
-    await m.addAdditionalAgent(agent, { from: owner });
-    await m.addAdditionalValidator(validatorA, { from: owner });
-    await m.addAdditionalValidator(validatorB, { from: owner });
-    await m.setRequiredValidatorApprovals(2, { from: owner });
-    await m.setRequiredValidatorDisapprovals(2, { from: owner });
-    await m.setEmployerBurnBps(100, { from: owner });
-
-    const payout = toBN(toWei('100'));
-    const burn = payout.muln(100).divn(10_000);
-    await plainToken.mint(employer, payout.add(burn), { from: owner });
-    await plainToken.mint(agent, toWei('1000'), { from: owner });
-    await plainToken.mint(validatorA, toWei('1000'), { from: owner });
-    await plainToken.mint(validatorB, toWei('1000'), { from: owner });
-    await plainToken.approve(m.address, payout.add(burn), { from: employer });
-    await plainToken.approve(m.address, toWei('1000'), { from: agent });
-    await plainToken.approve(m.address, toWei('1000'), { from: validatorA });
-    await plainToken.approve(m.address, toWei('1000'), { from: validatorB });
-
-    const agiType = await MockERC721.new({ from: owner });
-    await agiType.mint(agent, { from: owner });
-    await m.addAGIType(agiType.address, 92, { from: owner });
-
-    const tx = await m.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
-    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
-    await m.applyForJob(jobId, '', EMPTY_PROOF, { from: agent });
-    await m.requestJobCompletion(jobId, 'ipfs-completion', { from: agent });
-    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorA });
-    await m.disapproveJob(jobId, '', EMPTY_PROOF, { from: validatorB });
-
-    await expectRevert.unspecified(
-      m.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator })
-    );
-  });
-
 });

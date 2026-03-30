@@ -1,3 +1,6 @@
+> [!WARNING]
+> Deprecated semantic note: pre-v0.2.0 burn-on-settlement behavior is obsolete; old paused deployment must remain deprecated.
+
 # Owner Mainnet Deployment & Operations Guide
 
 ## 0) Start here first (non-technical owner)
@@ -55,7 +58,7 @@ Expected result of a safe cutover:
 - AGIALPHA mainnet token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Burn spender: `AGIJobManager` (not helper contracts).
 - Read helper for Etherscan-first preflight: `EmployerBurnReadHelper`.
-- Required burn evidence event when non-zero burn is applied: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
+- Required burn evidence event when non-zero burn is applied: `EmployerBurnChargedAtJobCreation(jobId, employer, token, amount, finalizer, settlementPathCode)`.
 
 
 > **Path clarity:** Hardhat is the official/recommended deployment workflow for current production operations. Any Truffle deployment section in this document is legacy compatibility-only and must not be used as the primary mainnet release path.
