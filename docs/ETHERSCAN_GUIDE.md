@@ -37,13 +37,15 @@ Corrected successor semantics: burn is createJob-only.
 
 ### Exact approval vs unlimited approval (risk warning)
 
-- **Exact approval (recommended):** approve exactly the quoted burn amount for this settlement.  
+- **Exact approval (recommended):** approve exactly the quoted `totalUpfront = payout + burn` for this createJob.  
   - Pros: least approval risk if spender key/contract assumptions change.
   - Cons: may require another approval transaction later.
 - **Unlimited approval (`2^256-1`):** convenient, but high risk.  
   - If spender trust assumptions break, remaining wallet balance can be exposed.
 - The spender for burn is **AGIJobManager** (not `EmployerBurnReadHelper`).
-- Approval is always a **separate transaction** from settlement/finalization.
+- Approval is always a **separate transaction** from `createJob`.
+
+> Legacy compatibility note: `EmployerBurnReadHelper` still exposes older employer-win burn readiness methods for ABI compatibility, but in corrected successor semantics they are non-actionable/deprecated. Use only createJob funding helpers.
 
 ## Choose your role
 - [Employer](#employer-flow)

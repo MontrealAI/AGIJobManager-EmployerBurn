@@ -4,11 +4,6 @@ pragma solidity ^0.8.19;
 interface IAGIJobManagerBurnView {
     function agiToken() external view returns (address);
     function employerBurnBps() external view returns (uint256);
-    function voteQuorum() external view returns (uint256);
-    function completionReviewPeriod() external view returns (uint256);
-    function challengePeriodAfterApproval() external view returns (uint256);
-    function disputeReviewPeriod() external view returns (uint256);
-    function settlementPaused() external view returns (bool);
     function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot);
     function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address tokenSnapshot);
     function getJobCore(uint256 jobId)
@@ -25,17 +20,6 @@ interface IAGIJobManagerBurnView {
             bool expired,
             uint8 agentPayoutPct
         );
-    function getJobValidation(uint256 jobId)
-        external
-        view
-        returns (
-            bool completionRequested,
-            uint256 validatorApprovals,
-            uint256 validatorDisapprovals,
-            uint256 completionRequestedAt,
-            uint256 disputedAt
-        );
-    function getJobFinalizationGate(uint256 jobId) external view returns (bool validatorApproved, uint256 validatorApprovedAt);
 }
 
 interface IERC20ReadOnly {
@@ -44,10 +28,9 @@ interface IERC20ReadOnly {
 }
 
 /// @title EmployerBurnReadHelper
-/// @notice Read-only helper contract for Etherscan-first employer burn preflight checks.
+/// @notice Read-only helper contract for Etherscan-first employer burn preflight and audit checks.
 /// @dev This helper is additive and non-authoritative: AGIJobManager remains settlement source-of-truth.
-/// @dev Settlement readiness methods are kept for backward compatibility but no longer gate on burn funding,
-/// @dev because burn is charged only at createJob in corrected successor semantics.
+/// @dev Corrected successor semantics charge burn only at createJob. Settlement-time burn readiness is deprecated.
 contract EmployerBurnReadHelper {
     uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
     uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
@@ -61,6 +44,7 @@ contract EmployerBurnReadHelper {
     uint8 public constant BURN_READINESS_INSUFFICIENT_BALANCE = 4;
     uint8 public constant BURN_READINESS_INSUFFICIENT_ALLOWANCE = 5;
     uint8 public constant BURN_READINESS_SETTLEMENT_PAUSED = 6;
+    uint8 public constant BURN_READINESS_NOT_APPLICABLE_CREATEJOB_ONLY = 7;
 
     IAGIJobManagerBurnView public immutable manager;
 
@@ -120,6 +104,26 @@ contract EmployerBurnReadHelper {
         totalUpfrontAtCreate = payoutEscrowed + burnAmountCharged;
     }
 
+    function getCreateJobFundingReadiness(uint256 payout, address employer)
+        external
+        view
+        returns (
+            uint256 totalUpfront,
+            uint256 employerBalance,
+            uint256 employerAllowance,
+            bool balanceSufficient,
+            bool allowanceSufficient
+        )
+    {
+        totalUpfront = payout + ((payout * manager.employerBurnBps()) / 10_000);
+        address token = manager.agiToken();
+        employerBalance = IERC20ReadOnly(token).balanceOf(employer);
+        employerAllowance = IERC20ReadOnly(token).allowance(employer, address(manager));
+        balanceSufficient = employerBalance >= totalUpfront;
+        allowanceSufficient = employerAllowance >= totalUpfront;
+    }
+
+    /// @notice Deprecated in createJob-only burn semantics. Kept for backward compatibility.
     function getEmployerBurnRequirements(uint256 jobId)
         external
         view
@@ -146,9 +150,10 @@ contract EmployerBurnReadHelper {
         allowanceSufficient = payerAllowance >= amount;
     }
 
-    function getEmployerBurnReadiness(uint256 jobId)
+    /// @notice Deprecated in createJob-only burn semantics. Kept for backward compatibility.
+    function getEmployerBurnReadiness(uint256)
         external
-        view
+        pure
         returns (
             bool employerWinReadyNow,
             bool balanceSufficient,
@@ -157,152 +162,17 @@ contract EmployerBurnReadHelper {
             uint8 settlementPathCode
         )
     {
-        return _getEmployerBurnReadiness(jobId);
-    }
-
-    function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
-        (bool ready,,, uint8 reasonCode, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
-        bool isFinalizePath = settlementPathCode > EMPLOYER_WIN_PATH_NONE
-            && settlementPathCode < EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-        bool reasonAcceptsFinalize = reasonCode == BURN_READINESS_OK || reasonCode == BURN_READINESS_BURN_BPS_ZERO;
-        return ready && reasonAcceptsFinalize && isFinalizePath;
-    }
-
-    function _getEmployerBurnReadiness(uint256 jobId) internal view returns (bool, bool, bool, uint8, uint8) {
-        (address employer, uint256 payout, bool completed, bool disputed, bool expired) = _readCoreMinimal(jobId);
-        if (completed || expired) {
-            return (false, true, true, BURN_READINESS_ALREADY_TERMINAL, EMPLOYER_WIN_PATH_NONE);
-        }
-        if (manager.settlementPaused()) {
-            return (false, true, true, BURN_READINESS_SETTLEMENT_PAUSED, EMPLOYER_WIN_PATH_NONE);
-        }
-
-        uint256 burnAmount = (payout * manager.employerBurnBps()) / 10_000;
-        (bool balanceSufficient, bool allowanceSufficient) = _getFundingReadiness(employer, burnAmount);
-
-        if (disputed) {
-            return _readinessForDisputed(jobId, balanceSufficient, allowanceSufficient, burnAmount);
-        }
-
-        return _readinessForFinalize(jobId, balanceSufficient, allowanceSufficient, burnAmount);
-    }
-
-    function _readCoreMinimal(uint256 jobId) internal view returns (address employer, uint256 payout, bool completed, bool disputed, bool expired) {
-        (employer,, payout,,, completed, disputed, expired,) = manager.getJobCore(jobId);
-    }
-
-    function _readValidation(uint256 jobId)
-        internal
-        view
-        returns (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt, uint256 disputedAt)
-    {
-        (completionRequested, approvals, disapprovals, completionRequestedAt, disputedAt) = manager.getJobValidation(jobId);
-    }
-
-    function _getFundingReadiness(address employer, uint256 burnAmount)
-        internal
-        pure
-        returns (bool balanceSufficient, bool allowanceSufficient)
-    {
-        employer;
-        burnAmount;
-        return (true, true);
-    }
-
-    function _readinessForDisputed(
-        uint256 jobId,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    ) internal view returns (bool, bool, bool, uint8, uint8) {
-        uint256 disputedAt = _readDisputedAt(jobId);
-        return _composeReadinessWithFunding(
+        return (
+            false,
             true,
-            _getDisputeSettlementPath(disputedAt),
-            balanceSufficient,
-            allowanceSufficient,
-            burnAmount
+            true,
+            BURN_READINESS_NOT_APPLICABLE_CREATEJOB_ONLY,
+            EMPLOYER_WIN_PATH_NONE
         );
     }
 
-    function _readDisputedAt(uint256 jobId) internal view returns (uint256 disputedAt) {
-        (,,,, disputedAt) = _readValidation(jobId);
-    }
-
-    function _readinessForFinalize(
-        uint256 jobId,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    ) internal view returns (bool, bool, bool, uint8, uint8) {
-        (bool finalizeReady, uint8 pathCode) = _isFinalizeEmployerWinReady(jobId);
-        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
-    }
-
-    function _getDisputeSettlementPath(uint256 disputedAt) internal view returns (uint8) {
-        if (block.timestamp > disputedAt + manager.disputeReviewPeriod()) {
-            return EMPLOYER_WIN_PATH_STALE_DISPUTE_OWNER;
-        }
-        return EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-    }
-
-    function _isFinalizeEmployerWinReady(uint256 jobId) internal view returns (bool ready, uint8 pathCode) {
-        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
-            _readValidation(jobId);
-        if (!completionRequested) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-        if (block.timestamp <= completionRequestedAt + manager.completionReviewPeriod()) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-
-        (bool validatorApproved, uint256 validatorApprovedAt) = manager.getJobFinalizationGate(jobId);
-        if (validatorApproved && block.timestamp <= validatorApprovedAt + manager.challengePeriodAfterApproval()) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-
-        uint256 totalVotes = approvals + disapprovals;
-        if (totalVotes == 0 || totalVotes < manager.voteQuorum() || approvals >= disapprovals) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-        return (true, EMPLOYER_WIN_PATH_FINALIZE);
-    }
-
-    function _composeReadinessWithFunding(
-        bool pathReady,
-        uint8 pathCode,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    )
-        internal
-        pure
-        returns (
-            bool employerWinReadyNow,
-            bool balanceOk,
-            bool allowanceOk,
-            uint8 reasonCode,
-            uint8 settlementPathCode
-        )
-    {
-        if (!pathReady) {
-            return (
-                false,
-                balanceSufficient,
-                allowanceSufficient,
-                BURN_READINESS_NOT_EMPLOYER_WIN_PATH,
-                EMPLOYER_WIN_PATH_NONE
-            );
-        }
-        if (burnAmount == 0) {
-            return (true, true, true, BURN_READINESS_BURN_BPS_ZERO, pathCode);
-        }
-        if (!balanceSufficient) {
-            return (true, false, allowanceSufficient, BURN_READINESS_INSUFFICIENT_BALANCE, pathCode);
-        }
-        if (!allowanceSufficient) {
-            return (true, true, false, BURN_READINESS_INSUFFICIENT_ALLOWANCE, pathCode);
-        }
-        return (true, true, true, BURN_READINESS_OK, pathCode);
+    /// @notice Deprecated in createJob-only burn semantics. Always false.
+    function canFinalizeEmployerWinWithBurn(uint256) external pure returns (bool) {
+        return false;
     }
 }
