@@ -781,15 +781,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.payout = _payout;
         job.duration = _duration;
         uint256 burnReserve = (_payout * employerBurnBps) / 10_000;
-        if (burnReserve != 0) {
-            bytes memory burnZero = abi.encodeWithSelector(bytes4(0x42966c68), 0);
-            (bool burnZeroOk,) = address(agiToken).call(burnZero);
-            if (!burnZeroOk) revert InvalidParameters();
-
-            bytes memory burnOne = abi.encodeWithSelector(bytes4(0x42966c68), 1);
-            (bool staticBurnOneOk,) = address(agiToken).staticcall(burnOne);
-            if (staticBurnOneOk) revert InvalidParameters();
-        }
         TransferUtils.safeTransferFromExact(address(agiToken), msg.sender, address(this), _payout + burnReserve);
         unchecked {
             lockedEscrow += _payout;
@@ -1582,7 +1573,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         unchecked {
             lockedBurnReserves -= reserve;
         }
+        uint256 supplyBefore = agiToken.totalSupply();
         IAGIALPHABurnable(address(agiToken)).burn(reserve);
+        if (supplyBefore < reserve || agiToken.totalSupply() != supplyBefore - reserve) revert InvalidState();
         emit EmployerBurnEnforced(
             jobId,
             job.employer,
