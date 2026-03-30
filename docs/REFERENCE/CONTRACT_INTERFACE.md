@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `d0e48107604a`.
-- Source snapshot fingerprint: `d0e48107604a`.
+- Generated at (deterministic source fingerprint): `068d4ef3b7ca`.
+- Source snapshot fingerprint: `068d4ef3b7ca`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -70,6 +70,8 @@
 | `expireJob(uint256 _jobId)` | external | nonpayable | — |
 | `finalizeJob(uint256 _jobId)` | external | nonpayable | — |
 | `getHighestPayoutPercentage(address agent)` | public | view | `uint256` |
+| `getJobBurnBpsSnapshot(uint256 jobId)` | external | view | `uint256 burnBpsSnapshot` |
+| `getJobBurnTokenSnapshot(uint256 jobId)` | external | view | `address tokenSnapshot` |
 | `getJobCompletionURI(uint256 jobId)` | external | view | `string memory` |
 | `getJobCore(uint256 jobId)` | external | view | `address employer, address assignedAgent, uint256 payout, uint256 duration, uint256 assignedAt, bool completed, bool disputed, bool expired, uint8 agentPayoutPct` |
 | `getJobFinalizationGate(uint256 jobId)` | external | view | `bool validatorApproved, uint256 validatorApprovedAt` |
@@ -139,6 +141,7 @@
 | `DisputeResolvedWithCode` | `uint256 indexed jobId, address indexed resolver, uint8 indexed resolutionCode, string reason` |
 | `DisputeReviewPeriodUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
 | `EmployerBurnBpsUpdated` | `uint256 indexed oldBps, uint256 indexed newBps` |
+| `EmployerBurnChargedAtJobCreation` | `uint256 indexed jobId, address indexed employer, address indexed token, uint256 payoutAmount, uint256 burnAmount, uint256 totalUpfront, uint256 burnBps` |
 | `EmployerBurnEnforced` | `uint256 indexed jobId, address indexed employer, address token, uint256 amount, address finalizer, uint8 settlementPathCode` |
 | `EnsHookAttempted` | `uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success` |
 | `EnsJobPagesUpdated` | `address indexed oldEnsJobPages, address indexed newEnsJobPages` |

@@ -6,14 +6,18 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 - Use Hardhat for deploy/replacement; use Etherscan for owner controls and verification reads.
 - ENSJobPages cutover is additive: deploy new ENSJobPages, grant wrapper approval, set AGIJobManager ENSJobPages pointer, migrate legacy jobs if needed, lock only after validation.
 - Never lock identity/configuration before validating addresses, approvals, and expected ENS hook behavior.
-- If employer-burn is enabled (`employerBurnBps > 0`), ensure employer operators are instructed to approve and hold burn coverage in addition to escrow.
+- If employer-burn is enabled (`employerBurnBps > 0`), ensure employer operators are instructed to approve and hold **total upfront** funding (`escrow + burn`) before `createJob`.
 
 ## Employer-burn owner checks
 
 - Mainnet AGIALPHA token for this runbook: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Confirm `employerBurnBps()` matches the publicly announced policy before enabling traffic.
-- Confirm runbooks instruct employers to approve AGIJobManager as spender for burn authorization.
-- During incident review, verify employer-win settlements include `EmployerBurnEnforced` when burn amount is non-zero.
+- Confirm runbooks instruct employers to approve AGIJobManager as spender for `payout + burn` before `createJob`.
+- During incident review, verify create transactions include `EmployerBurnChargedAtJobCreation` when burn amount is non-zero.
+- Confirm settlement/finalization/refund/dispute transactions do **not** emit burn events.
+- Disclosure baseline for operator communications:
+  - AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+  - Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
 
 
 ## Start here by owner intent

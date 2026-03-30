@@ -54,8 +54,13 @@ Expected result of a safe cutover:
 
 - AGIALPHA mainnet token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Burn spender: `AGIJobManager` (not helper contracts).
-- Read helper for Etherscan-first preflight: `EmployerBurnReadHelper`.
-- Required burn evidence event when non-zero burn is applied: `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)`.
+- Create-job funding helpers on additive `EmployerBurnReadHelper` for Etherscan-first preflight:
+  - `quoteCreateJobBurn(uint256 payout)`
+  - `getCreateJobFundingRequirement(uint256 payout)`
+  - `getCreateJobAllowanceRequirement(uint256 payout)`
+  - `getJobEconomicSnapshot(uint256 jobId)`
+- Required burn evidence event when non-zero burn is applied: `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
+- Corrected semantic guardrail: settlement/refund/dispute/cancel/delist/expiry paths must not emit burn events.
 
 
 > **Path clarity:** Hardhat is the official/recommended deployment workflow for current production operations. Any Truffle deployment section in this document is legacy compatibility-only and must not be used as the primary mainnet release path.
