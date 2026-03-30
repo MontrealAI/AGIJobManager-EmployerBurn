@@ -187,21 +187,21 @@ Every step emits events and changes state/balances.
 
 | Action | Events | Token movements | State changes |
 | --- | --- | --- | --- |
-| `createJob` | `JobCreated` | employer → contract escrow | new job stored |
+| `createJob` | `JobCreated`, `EmployerBurnChargedAtJobCreation` (if burn > 0) | employer → contract escrow + `burnFrom(employer, burn)` | new job stored |
 | `applyForJob` | `JobApplied` | none | `assignedAgent`, `assignedAt` |
 | `requestJobCompletion` | `JobCompletionRequested` | none | `completionRequested`, `jobCompletionURI` |
 | `validateJob` | `JobValidated` | none (until threshold) | `validatorApprovals`, validator maps |
 | `disapproveJob` | `JobDisapproved`, maybe `JobDisputed` | none | `validatorDisapprovals`, `disputed` |
 | `resolveDisputeWithCode(AGENT_WIN)` | `DisputeResolvedWithCode`, `JobCompleted`, `NFTIssued` | contract → agent/validators | `completed`, reputation updates |
-| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurnEnforced` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
+| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode` | contract → employer refund only (no burn on settlement path) | `completed` |
 
 Key events include:
 - `JobCreated`, `JobApplied`, `JobCompletionRequested`
-- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnEnforced`
+- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`
 - `JobCompleted`, `NFTIssued`
 
 Token movements:
-- **createJob**: employer → contract escrow
+- **createJob**: employer → contract escrow and immediate employer-funded burn posting cost
 - **completion**: contract → agent + validators
 - **employer win**: contract → employer refund
 
