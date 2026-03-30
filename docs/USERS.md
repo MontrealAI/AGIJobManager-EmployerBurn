@@ -1,5 +1,7 @@
 # AGIJobManager — User Guide (Start Here)
 
+> **Deprecation notice:** Some deep examples below refer to pre-successor settlement-burn terminology kept for historical compatibility. Canonical corrected semantics for `v0.2.0`: burn is charged only at `createJob`, never during settlement/refund/dispute/cancel/expiry.
+
 This guide is written for **all roles**, starting with non‑technical users. It explains how to safely use the AGIJobManager smart contract without needing to read Solidity. For deep technical details, see the role guides and reference docs.
 
 > **Safety first**
@@ -193,11 +195,11 @@ Every step emits events and changes state/balances.
 | `validateJob` | `JobValidated` | none (until threshold) | `validatorApprovals`, validator maps |
 | `disapproveJob` | `JobDisapproved`, maybe `JobDisputed` | none | `validatorDisapprovals`, `disputed` |
 | `resolveDisputeWithCode(AGENT_WIN)` | `DisputeResolvedWithCode`, `JobCompleted`, `NFTIssued` | contract → agent/validators | `completed`, reputation updates |
-| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurnEnforced` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
+| `resolveDisputeWithCode(EMPLOYER_WIN)` | `DisputeResolvedWithCode`, `EmployerBurnChargedAtJobCreation` (if burn > 0) | contract → employer refund + `burnFrom(employer, burn)` | `completed` |
 
 Key events include:
 - `JobCreated`, `JobApplied`, `JobCompletionRequested`
-- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnEnforced`
+- `JobValidated`, `JobDisapproved`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnChargedAtJobCreation`
 - `JobCompleted`, `NFTIssued`
 
 Token movements:

@@ -1,3 +1,5 @@
+> **Historical note (deprecated):** This reconciliation captured pre-successor settlement-burn semantics and is retained only as an archive record. For corrected requirements, use createJob-only burn release `v0.2.0` and current docs.
+
 # Mainnet Release Reconciliation (2026-03-29)
 
 ## 1) Outcome Matrix

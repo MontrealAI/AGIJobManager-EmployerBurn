@@ -1,3 +1,5 @@
+> **Historical note (deprecated):** This ADR describes the pre-successor model where burn happened on employer-win settlement paths. It is retained for historical traceability only and is superseded by `ADR_2026-03_CREATEJOB_ONLY_BURN_SUCCESSOR.md` and release `v0.2.0`.
+
 # ADR — Employer-funded burn enforcement architecture
 
 ## Status

@@ -1,3 +1,5 @@
+> **Historical note (deprecated):** This audit captures the older, now-deprecated settlement-path burn model. It remains for immutable historical traceability only. Corrected successor semantics are documented in `EMPLOYER_BURN_BUG_AUDIT_2026-03-30.md` and `ADR_2026-03_CREATEJOB_ONLY_BURN_SUCCESSOR.md`.
+
 # EmployerBurn Audit and Reconciliation Report (2026-03-28)
 
 ## Scope
