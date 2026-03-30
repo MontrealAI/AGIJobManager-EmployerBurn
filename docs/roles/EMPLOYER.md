@@ -13,10 +13,10 @@ This guide is for job posters (employers). It shows how to safely create and man
 Use your wallet or Etherscan to approve AGIALPHA to the **AGIJobManager contract**.
 
 - Minimum safe approval for EmployerBurn variant:
-  - `approval >= payout + expectedBurn`
+  - `approval = payout + expectedBurn (recommended exact approval)`
   - where `expectedBurn = payout * employerBurnBps / 10_000`.
-- The extra burn approval is only consumed if settlement ends in an employer-win path.
-- If burn policy is `0` bps, extra burn approval is not required.
+- The burn amount is consumed immediately in `createJob` as a non-refundable posting cost.
+- If burn policy is `0` bps, total approval equals payout.
 
 ### 2) Create a job
 Generate/upload the **job spec metadata** JSON and call `createJob(jobSpecURI, payout, duration, details)`.
@@ -41,11 +41,12 @@ If no agent has been assigned and the job is not completed, call `cancelJob(jobI
 Call `disputeJob(jobId)` if you disagree with the completion or validation direction.
 
 ### 6) Employer-burn preflight checks (recommended)
-Use `EmployerBurnReadHelper` in Etherscan **Read Contract** before settlement:
-- `quoteEmployerBurn(jobId)`
-- `getEmployerBurnRequirements(jobId)`
-- `getEmployerBurnReadiness(jobId)`
-- `canFinalizeEmployerWinWithBurn(jobId)` (for `finalizeJob` path only)
+Use `EmployerBurnReadHelper` in Etherscan **Read Contract** before posting:
+- `quoteCreateJobBurn(payout)`
+- `getCreateJobFundingRequirement(payout)`
+- `getCreateJobAllowanceRequirement(payout)`
+- `getCreateJobFundingReadiness(payout, employer)`
+- `getJobEconomicSnapshot(jobId)` (after posting, for audit evidence)
 
 ### 7) Receive NFT receipt
 When a job completes, an NFT is minted to your wallet.
@@ -54,7 +55,7 @@ When a job completes, an NFT is minted to your wallet.
 
 ## Common mistakes
 - **Insufficient allowance** → `TransferFailed`
-- **Employer-win settlement revert after dispute/finalize** → usually missing employer burn allowance or wallet balance for `burnFrom`.
+- **createJob revert** → usually insufficient balance/allowance for `payout + burn`, token pause, or invalid inputs.
 - **Job already assigned or completed** → `InvalidState`
 - **Wrong jobId** → `JobNotFound`
 
@@ -69,4 +70,4 @@ When a job completes, an NFT is minted to your wallet.
 - `getJobValidation(jobId)` → completionRequested flag
 
 ### Events to index
-`JobCreated`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`, `EmployerBurnEnforced`
+`JobCreated`, `EmployerBurnChargedAtJobCreation`, `JobApplied`, `JobCompletionRequested`, `JobCompleted`, `NFTIssued`, `JobDisputed`, `DisputeResolvedWithCode`

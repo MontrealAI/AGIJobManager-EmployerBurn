@@ -3,7 +3,7 @@
 ## Current strategy
 
 - **Canonical release gate (Hardhat-first orchestration):** `npm run test:canonical` calls `npm run release:readiness`.
-- **EmployerBurn settlement regression suite:** `npm run test:employerburn` (Truffle compatibility runner used by the canonical readiness gate).
+- **EmployerBurn successor semantics suite:** `npm run test:employerburn` (Truffle compatibility runner used by the canonical readiness gate).
 - **Foundry suites:** `forge-test/` for fuzz and invariant hardening (non-canonical deployment toolchain).
 - **UI smoke checks:** ABI sync and front-end critical path validation.
 
@@ -12,7 +12,7 @@
 | Suite | Purpose | Command | Validates |
 | --- | --- | --- | --- |
 | Canonical release readiness lane | Preflight + compile + size + docs + employer-burn settlement tests | `npm run test:canonical` | Mainnet release safety gate |
-| EmployerBurn settlement lane | Direct settlement-path and burn enforcement tests | `npm run test:employerburn` | Burn correctness + anti-subsidy behavior |
+| EmployerBurn createJob-only lane | CreateJob-burn + no-later-burn semantics tests | `npm run test:employerburn` | Burn correctness + anti-subsidy behavior |
 | Full regression lane (default `npm test`) | Legacy-wide Truffle/Node regression + canonical readiness | `npm test` | Prevents non-EmployerBurn regression drift in CI |
 | Lint lane | Solidity lint rules | `npm run lint` | Style/safety linting |
 | Bytecode lane | EIP-170/EIP-3860 hard limits + no-growth budget | `npm run size` | Deployability constraints |

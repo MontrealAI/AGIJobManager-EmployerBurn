@@ -423,7 +423,7 @@ node scripts/advisor/state_advisor.js --input scripts/advisor/sample_job_state.j
 ## F) FAQ (EmployerBurn, plain English)
 
 ### Q1) Why do I need a second approval if I already escrowed payout AGIALPHA?
-Escrow approval and employer-burn approval are separate token spends. Escrow is consumed when creating the job; burn is consumed later only if settlement is employer-win.
+Escrow and burn are charged in the same createJob economic action. Approve one total amount (`payout + burn`) before calling `createJob`; the contract escrows payout and burns the posting-cost amount immediately in that transaction.
 
 ### Q2) Can AGIJobManager burn tokens from any wallet?
 No. Burn uses `burnFrom(employer, amount)` on the employer tied to that job and requires that employer's allowance.
@@ -432,7 +432,7 @@ No. Burn uses `burnFrom(employer, amount)` on the employer tied to that job and 
 No. Burn source is employer wallet authorization only. Protocol-held balances are not used to satisfy burn.
 
 ### Q4) Why did my finalize/dispute tx revert?
-Most common reasons: settlement paused, job not in eligible employer-win path, insufficient AGIALPHA allowance, insufficient AGIALPHA balance, or wrong signer for moderator/owner-only paths.
+Most common reasons: settlement paused, review/challenge windows not elapsed, invalid state transition for that job, insufficient gas, or wrong signer for moderator/owner-only paths. (Burn is not part of finalize/dispute in corrected successor semantics.)
 
 ### Q5) Is permit required?
 No. Standard `approve` is supported and is the default Etherscan-first path.
