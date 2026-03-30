@@ -1,8 +1,8 @@
 {
   "name": "agijobmanager-employerburn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "AGIJobManager EmployerBurn variant with employer-authorized AGIALPHA burn enforcement",
+  "description": "AGIJobManager EmployerBurn variant v0.2.0 completion-only employer-funded burn reserve correction",
   "scripts": {
     "build": "npm run build:hardhat",
     "size": "node scripts/check-bytecode-size.js",
