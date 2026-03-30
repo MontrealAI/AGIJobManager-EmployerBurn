@@ -50,3 +50,6 @@ To reduce operator mistakes for non-technical employers, additive periphery cont
 3. Approve AGIJobManager for at least `payout + burn`.
 4. Execute eligible finalize/dispute resolution path.
 5. Verify settlement + `EmployerBurnEnforced` event when burn amount is non-zero.
+
+## v0.2.0 corrective note
+Burn is charged only at createJob as a posting cost and never in settlement paths.

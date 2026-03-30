@@ -6,13 +6,17 @@
 [![Security Policy][security-badge]][security-url]
 [![License][license-badge]][license-url]
 
-AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI work agreements where employer-win settlement paths enforce an employer-authorized AGIALPHA burn, with optional ENS-backed job pages managed by `ENSJobPages`.
+AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI work agreements where the employer funds a non-refundable AGIALPHA burn at `createJob` time, with optional ENS-backed job pages managed by `ENSJobPages`.
 
 > [!IMPORTANT]
 > **New here? Start with the [Genesis Console](https://montrealai.github.io/agijobmanagerv0.html).**  
 > This is the fastest operator/reviewer entry point for the standalone mainnet UI.  
 > **Repo-pinned equivalent artifact:** `ui/agijobmanager_genesis_job_mainnet_2026-03-05-v33.html`  
 > **Operator guide:** `docs/ui/GENESIS_JOB_MAINNET_HTML_UI.md`
+
+
+> [!WARNING]
+> **Deprecated release warning (pre-v0.2.0):** the prior deployment enforced burn on employer-win settlement/refund paths, which is incorrect for the corrected requirement. That deployment is paused and must remain deprecated. Use only the corrected successor deployment (`v0.2.0` semantics) for new usage.
 
 ## Quick links
 
@@ -42,16 +46,16 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
   - `AGIJobManager owner` controls `setEnsJobPages(...)` and AGIJobManager governance.
   - `wrapped-root owner` controls NameWrapper approval needed for wrapped-root ENS writes.
 - **Canonical safety rule:** ENS hooks are best-effort side effects; settlement/dispute outcomes remain authoritative on AGIJobManager.
-- **Employer-burn semantics (this repo variant):** employer-favor settlement paths can burn AGIALPHA directly from the employer wallet via `burnFrom`, never from protocol escrow/treasury balances.
+- **Employer-burn semantics (corrected successor):** burn is charged exactly once at `createJob` from the employer wallet via `burnFrom`; settlement/refund/cancel/expiry/dispute paths never burn.
 
-### Employer-funded burn quick note (Etherscan-first)
+### Employer-funded createJob burn quick note (Etherscan-first)
 
 - Mainnet AGIALPHA token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
-- Burn executes only on employer-win settlement paths (`_refundEmployer` flow via finalize/dispute resolution), not on agent-win, cancel, or expiry paths.
+- Burn executes only at `createJob` and is immediate/non-refundable posting cost.
 - Operator configures burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
-- Etherscan helper views are provided by additive periphery contract `EmployerBurnReadHelper`: `quoteEmployerBurn(jobId)`, `getEmployerBurnRequirements(jobId)`, `getEmployerBurnReadiness(jobId)`, `canFinalizeEmployerWinWithBurn(jobId)`.
-- Employers must keep extra AGIALPHA balance and allowance for the burn, in addition to escrow approval.
-- Burn observability: settlement emits `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` when non-zero burn is applied.
+- Etherscan helper views: use periphery helper `EmployerBurnReadHelper` with `quoteCreateJobFunding(payout)` and `getCreateJobFundingReadiness(employer,payout)`; manager exposes `getJobEconomicSnapshot(jobId)` for post-creation auditability.
+- Employers must approve and hold `payout + burn` before `createJob` in one atomic transaction.
+- Burn observability: `createJob` emits `EmployerBurnChargedAtJobCreation(jobId, employer, token, burnAmount, payoutAmount, totalUpfrontRequired, burnBpsSnapshot)`.
 - Detailed design note: `docs/REFERENCE/EMPLOYER_BURN_DESIGN.md`.
 - Upstream reconciliation note: `docs/REFERENCE/UPSTREAM_RECONCILIATION.md`.
 - Latest audit and blocker report (2026-03-29): `docs/REFERENCE/MAINNET_RELEASE_RECONCILIATION_2026-03-29.md` (with prior baseline in `docs/REFERENCE/EMPLOYER_BURN_AUDIT_2026-03-28.md`).
@@ -242,3 +246,10 @@ Alias note: `check-no-binaries` is exposed as `npm run check:no-binaries`.
 [license-url]: ./LICENSE
 
 - `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.
+
+
+## Burn disclosures
+
+AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
+
+Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.

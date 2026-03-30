@@ -1,3 +1,6 @@
+> [!WARNING]
+> Deprecated semantic note: pre-v0.2.0 burn-on-settlement behavior is obsolete; old paused deployment must remain deprecated.
+
 # OWNER RUNBOOK (Low-touch operations)
 
 This runbook is optimized for autonomous, checklist-driven operations and Etherscan-first control.
@@ -13,7 +16,7 @@ This runbook is optimized for autonomous, checklist-driven operations and Ethers
 - Mainnet AGIALPHA token for this runbook: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Confirm `employerBurnBps()` matches the publicly announced policy before enabling traffic.
 - Confirm runbooks instruct employers to approve AGIJobManager as spender for burn authorization.
-- During incident review, verify employer-win settlements include `EmployerBurnEnforced` when burn amount is non-zero.
+- During incident review, verify employer-win settlements include `EmployerBurnChargedAtJobCreation` when burn amount is non-zero.
 
 
 ## Start here by owner intent
