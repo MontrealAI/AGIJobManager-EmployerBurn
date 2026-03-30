@@ -117,5 +117,9 @@ contract('EmployerBurnReadHelper', (accounts) => {
 
     const funding = await helper.getCompletionBurnFundingStatus(jobId);
     assert.equal(funding.reserveFunded, false);
+
+    const readiness = await helper.getSuccessfulCompletionFinalizationReadiness(jobId);
+    assert.equal(readiness.reserveFunded, false);
+    assert.equal(readiness.reasonCode.toString(), '2');
   });
 });

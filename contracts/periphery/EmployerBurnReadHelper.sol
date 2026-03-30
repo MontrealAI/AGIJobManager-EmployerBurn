@@ -99,7 +99,7 @@ contract EmployerBurnReadHelper {
         returns (bool ready, bool reserveFunded, bool completionPathReady, uint8 reasonCode, uint8 settlementPathCode)
     {
         (, , bool completed, bool disputed, bool expired) = _readCore(jobId);
-        if (completed || expired) return (false, true, false, READINESS_ALREADY_TERMINAL, 0);
+        if (completed || expired) return (false, false, false, READINESS_ALREADY_TERMINAL, 0);
         if (manager.settlementPaused()) return (false, true, false, READINESS_SETTLEMENT_PAUSED, 0);
 
         reserveFunded = true;
