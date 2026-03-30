@@ -80,6 +80,18 @@ contract("AGIJobManager mainnet hardening", (accounts) => {
     await time.increase(reviewPeriod.addn(1));
   }
 
+  it("exposes canonical AGIALPHA mainnet pin constant", async () => {
+    const token = await MockERC20.new({ from: owner });
+    const ens = await MockENS.new({ from: owner });
+    const wrapper = await MockNameWrapper.new({ from: owner });
+    const manager = await deployManager(token, ens.address, wrapper.address);
+
+    assert.equal(
+      await manager.AGIALPHA_MAINNET_TOKEN(),
+      "0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA"
+    );
+  });
+
   it("does not allow malformed ENS tokenURI payloads to brick settlement", async () => {
     const token = await MockERC20.new({ from: owner });
     const ens = await MockENS.new({ from: owner });
