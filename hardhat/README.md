@@ -352,3 +352,17 @@ Troubleshooting reference:
 ## Mainnet ENS deploy explicit values on chainId 1
 
 `deploy-ens-job-pages.js` blocks mainnet deploys unless `JOB_MANAGER`, `JOBS_ROOT_NAME`, and `JOBS_ROOT_NODE` are set explicitly. Defaults are legacy non-mainnet helpers only. The script also hard-fails if `JOBS_ROOT_NAME` is not already normalized.
+
+
+## v0.2.0 corrective workflow (completion-only burn reserve)
+
+Run in order:
+1. `npm run doctor`
+2. `npm run release:build`
+3. `npm run release:dry-run`
+4. `DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT npm run release:deploy:mainnet`
+5. `npm run release:verify`
+6. `npm run release:postdeploy`
+7. `npm run release:readiness`
+
+Postdeploy operator checks must confirm completion-only burn semantics and reserve accounting (`lockedBurnReserve`).

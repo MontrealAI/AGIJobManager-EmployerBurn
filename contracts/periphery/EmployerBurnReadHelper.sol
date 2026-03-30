@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-interface IAGIJobManagerBurnView {
+interface IAGIJobManagerCompletionBurnView {
     function agiToken() external view returns (address);
     function employerBurnBps() external view returns (uint256);
     function voteQuorum() external view returns (uint256);
     function completionReviewPeriod() external view returns (uint256);
     function challengePeriodAfterApproval() external view returns (uint256);
-    function disputeReviewPeriod() external view returns (uint256);
     function settlementPaused() external view returns (bool);
     function getJobCore(uint256 jobId)
         external
@@ -34,234 +33,126 @@ interface IAGIJobManagerBurnView {
             uint256 disputedAt
         );
     function getJobFinalizationGate(uint256 jobId) external view returns (bool validatorApproved, uint256 validatorApprovedAt);
+    function getJobBurnFunding(uint256 jobId) external view returns (uint256 burnReserveAmount);
 }
 
-interface IERC20ReadOnly {
-    function balanceOf(address account) external view returns (uint256);
-    function allowance(address owner, address spender) external view returns (uint256);
-}
-
-/// @title EmployerBurnReadHelper
-/// @notice Read-only helper contract for Etherscan-first employer burn preflight checks.
-/// @dev This helper is additive and non-authoritative: AGIJobManager remains settlement source-of-truth.
 contract EmployerBurnReadHelper {
-    uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
-    uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
-    uint8 public constant EMPLOYER_WIN_PATH_DISPUTE_MODERATOR = 2;
-    uint8 public constant EMPLOYER_WIN_PATH_STALE_DISPUTE_OWNER = 3;
+    uint8 public constant SUCCESS_PATH_NONE = 0;
+    uint8 public constant SUCCESS_PATH_FINALIZE = 1;
 
-    uint8 public constant BURN_READINESS_OK = 0;
-    uint8 public constant BURN_READINESS_NOT_EMPLOYER_WIN_PATH = 1;
-    uint8 public constant BURN_READINESS_ALREADY_TERMINAL = 2;
-    uint8 public constant BURN_READINESS_BURN_BPS_ZERO = 3;
-    uint8 public constant BURN_READINESS_INSUFFICIENT_BALANCE = 4;
-    uint8 public constant BURN_READINESS_INSUFFICIENT_ALLOWANCE = 5;
-    uint8 public constant BURN_READINESS_SETTLEMENT_PAUSED = 6;
+    uint8 public constant READINESS_OK = 0;
+    uint8 public constant READINESS_TERMINAL = 1;
+    uint8 public constant READINESS_SETTLEMENT_PAUSED = 2;
+    uint8 public constant READINESS_NOT_COMPLETION_REQUESTED = 3;
+    uint8 public constant READINESS_REVIEW_WINDOW = 4;
+    uint8 public constant READINESS_CHALLENGE_WINDOW = 5;
+    uint8 public constant READINESS_DISPUTED = 6;
+    uint8 public constant READINESS_NOT_SUCCESS_OUTCOME = 7;
 
-    IAGIJobManagerBurnView public immutable manager;
+    IAGIJobManagerCompletionBurnView public immutable manager;
 
     constructor(address managerAddress) {
         require(managerAddress != address(0), "manager=0");
-        manager = IAGIJobManagerBurnView(managerAddress);
+        manager = IAGIJobManagerCompletionBurnView(managerAddress);
     }
 
-    function quoteEmployerBurn(uint256 jobId)
+    function quoteCompletionBurn(uint256 jobId)
         external
         view
-        returns (address token, uint256 amount, uint256 burnBps, address payer, address spender)
+        returns (address token, uint256 amount, uint256 burnBpsSnapshot, address payer, uint256 payoutEscrow)
     {
-        uint256 payout;
-        (payer,, payout,,,,,,) = manager.getJobCore(jobId);
+        (payer,, payoutEscrow,,,,,,) = manager.getJobCore(jobId);
+        amount = manager.getJobBurnFunding(jobId);
+        burnBpsSnapshot = manager.employerBurnBps();
         token = manager.agiToken();
-        burnBps = manager.employerBurnBps();
-        spender = address(manager);
-        amount = (payout * burnBps) / 10_000;
     }
 
-    function getEmployerBurnRequirements(uint256 jobId)
+    function getCompletionBurnFundingStatus(uint256 jobId)
         external
         view
         returns (
             address token,
             address payer,
-            address spender,
-            uint256 amount,
-            uint256 payerBalance,
-            uint256 payerAllowance,
-            bool balanceSufficient,
-            bool allowanceSufficient
+            uint256 payoutEscrow,
+            uint256 burnReserveRequired,
+            uint256 burnReserveLocked,
+            bool reserveFunded,
+            uint256 totalEmployerUpfrontFunding
         )
     {
-        uint256 payout;
-        (payer,, payout,,,,,,) = manager.getJobCore(jobId);
+        (payer,, payoutEscrow,,,,,,) = manager.getJobCore(jobId);
+        burnReserveLocked = manager.getJobBurnFunding(jobId);
         token = manager.agiToken();
-        spender = address(manager);
-        amount = (payout * manager.employerBurnBps()) / 10_000;
-        payerBalance = IERC20ReadOnly(token).balanceOf(payer);
-        payerAllowance = IERC20ReadOnly(token).allowance(payer, spender);
-        balanceSufficient = payerBalance >= amount;
-        allowanceSufficient = payerAllowance >= amount;
+        burnReserveRequired = (payoutEscrow * manager.employerBurnBps()) / 10_000;
+        reserveFunded = burnReserveLocked >= burnReserveRequired;
+        totalEmployerUpfrontFunding = payoutEscrow + burnReserveRequired;
     }
 
-    function getEmployerBurnReadiness(uint256 jobId)
+    function getEmployerUpfrontFundingRequirement(uint256 jobId)
+        external
+        view
+        returns (uint256 payoutEscrow, uint256 burnReserveRequired, uint256 totalRequired)
+    {
+        (,, payoutEscrow,,,,,,) = manager.getJobCore(jobId);
+        burnReserveRequired = (payoutEscrow * manager.employerBurnBps()) / 10_000;
+        totalRequired = payoutEscrow + burnReserveRequired;
+    }
+
+    function canFinalizeSuccessfulCompletion(uint256 jobId) external view returns (bool) {
+        (bool ready,,,,) = _getSuccessfulCompletionFinalizationReadiness(jobId);
+        return ready;
+    }
+
+    function getSuccessfulCompletionFinalizationReadiness(uint256 jobId)
         external
         view
         returns (
-            bool employerWinReadyNow,
-            bool balanceSufficient,
-            bool allowanceSufficient,
+            bool ready,
             uint8 reasonCode,
-            uint8 settlementPathCode
+            uint8 settlementPathCode,
+            bool reserveFunded,
+            uint256 completionBurnAmount
         )
     {
-        return _getEmployerBurnReadiness(jobId);
+        return _getSuccessfulCompletionFinalizationReadiness(jobId);
     }
 
-    function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
-        (bool ready, bool balanceOk, bool allowanceOk,, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
-        bool isFinalizePath = settlementPathCode > EMPLOYER_WIN_PATH_NONE
-            && settlementPathCode < EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-        return ready && balanceOk && allowanceOk && isFinalizePath;
-    }
-
-    function _getEmployerBurnReadiness(uint256 jobId) internal view returns (bool, bool, bool, uint8, uint8) {
+    function _getSuccessfulCompletionFinalizationReadiness(uint256 jobId)
+        internal
+        view
+        returns (bool ready, uint8 reasonCode, uint8 settlementPathCode, bool reserveFunded, uint256 completionBurnAmount)
+    {
         (address employer, uint256 payout, bool completed, bool disputed, bool expired) = _readCoreMinimal(jobId);
-        if (completed || expired) {
-            return (false, true, true, BURN_READINESS_ALREADY_TERMINAL, EMPLOYER_WIN_PATH_NONE);
-        }
-        if (manager.settlementPaused()) {
-            return (false, true, true, BURN_READINESS_SETTLEMENT_PAUSED, EMPLOYER_WIN_PATH_NONE);
+        if (employer == address(0)) return (false, READINESS_TERMINAL, SUCCESS_PATH_NONE, false, 0);
+        completionBurnAmount = (payout * manager.employerBurnBps()) / 10_000;
+        uint256 reserveLocked = manager.getJobBurnFunding(jobId);
+        reserveFunded = reserveLocked >= completionBurnAmount;
+
+        if (completed || expired) return (false, READINESS_TERMINAL, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
+        if (manager.settlementPaused()) return (false, READINESS_SETTLEMENT_PAUSED, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
+        if (disputed) return (false, READINESS_DISPUTED, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
+
+        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) = manager.getJobValidation(jobId);
+        if (!completionRequested) return (false, READINESS_NOT_COMPLETION_REQUESTED, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
+
+        (bool validatorApproved, uint256 validatorApprovedAt) = manager.getJobFinalizationGate(jobId);
+        if (validatorApproved && block.timestamp <= validatorApprovedAt + manager.challengePeriodAfterApproval()) {
+            return (false, READINESS_CHALLENGE_WINDOW, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
         }
 
-        uint256 burnAmount = (payout * manager.employerBurnBps()) / 10_000;
-        (bool balanceSufficient, bool allowanceSufficient) = _getFundingReadiness(employer, burnAmount);
-
-        if (disputed) {
-            return _readinessForDisputed(jobId, balanceSufficient, allowanceSufficient, burnAmount);
+        if (block.timestamp <= completionRequestedAt + manager.completionReviewPeriod()) {
+            return (false, READINESS_REVIEW_WINDOW, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
         }
 
-        return _readinessForFinalize(jobId, balanceSufficient, allowanceSufficient, burnAmount);
+        uint256 totalVotes = approvals + disapprovals;
+        if ((validatorApproved && approvals > disapprovals) || totalVotes == 0 || approvals > disapprovals) {
+            return (true, READINESS_OK, SUCCESS_PATH_FINALIZE, reserveFunded, completionBurnAmount);
+        }
+
+        return (false, READINESS_NOT_SUCCESS_OUTCOME, SUCCESS_PATH_NONE, reserveFunded, completionBurnAmount);
     }
 
     function _readCoreMinimal(uint256 jobId) internal view returns (address employer, uint256 payout, bool completed, bool disputed, bool expired) {
         (employer,, payout,,, completed, disputed, expired,) = manager.getJobCore(jobId);
-    }
-
-    function _readValidation(uint256 jobId)
-        internal
-        view
-        returns (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt, uint256 disputedAt)
-    {
-        (completionRequested, approvals, disapprovals, completionRequestedAt, disputedAt) = manager.getJobValidation(jobId);
-    }
-
-    function _getFundingReadiness(address employer, uint256 burnAmount)
-        internal
-        view
-        returns (bool balanceSufficient, bool allowanceSufficient)
-    {
-        if (burnAmount == 0) {
-            return (true, true);
-        }
-        address token = manager.agiToken();
-        balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
-        allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
-    }
-
-    function _readinessForDisputed(
-        uint256 jobId,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    ) internal view returns (bool, bool, bool, uint8, uint8) {
-        uint256 disputedAt = _readDisputedAt(jobId);
-        return _composeReadinessWithFunding(
-            true,
-            _getDisputeSettlementPath(disputedAt),
-            balanceSufficient,
-            allowanceSufficient,
-            burnAmount
-        );
-    }
-
-    function _readDisputedAt(uint256 jobId) internal view returns (uint256 disputedAt) {
-        (,,,, disputedAt) = _readValidation(jobId);
-    }
-
-    function _readinessForFinalize(
-        uint256 jobId,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    ) internal view returns (bool, bool, bool, uint8, uint8) {
-        (bool finalizeReady, uint8 pathCode) = _isFinalizeEmployerWinReady(jobId);
-        return _composeReadinessWithFunding(finalizeReady, pathCode, balanceSufficient, allowanceSufficient, burnAmount);
-    }
-
-    function _getDisputeSettlementPath(uint256 disputedAt) internal view returns (uint8) {
-        if (block.timestamp > disputedAt + manager.disputeReviewPeriod()) {
-            return EMPLOYER_WIN_PATH_STALE_DISPUTE_OWNER;
-        }
-        return EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-    }
-
-    function _isFinalizeEmployerWinReady(uint256 jobId) internal view returns (bool ready, uint8 pathCode) {
-        (bool completionRequested, uint256 approvals, uint256 disapprovals, uint256 completionRequestedAt,) =
-            _readValidation(jobId);
-        if (!completionRequested) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-        if (block.timestamp <= completionRequestedAt + manager.completionReviewPeriod()) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-
-        (bool validatorApproved, uint256 validatorApprovedAt) = manager.getJobFinalizationGate(jobId);
-        if (validatorApproved && block.timestamp <= validatorApprovedAt + manager.challengePeriodAfterApproval()) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-
-        uint256 totalVotes = approvals + disapprovals;
-        if (totalVotes == 0 || totalVotes < manager.voteQuorum() || approvals >= disapprovals) {
-            return (false, EMPLOYER_WIN_PATH_NONE);
-        }
-        return (true, EMPLOYER_WIN_PATH_FINALIZE);
-    }
-
-    function _composeReadinessWithFunding(
-        bool pathReady,
-        uint8 pathCode,
-        bool balanceSufficient,
-        bool allowanceSufficient,
-        uint256 burnAmount
-    )
-        internal
-        pure
-        returns (
-            bool employerWinReadyNow,
-            bool balanceOk,
-            bool allowanceOk,
-            uint8 reasonCode,
-            uint8 settlementPathCode
-        )
-    {
-        if (!pathReady) {
-            return (
-                false,
-                balanceSufficient,
-                allowanceSufficient,
-                BURN_READINESS_NOT_EMPLOYER_WIN_PATH,
-                EMPLOYER_WIN_PATH_NONE
-            );
-        }
-        if (burnAmount == 0) {
-            return (true, true, true, BURN_READINESS_BURN_BPS_ZERO, pathCode);
-        }
-        if (!balanceSufficient) {
-            return (true, false, allowanceSufficient, BURN_READINESS_INSUFFICIENT_BALANCE, pathCode);
-        }
-        if (!allowanceSufficient) {
-            return (true, true, false, BURN_READINESS_INSUFFICIENT_ALLOWANCE, pathCode);
-        }
-        return (true, true, true, BURN_READINESS_OK, pathCode);
     }
 }
