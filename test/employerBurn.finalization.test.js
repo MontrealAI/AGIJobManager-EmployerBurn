@@ -4,6 +4,7 @@ const { expectRevert, time } = require('@openzeppelin/test-helpers');
 const AGIJobManager = artifacts.require('AGIJobManager');
 const MockERC20 = artifacts.require('MockERC20');
 const MockERC721 = artifacts.require('MockERC721');
+const ERC20NoReturn = artifacts.require('ERC20NoReturn');
 
 const ZERO_ROOT = '0x' + '00'.repeat(32);
 const ZERO_ADDRESS = '0x' + '00'.repeat(20);
@@ -83,7 +84,7 @@ contract('AGIJobManager completion-only employer burn reserve', (accounts) => {
     const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
     assert.ok(enforced);
     assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.settlementPathCode.toString(), '11');
+    assert.equal(enforced.args.settlementPathCode.toString(), '1');
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
   });
@@ -155,7 +156,7 @@ contract('AGIJobManager completion-only employer burn reserve', (accounts) => {
     const enforced = tx.logs.find((l) => l.event === 'EmployerBurnEnforced');
     assert.ok(enforced);
     assert.equal(enforced.args.amount.toString(), burn.toString());
-    assert.equal(enforced.args.settlementPathCode.toString(), '12');
+    assert.equal(enforced.args.settlementPathCode.toString(), '1');
     const supplyAfter = await token.totalSupply();
     assert.equal(supplyBefore.sub(supplyAfter).toString(), burn.toString());
   });
@@ -205,5 +206,24 @@ contract('AGIJobManager completion-only employer burn reserve', (accounts) => {
     await time.increase(2);
     readiness = await manager.getJobFinalizationGate(jobId);
     assert.equal(readiness.validatorApproved, true);
+  });
+
+  it('rejects non-burnable AGI token when enabling burn bps', async () => {
+    const plain = await ERC20NoReturn.new({ from: owner });
+    const m = await AGIJobManager.new(
+      plain.address,
+      'ipfs://base',
+      [ZERO_ADDRESS, ZERO_ADDRESS],
+      [ZERO_ROOT, ZERO_ROOT, ZERO_ROOT, ZERO_ROOT],
+      [ZERO_ROOT, ZERO_ROOT],
+      { from: owner }
+    );
+    await expectRevert.unspecified(m.setEmployerBurnBps(100, { from: owner }));
+  });
+
+  it('rejects AGI token update to non-burnable token when burn bps is active', async () => {
+    await setup();
+    const plain = await ERC20NoReturn.new({ from: owner });
+    await expectRevert.unspecified(manager.updateAGITokenAddress(plain.address, { from: owner }));
   });
 });

@@ -539,6 +539,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     uint8 private constant ENS_HOOK_REVOKE = 4;
     uint8 private constant ENS_HOOK_LOCK = 5;
     uint8 private constant ENS_HOOK_LOCK_BURN = 6;
+    uint8 private constant COMPLETION_BURN_PATH = 1;
     uint256 internal constant ENS_HOOK_GAS_LIMIT = 500_000;
     uint256 internal constant ENS_URI_GAS_LIMIT = 200_000;
     uint256 internal constant ENS_URI_MAX_RETURN_BYTES = 2048;
@@ -673,7 +674,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _t(job.employer, job.payout);
         emit JobCancelled(jobId);
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
-        delete completionBurnReserveByJob[jobId];
         delete jobs[jobId];
     }
 
@@ -1060,6 +1060,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function updateAGITokenAddress(address _newTokenAddress) external onlyOwner whenIdentityConfigurable {
         if (_newTokenAddress.code.length == 0) revert InvalidParameters();
         _requireEmptyEscrow();
+        if (employerBurnBps != 0) {
+            _requireBurnCallable(_newTokenAddress);
+        }
         address oldToken = address(agiToken);
         agiToken = IERC20(_newTokenAddress);
         emit AGITokenAddressUpdated(oldToken, _newTokenAddress);
@@ -1214,9 +1217,23 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
         _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
+        if (bps != 0) {
+            _requireBurnCallable(address(agiToken));
+        }
         uint256 oldBps = employerBurnBps;
         employerBurnBps = bps;
         emit EmployerBurnBpsUpdated(oldBps, bps);
+    }
+
+    function _requireBurnCallable(address token) internal {
+        uint256 success;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, shl(224, 0x42966c68))
+            mstore(add(ptr, 4), 0)
+            success := call(gas(), token, 0, ptr, 0x24, 0, 0)
+        }
+        if (success == 0) revert InvalidParameters();
     }
 
     function getJobCore(uint256 jobId)
@@ -1559,19 +1576,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
     }
 
-    function _getEmployerBurnPathCode() internal pure returns (uint8) {
-        if (msg.sig == this.finalizeJob.selector) {
-            return 11;
-        }
-        if (msg.sig == this.resolveDisputeWithCode.selector) {
-            return 12;
-        }
-        if (msg.sig == this.resolveStaleDispute.selector) {
-            return 13;
-        }
-        return 0;
-    }
-
     function _releaseCompletionBurnReserve(uint256 jobId, Job storage job) internal {
         uint256 reserve = completionBurnReserveByJob[jobId];
         if (reserve == 0) return;
@@ -1596,7 +1600,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
             address(agiToken),
             reserve,
             msg.sender,
-            _getEmployerBurnPathCode()
+            COMPLETION_BURN_PATH
         );
     }
 

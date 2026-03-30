@@ -1,6 +1,6 @@
 # Events and Errors Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `c46437195ed0`.
+- Generated at (deterministic source fingerprint): `d89e418ce86c`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Events catalog
