@@ -472,3 +472,15 @@ No. Standard `approve` is supported and is the default Etherscan-first path.
 - **Paused:** emergency stop state where protected functions revert.
 - **Revert:** transaction fails and all state changes in that tx are undone.
 - **Event:** log emitted by a contract, used as verifiable evidence of what happened.
+
+
+## v0.2.0 completion-only burn reserve checks
+
+- Deprecated: v0.1.x burned on Employer-win refund outcomes.
+- v0.2.0 burns only on successful completion paths.
+- Use `EmployerBurnReadHelper` read methods:
+  - `quoteCompletionBurn(jobId)`
+  - `getCompletionBurnFundingStatus(jobId)`
+  - `getEmployerUpfrontFundingRequirement(jobId)`
+  - `canFinalizeSuccessfulCompletion(jobId)`
+  - `getSuccessfulCompletionFinalizationReadiness(jobId)`

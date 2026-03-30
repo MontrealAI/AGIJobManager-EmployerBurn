@@ -324,6 +324,7 @@ interface NameWrapper {
 }
 
 interface IAGIALPHABurnable is IERC20 {
+    function burn(uint256 value) external;
     function burnFrom(address account, uint256 value) external;
 }
 
@@ -393,6 +394,8 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     uint256 public lockedValidatorBonds;
     /// @notice Total AGI locked as dispute bonds for unsettled disputes.
     uint256 public lockedDisputeBonds;
+    /// @notice Total AGI funded by employers as completion-only burn reserves for unsettled jobs.
+    uint256 public lockedBurnReserves;
     uint256 public maxActiveJobsPerAgent = 3;
     /// @notice Employer burn rate for employer-favor finalization paths.
     /// @dev Denominated in basis points over job payout (10_000 = 100%).
@@ -458,6 +461,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     mapping(address => uint256) internal activeJobsByAgent;
     AGIType[] public agiTypes;
     mapping(uint256 => string) private _tokenURIs;
+    mapping(uint256 => uint256) private completionBurnReserveByJob;
 
     event JobCreated(
         uint256 indexed jobId,
@@ -535,6 +539,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     uint8 private constant ENS_HOOK_REVOKE = 4;
     uint8 private constant ENS_HOOK_LOCK = 5;
     uint8 private constant ENS_HOOK_LOCK_BURN = 6;
+    uint8 private constant COMPLETION_BURN_PATH = 1;
     uint256 internal constant ENS_HOOK_GAS_LIMIT = 500_000;
     uint256 internal constant ENS_URI_GAS_LIMIT = 200_000;
     uint256 internal constant ENS_URI_MAX_RETURN_BYTES = 2048;
@@ -665,6 +670,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
 
     function _cancelJobAndRefund(uint256 jobId, Job storage job) internal {
         _releaseEscrow(job);
+        _releaseCompletionBurnReserve(jobId, job);
         _t(job.employer, job.payout);
         emit JobCancelled(jobId);
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
@@ -672,7 +678,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     }
 
     function _requireEmptyEscrow() internal view {
-        if ((lockedEscrow | lockedAgentBonds | lockedValidatorBonds | lockedDisputeBonds) != 0) revert InvalidState();
+        if ((lockedEscrow | lockedAgentBonds | lockedValidatorBonds | lockedDisputeBonds | lockedBurnReserves) != 0) {
+            revert InvalidState();
+        }
     }
 
     function _requireValidReviewPeriod(uint256 period) internal pure {
@@ -774,10 +782,14 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.jobSpecURI = _jobSpecURI;
         job.payout = _payout;
         job.duration = _duration;
-        TransferUtils.safeTransferFromExact(address(agiToken), msg.sender, address(this), _payout);
+        uint256 burnReserve = (_payout * employerBurnBps) / 10_000;
+        uint256 upfront = _payout + burnReserve;
+        TransferUtils.safeTransferFromExact(address(agiToken), msg.sender, address(this), upfront);
         unchecked {
             lockedEscrow += _payout;
+            lockedBurnReserves += burnReserve;
         }
+        completionBurnReserveByJob[jobId] = burnReserve;
         emit JobCreated(jobId, _jobSpecURI, _payout, _duration, _details);
         _callEnsJobPagesHook(ENS_HOOK_CREATE, jobId);
     }
@@ -1048,6 +1060,9 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function updateAGITokenAddress(address _newTokenAddress) external onlyOwner whenIdentityConfigurable {
         if (_newTokenAddress.code.length == 0) revert InvalidParameters();
         _requireEmptyEscrow();
+        if (employerBurnBps != 0) {
+            _requireBurnCallable(_newTokenAddress);
+        }
         address oldToken = address(agiToken);
         agiToken = IERC20(_newTokenAddress);
         emit AGITokenAddressUpdated(oldToken, _newTokenAddress);
@@ -1202,9 +1217,23 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function setEmployerBurnBps(uint256 bps) external onlyOwner {
         _requireEmptyEscrow();
         if (bps > 10_000) revert InvalidParameters();
+        if (bps != 0) {
+            _requireBurnCallable(address(agiToken));
+        }
         uint256 oldBps = employerBurnBps;
         employerBurnBps = bps;
         emit EmployerBurnBpsUpdated(oldBps, bps);
+    }
+
+    function _requireBurnCallable(address token) internal {
+        uint256 success;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, shl(224, 0x42966c68))
+            mstore(add(ptr, 4), 0)
+            success := call(gas(), token, 0, ptr, 0x24, 0, 0)
+        }
+        if (success == 0) revert InvalidParameters();
     }
 
     function getJobCore(uint256 jobId)
@@ -1312,6 +1341,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.expired = true;
         _decrementActiveJob(job);
         _releaseEscrow(job);
+        _releaseCompletionBurnReserve(_jobId, job);
         _settleAgentBond(job, false, false);
         _t(job.employer, job.payout);
         emit JobExpired(_jobId, job.employer, job.assignedAgent, job.payout);
@@ -1388,6 +1418,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.completed = true;
         _decrementActiveJob(job);
         _releaseEscrow(job);
+        _consumeCompletionBurnReserve(_jobId, job);
         _settleAgentBond(job, true, false);
 
         uint256 reputationPoints = ReputationMath.computeReputationPoints(
@@ -1523,19 +1554,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         job.disputed = false;
         _decrementActiveJob(job);
         _releaseEscrow(job);
-        uint256 burnAmount = (job.payout * employerBurnBps) / 10_000;
-        if (burnAmount != 0) {
-            IAGIALPHABurnable(address(agiToken)).burnFrom(job.employer, burnAmount);
-            uint8 settlementPathCode = _getEmployerBurnPathCode();
-            emit EmployerBurnEnforced(
-                jobId,
-                job.employer,
-                address(agiToken),
-                burnAmount,
-                msg.sender,
-                settlementPathCode
-            );
-        }
+        _releaseCompletionBurnReserve(jobId, job);
         bool poolToValidators = (requiredValidatorDisapprovals != 0
             && job.validatorDisapprovals >= requiredValidatorDisapprovals);
         uint256 agentBondPool = _settleAgentBond(job, false, poolToValidators);
@@ -1557,17 +1576,32 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _callEnsJobPagesHook(ENS_HOOK_REVOKE, jobId);
     }
 
-    function _getEmployerBurnPathCode() internal pure returns (uint8) {
-        if (msg.sig == this.finalizeJob.selector) {
-            return 1;
+    function _releaseCompletionBurnReserve(uint256 jobId, Job storage job) internal {
+        uint256 reserve = completionBurnReserveByJob[jobId];
+        if (reserve == 0) return;
+        completionBurnReserveByJob[jobId] = 0;
+        unchecked {
+            lockedBurnReserves -= reserve;
         }
-        if (msg.sig == this.resolveDisputeWithCode.selector) {
-            return 2;
+        _t(job.employer, reserve);
+    }
+
+    function _consumeCompletionBurnReserve(uint256 jobId, Job storage job) internal {
+        uint256 reserve = completionBurnReserveByJob[jobId];
+        if (reserve == 0) return;
+        completionBurnReserveByJob[jobId] = 0;
+        unchecked {
+            lockedBurnReserves -= reserve;
         }
-        if (msg.sig == this.resolveStaleDispute.selector) {
-            return 3;
-        }
-        return 0;
+        IAGIALPHABurnable(address(agiToken)).burn(reserve);
+        emit EmployerBurnEnforced(
+            jobId,
+            job.employer,
+            address(agiToken),
+            reserve,
+            msg.sender,
+            COMPLETION_BURN_PATH
+        );
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -1608,7 +1642,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     /// @dev Owner withdrawals are limited to balances not backing lockedEscrow/locked*Bonds.
     function withdrawableAGI() public view returns (uint256) {
         uint256 bal = agiToken.balanceOf(address(this));
-        uint256 lockedTotal = lockedEscrow + lockedValidatorBonds + lockedAgentBonds + lockedDisputeBonds;
+        uint256 lockedTotal = lockedEscrow + lockedValidatorBonds + lockedAgentBonds + lockedDisputeBonds + lockedBurnReserves;
         if (bal < lockedTotal) revert InsolventEscrowBalance();
         return bal - lockedTotal;
     }

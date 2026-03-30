@@ -45,12 +45,24 @@ if (!deployment.contracts?.AGIJobManager?.address) {
   console.error('❌ Deployment record missing contracts.AGIJobManager.address');
   process.exit(1);
 }
+if (!deployment.finalOwner) {
+  console.error('❌ Deployment record missing finalOwner');
+  process.exit(1);
+}
+const verificationStatus = deployment.verification?.AGIJobManager?.status;
+if (!verificationStatus || (verificationStatus !== 'verified' && verificationStatus !== 'already_verified')) {
+  console.error('❌ AGIJobManager verification status missing or not verified in deployment record.');
+  process.exit(1);
+}
 
 console.log(`✅ Post-deploy metadata validated from ${latest.name}`);
 console.log(`- network: ${deployment.network}`);
 console.log(`- chainId: ${deployment.chainId}`);
 console.log(`- blockNumber: ${latest.blockNumber}`);
 console.log(`- AGIJobManager: ${deployment.contracts.AGIJobManager.address}`);
+console.log(`- finalOwner: ${deployment.finalOwner}`);
+console.log(`- AGIJobManager verification: ${verificationStatus}`);
+console.log('- completion burn reserve semantics: confirm employerBurnBps and lockedBurnReserves via Etherscan Read Contract.');
 
 const verifyTargetsPath = path.join(dir, 'verify-targets.json');
 if (!fs.existsSync(verifyTargetsPath)) {
