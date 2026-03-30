@@ -1,6 +1,6 @@
 # Events and Errors Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `7db430dccb82`.
+- Generated at (deterministic source fingerprint): `04a9f3a63f73`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Events catalog
@@ -51,6 +51,7 @@
 
 | Error | Parameters | Likely causes | Remediation |
 | --- | --- | --- | --- |
+| `AGIALPHATokenPinned` | — | Contract-defined guard violation | Inspect transaction traces and state getters |
 | `Blacklisted` | — | Caller is blocked by operator policy | Review blacklist rationale and incident policy |
 | `ConfigLocked` | — | Contract-defined guard violation | Inspect transaction traces and state getters |
 | `IneligibleAgentPayout` | — | Contract-defined guard violation | Inspect transaction traces and state getters |

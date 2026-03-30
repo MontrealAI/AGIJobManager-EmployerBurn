@@ -58,6 +58,7 @@ Expected result of a safe cutover:
   - `quoteCreateJobBurn(uint256 payout)`
   - `getCreateJobFundingRequirement(uint256 payout)`
   - `getCreateJobAllowanceRequirement(uint256 payout)`
+  - `getJobBurnAmountSnapshot(uint256 jobId)`
   - `getJobEconomicSnapshot(uint256 jobId)`
 - Required burn evidence event when non-zero burn is applied: `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)`.
 - Corrected semantic guardrail: settlement/refund/dispute/cancel/delist/expiry paths must not emit burn events.
@@ -103,7 +104,7 @@ AGIJobManager is intended for AI agents exclusively for normal protocol particip
 | Blacklist/unblacklist agent | `blacklistAgent(address,bool)` | Owner | None | Yes | Safe |
 | Blacklist/unblacklist validator | `blacklistValidator(address,bool)` | Owner | None | Yes | Safe |
 | Update Merkle roots | `updateMerkleRoots(bytes32,bytes32)` | Owner | None | Yes | Safe |
-| Update AGI token address | `updateAGITokenAddress(address)` | Owner | `lockIdentityConfig == false`; new token must be a contract; empty escrow/bonds required (`lockedEscrow`, `lockedAgentBonds`, `lockedValidatorBonds`, `lockedDisputeBonds` all zero) | Yes | Safe |
+| Update AGI token address | `updateAGITokenAddress(address)` | Owner | Disabled in corrected successor; function always reverts (`AGIALPHATokenPinned`) | No (non-operational) | Do not call |
 | Update ENS registry | `updateEnsRegistry(address)` | Owner | `lockIdentityConfig == false`; address must be a contract; empty escrow/bonds required | Yes | Safe |
 | Update NameWrapper | `updateNameWrapper(address)` | Owner | `lockIdentityConfig == false`; address can be zero or a contract; empty escrow/bonds required | Yes | Safe |
 | Update ENS root nodes | `updateRootNodes(bytes32,bytes32,bytes32,bytes32)` | Owner | `lockIdentityConfig == false`; empty escrow/bonds required | Yes | Safe |
@@ -179,7 +180,7 @@ Use this checklist before any mainnet transaction.
 
 Identity lock effect summary:
 
-- Lock blocks: `updateAGITokenAddress`, `updateEnsRegistry`, `updateNameWrapper`, `updateRootNodes`, `setEnsJobPages`.
+- Lock blocks: `updateEnsRegistry`, `updateNameWrapper`, `updateRootNodes`, `setEnsJobPages`. (`updateAGITokenAddress` is already disabled in this successor release.)
 - Lock does not block: pause controls, Merkle roots, direct allowlists, blacklists, thresholds, bonds, payout and timing parameters.
 
 ## 6) Deployment Overview (Hardhat canonical, Truffle legacy)
@@ -602,7 +603,7 @@ A participant can be authorized if they control the configured subdomain via Nam
 | Max payout per job | `maxJobPayout()` | `setMaxJobPayout` | `88888888000000000000000000` | No special gate | Use staged increases |
 | Max job duration | `jobDurationLimit()` | `setJobDurationLimit` | `10000000` | Must be non-zero | Keep aligned with ops timelines |
 | Max active jobs per agent | `maxActiveJobsPerAgent()` | `setMaxActiveJobsPerAgent` | `3` | Range guard in setter | Increase carefully to avoid concentration |
-| AGI token address | `agiToken()` | `updateAGITokenAddress` | Constructor input | Identity unlocked + empty escrow/bonds + contract address | Treat as major migration event |
+| AGI token address | `agiToken()` | Non-upgradable in successor (`updateAGITokenAddress` reverts) | Constructor input | Not changeable after deployment | Must be AGIALPHA for mainnet successor |
 | ENS registry | `ens()` | `updateEnsRegistry` | Constructor input | Identity unlocked + empty escrow/bonds + contract address | Change only with full namespace validation |
 | ENS name wrapper | `nameWrapper()` | `updateNameWrapper` | Constructor input | Identity unlocked + empty escrow/bonds + zero/contract | Validate wrapper ownership model |
 | ENS root nodes | `clubRootNode()`, `agentRootNode()`, `alphaClubRootNode()`, `alphaAgentRootNode()` | `updateRootNodes` | Constructor inputs | Identity unlocked + empty escrow/bonds | Update during intake pause window |
@@ -610,6 +611,8 @@ A participant can be authorized if they control the configured subdomain via Nam
 | ENS tokenURI toggle | no public getter (write-only toggle) | `setUseEnsJobTokenURI` | `false` unless set | No special gate | Toggle only with metadata readiness |
 | Base IPFS URL | no public getter | `setBaseIpfsUrl` | Constructor input | Length bound | Track value in release ledger |
 | Merkle roots | `validatorMerkleRoot()`, `agentMerkleRoot()` | `updateMerkleRoots` | Constructor input | No special gate | Publish proofs before updates |
+
+> Successor pinning rule: AGIALPHA is pinned in this release. `updateAGITokenAddress(...)` is intentionally disabled and reverts.
 
 ## 13) Troubleshooting (symptom → cause → web-only fix)
 
@@ -632,3 +635,4 @@ Humans can still execute owner and operator administration functions safely usin
 Authoritative Terms and Conditions are embedded in the contract header in `contracts/AGIJobManager.sol` and mirrored in `docs/LEGAL/TERMS_AND_CONDITIONS.md`.
 
 This guide is operational documentation, not legal advice.
+

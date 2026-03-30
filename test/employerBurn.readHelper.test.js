@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { expectRevert } = require('@openzeppelin/test-helpers');
 const { toBN, toWei } = web3.utils;
 
 const AGIJobManager = artifacts.require('AGIJobManager');
@@ -66,6 +67,11 @@ contract('EmployerBurnReadHelper', (accounts) => {
 
     const allowanceRequired = await helper.getCreateJobAllowanceRequirement(payout);
     assert.equal(allowanceRequired.toString(), total.toString());
+
+    const allowanceDetails = await helper.getCreateJobAllowanceRequirementWithToken(payout);
+    assert.equal(allowanceDetails.token, token.address);
+    assert.equal(allowanceDetails.spender, manager.address);
+    assert.equal(allowanceDetails.allowanceRequired.toString(), total.toString());
   });
 
   it('returns createJob funding readiness based on wallet balance and allowance', async () => {
@@ -114,9 +120,11 @@ contract('EmployerBurnReadHelper', (accounts) => {
     await manager.resolveDisputeWithCode(jobId, 2, 'employer win', { from: moderator });
 
     const newToken = await MockERC20.new({ from: owner });
-    await manager.updateAGITokenAddress(newToken.address, { from: owner });
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
     const stillSnapshotted = await helper.getJobEconomicSnapshot(jobId);
     assert.equal(stillSnapshotted.token, token.address);
+    const burnSnapshot = await helper.getJobBurnAmountSnapshot(jobId);
+    assert.equal(burnSnapshot.toString(), burn.toString());
   });
 
   it('keeps deprecated employer-win burn readiness APIs non-actionable', async () => {

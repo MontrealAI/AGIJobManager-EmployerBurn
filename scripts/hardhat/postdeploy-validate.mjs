@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+const AGIALPHA_MAINNET = '0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA';
 const network = process.env.DEPLOY_NETWORK || 'mainnet';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 const dir = path.join(root, 'hardhat', 'deployments', network);
@@ -69,7 +70,15 @@ if (typeof deployment.constructorArgs?.agiTokenAddress !== 'string') {
   console.error('❌ Deployment record missing constructorArgs.agiTokenAddress');
   process.exit(1);
 }
-console.log(`✅ agiTokenAddress recorded: ${deployment.constructorArgs.agiTokenAddress}`);
+const configuredToken = deployment.constructorArgs.agiTokenAddress;
+console.log(`✅ agiTokenAddress recorded: ${configuredToken}`);
+if (deployment.chainId === 1 && configuredToken.toLowerCase() !== AGIALPHA_MAINNET.toLowerCase()) {
+  console.error(`❌ Mainnet successor must pin AGIALPHA token ${AGIALPHA_MAINNET}; found ${configuredToken}`);
+  process.exit(1);
+}
+if (deployment.chainId === 1) {
+  console.log(`✅ Mainnet AGIALPHA pin confirmed: ${AGIALPHA_MAINNET}`);
+}
 
 const verification = deployment.verification?.AGIJobManager?.status;
 if (!verification || (verification !== 'verified' && verification !== 'already_verified')) {
@@ -84,9 +93,11 @@ if (!fs.existsSync(artifactPath)) {
   process.exit(1);
 }
 const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
-const selectors = new Set((artifact.abi || []).filter((x) => x.type === 'function').map((x) => x.name));
+const abi = artifact.abi || [];
+const selectors = new Set(abi.filter((x) => x.type === 'function').map((x) => x.name));
 const requiredHelpers = [
   'getJobBurnBpsSnapshot',
+  'getJobBurnTokenSnapshot',
   'setEnsJobPages',
 ];
 for (const fn of requiredHelpers) {
@@ -96,3 +107,34 @@ for (const fn of requiredHelpers) {
   }
 }
 console.log('✅ Required create-job burn helpers + ENS wiring function present in ABI.');
+
+const updateTokenFn = abi.find((x) => x.type === 'function' && x.name === 'updateAGITokenAddress');
+if (!updateTokenFn) {
+  console.error('❌ Missing updateAGITokenAddress function in ABI.');
+  process.exit(1);
+}
+if (updateTokenFn.stateMutability !== 'pure') {
+  console.error(`❌ updateAGITokenAddress must be pure (disabled pinning stub). Found mutability=${updateTokenFn.stateMutability}`);
+  process.exit(1);
+}
+const errorNames = new Set(abi.filter((x) => x.type === 'error').map((x) => x.name));
+if (!errorNames.has('AGIALPHATokenPinned')) {
+  console.error('❌ Missing AGIALPHATokenPinned custom error in ABI.');
+  process.exit(1);
+}
+console.log('✅ Token pinning behavior surface validated (pure update stub + AGIALPHATokenPinned error).');
+
+const helperArtifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'periphery', 'EmployerBurnReadHelper.sol', 'EmployerBurnReadHelper.json');
+if (!fs.existsSync(helperArtifactPath)) {
+  console.error(`❌ Missing Hardhat artifact for EmployerBurnReadHelper: ${helperArtifactPath}`);
+  process.exit(1);
+}
+const helperArtifact = JSON.parse(fs.readFileSync(helperArtifactPath, 'utf8'));
+const helperSelectors = new Set((helperArtifact.abi || []).filter((x) => x.type === 'function').map((x) => x.name));
+for (const fn of ['quoteCreateJobBurn', 'getCreateJobFundingRequirement', 'getCreateJobAllowanceRequirement', 'getCreateJobAllowanceRequirementWithToken', 'getJobBurnAmountSnapshot', 'getJobEconomicSnapshot']) {
+  if (!helperSelectors.has(fn)) {
+    console.error(`❌ Missing required EmployerBurnReadHelper function in ABI: ${fn}`);
+    process.exit(1);
+  }
+}
+console.log('✅ EmployerBurnReadHelper createJob-only helper surface present in ABI.');

@@ -720,7 +720,7 @@ contract("AGIJobManager comprehensive suite", (accounts) => {
       await expectRevert.unspecified(manager.addAdditionalAgent(agent, { from: outsider }));
 
       await manager.setBaseIpfsUrl("ipfs://new", { from: owner });
-      await manager.updateAGITokenAddress(token.address, { from: owner });
+      await expectRevert.unspecified(manager.updateAGITokenAddress(token.address, { from: owner }));
       await manager.setMaxJobPayout(payout.muln(10), { from: owner });
       await manager.setJobDurationLimit(9000, { from: owner });
       await manager.addModerator(validatorFour, { from: owner });

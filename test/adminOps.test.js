@@ -209,12 +209,7 @@ contract("AGIJobManager admin ops", (accounts) => {
 
   it("emits events for high-impact configuration updates", async () => {
     const newToken = await MockERC20.new({ from: owner });
-    const oldTokenAddress = await manager.agiToken();
-    const tokenTx = await manager.updateAGITokenAddress(newToken.address, { from: owner });
-    const tokenEvent = tokenTx.logs.find((log) => log.event === "AGITokenAddressUpdated");
-    assert.ok(tokenEvent, "AGITokenAddressUpdated should be emitted");
-    assert.equal(tokenEvent.args.oldToken, oldTokenAddress);
-    assert.equal(tokenEvent.args.newToken, newToken.address);
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
 
     const ensJobPages = await MockENSJobPages.new({ from: owner });
     const oldEnsJobPages = await manager.ensJobPages();
@@ -355,27 +350,22 @@ contract("AGIJobManager admin ops", (accounts) => {
     await expectCustomError(manager.updateNameWrapper.call(nameWrapper.address, { from: owner }), "ConfigLocked");
   });
 
-  it("locks critical config and restricts token updates to pre-job setup", async () => {
+  it("locks critical config and keeps token updates disabled", async () => {
     const newToken = await MockERC20.new({ from: owner });
-    await manager.updateAGITokenAddress(newToken.address, { from: owner });
-    assert.equal(await manager.agiToken(), newToken.address, "token should update before jobs");
+    const pinnedToken = await manager.agiToken();
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
+    assert.equal(await manager.agiToken(), pinnedToken, "token must remain pinned before jobs");
 
     const payout = toBN(toWei("3"));
-    await newToken.mint(employer, payout, { from: owner });
-    await newToken.approve(manager.address, payout, { from: employer });
+    await token.mint(employer, payout, { from: owner });
+    await token.approve(manager.address, payout, { from: employer });
     await manager.createJob("ipfs", payout, 1000, "details", { from: employer });
 
     const anotherToken = await MockERC20.new({ from: owner });
-    await expectCustomError(
-      manager.updateAGITokenAddress.call(anotherToken.address, { from: owner }),
-      "InvalidState"
-    );
+    await expectRevert.unspecified(manager.updateAGITokenAddress(anotherToken.address, { from: owner }));
 
     await manager.lockIdentityConfiguration({ from: owner });
-    await expectCustomError(
-      manager.updateAGITokenAddress.call(newToken.address, { from: owner }),
-      "ConfigLocked"
-    );
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
   });
 
   it("rejects non-ERC721 AGI type configurations", async () => {
@@ -449,16 +439,12 @@ contract("AGIJobManager admin ops", (accounts) => {
     await manager.requestJobCompletion(jobId, "ipfs-complete", { from: agent });
 
     const newToken = await MockERC20.new({ from: owner });
-    await expectCustomError(
-      manager.updateAGITokenAddress.call(newToken.address, { from: owner }),
-      "InvalidState"
-    );
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
 
     const reviewPeriod = await manager.completionReviewPeriod();
     await time.increase(reviewPeriod.addn(1));
     await manager.finalizeJob(jobId, { from: employer });
 
-    await manager.updateAGITokenAddress(newToken.address, { from: owner });
-    assert.equal(await manager.agiToken(), newToken.address, "token should update after settlement");
+    await expectRevert.unspecified(manager.updateAGITokenAddress(newToken.address, { from: owner }));
   });
 });

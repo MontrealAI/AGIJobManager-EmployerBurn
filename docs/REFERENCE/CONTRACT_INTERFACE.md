@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `7db430dccb82`.
-- Source snapshot fingerprint: `7db430dccb82`.
+- Generated at (deterministic source fingerprint): `04a9f3a63f73`.
+- Source snapshot fingerprint: `04a9f3a63f73`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -117,7 +117,7 @@
 | `unpause()` | external | nonpayable | — |
 | `unpauseAll()` | external | nonpayable | — |
 | `unpauseIntake()` | external | nonpayable | — |
-| `updateAGITokenAddress(address _newTokenAddress)` | external | nonpayable | — |
+| `updateAGITokenAddress(address)` | external | pure | — |
 | `updateEnsRegistry(address _newEnsRegistry)` | external | nonpayable | — |
 | `updateMerkleRoots(bytes32 _validatorMerkleRoot, bytes32 _agentMerkleRoot)` | external | nonpayable | — |
 | `updateNameWrapper(address _newNameWrapper)` | external | nonpayable | — |
@@ -174,6 +174,7 @@
 
 | Error | Parameters |
 | --- | --- |
+| `AGIALPHATokenPinned` | — |
 | `Blacklisted` | — |
 | `ConfigLocked` | — |
 | `IneligibleAgentPayout` | — |

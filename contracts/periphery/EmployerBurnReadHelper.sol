@@ -85,6 +85,22 @@ contract EmployerBurnReadHelper {
         allowanceRequired = payout + ((payout * manager.employerBurnBps()) / 10_000);
     }
 
+    function getCreateJobAllowanceRequirementWithToken(uint256 payout)
+        external
+        view
+        returns (address token, address spender, uint256 allowanceRequired)
+    {
+        token = manager.agiToken();
+        spender = address(manager);
+        allowanceRequired = payout + ((payout * manager.employerBurnBps()) / 10_000);
+    }
+
+    function getJobBurnAmountSnapshot(uint256 jobId) external view returns (uint256 burnAmountCharged) {
+        (, , uint256 payoutEscrowed, , , , , , ) = manager.getJobCore(jobId);
+        uint256 burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
+        burnAmountCharged = (payoutEscrowed * burnBpsSnapshot) / 10_000;
+    }
+
     function getJobEconomicSnapshot(uint256 jobId)
         external
         view

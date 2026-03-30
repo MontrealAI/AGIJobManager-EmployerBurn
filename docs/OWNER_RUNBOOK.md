@@ -147,9 +147,10 @@ Before `lockIdentityConfiguration()` or `lockConfiguration()`:
 ## 7) High-risk actions (operator warnings)
 
 - `rescueERC20`, `rescueToken`: emergency-only, must not violate escrow solvency assumptions.
-- `updateAGITokenAddress`: identity-critical; only before lock.
+- `updateAGITokenAddress`: disabled in the corrected successor; call reverts because AGIALPHA is pinned.
 - `updateEnsRegistry`/`updateNameWrapper`/`updateRootNodes`/`setEnsJobPages`: identity-critical; only before lock.
 - Parameter setters affecting incentives (`setValidatorBondParams`, `setAgentBondParams`, `setValidatorSlashBps`, `setVoteQuorum`, etc.) should use change tickets and announced effective times.
 - `setEmployerBurnBps`: economic-impact setting; announce before changing and verify employer-facing runbooks are updated.
 
 - `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.
+

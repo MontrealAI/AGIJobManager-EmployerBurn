@@ -38,6 +38,11 @@
     },
     {
       "inputs": [],
+      "name": "AGIALPHATokenPinned",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "Blacklisted",
       "type": "error"
     },
@@ -2336,13 +2341,13 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_newTokenAddress",
+          "name": "",
           "type": "address"
         }
       ],
       "name": "updateAGITokenAddress",
       "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "pure",
       "type": "function"
     },
     {

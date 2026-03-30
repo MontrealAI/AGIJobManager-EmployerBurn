@@ -33,7 +33,7 @@ contract('identityConfig.locking', (accounts) => {
 
     await time.increase(6001);
     await manager.expireJob(0, { from: employer });
-    await manager.updateAGITokenAddress(altToken.address, { from: owner });
+    await require('@openzeppelin/test-helpers').expectRevert.unspecified(manager.updateAGITokenAddress(altToken.address, { from: owner }));
     await manager.lockIdentityConfiguration({ from: owner });
     await require('@openzeppelin/test-helpers').expectRevert.unspecified(manager.updateAGITokenAddress(token.address, { from: owner }));
   });
