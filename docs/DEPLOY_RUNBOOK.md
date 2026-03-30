@@ -105,7 +105,8 @@ ENS smoke check (if configured):
 ## 7) Rollback / incident notes
 
 - **ENS misconfigured**: if identity is **not locked**, update `ensJobPages` to a healthy contract or set it to zero address; if identity is already locked, this remediation path is unavailable and ENS issues must be handled off-chain while core settlement remains functional.
-- **Wrong token/identity addresses pre-jobs**: use `updateAGITokenAddress` / identity setters while identity still configurable and locked balances are zero.
+- **Wrong identity addresses pre-jobs**: use identity setters (`updateEnsRegistry`, `updateNameWrapper`, `setEnsJobPages`, `updateRootNodes`) while identity is still configurable and locked balances are zero.
+- **Wrong AGI token for corrected successor**: do **not** attempt `updateAGITokenAddress` (disabled, always reverts). Redeploy with correct constructor token (mainnet must be AGIALPHA `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`).
 - **Wrong token address after activity**: direct replacement blocked by empty-lock requirement; pause, drain obligations via normal settlement, then reconfigure if still unlocked.
 
 ```mermaid

@@ -72,7 +72,7 @@ Manages moderator permissions.
 Explicit allowlists for roles, bypassing ENS/Merkle checks.
 
 ### `updateAGITokenAddress(address)`
-Changes the ERC‑20 token used for payouts.
+Disabled compatibility stub in the corrected successor release; always reverts with `AGIALPHATokenPinned` because the successor is AGIALPHA-pinned.
 
 ### `setBaseIpfsUrl(string)`
 Base prefix for minted NFT tokenURIs when a job URI is a bare CID.

@@ -66,7 +66,7 @@ All parameters are upgradable by the owner. Defaults are set in the contract to 
   - `blacklistValidator`
 
 ### Managing ENS wiring and identity lock
-- ENS wiring functions (`updateAGITokenAddress`, `updateEnsRegistry`, `updateNameWrapper`, `updateRootNodes`) are only available while `lockIdentityConfig` is false **and** only before any jobs exist (`nextJobId == 0`) with zero escrow (`lockedEscrow == 0`). If either guard fails, the call reverts with `InvalidState` even if identity configuration is still unlocked.
+- ENS wiring functions (`updateEnsRegistry`, `updateNameWrapper`, `updateRootNodes`, `setEnsJobPages`) are only available while `lockIdentityConfig` is false; several also require empty escrow state. `updateAGITokenAddress` is disabled in the corrected successor and always reverts (`AGIALPHATokenPinned`).
 - `lockIdentityConfiguration()` permanently disables those wiring updates by setting `lockIdentityConfig = true` and emits `IdentityConfigurationLocked`.
 - `updateMerkleRoots` remains available after the lock and is the primary mechanism for allowlist rotation.
 
@@ -84,7 +84,7 @@ All parameters are upgradable by the owner. Defaults are set in the contract to 
 - Withdrawals are only allowed while paused.
 
 ### Rotating the escrow token
-- `updateAGITokenAddress` changes the ERC‑20 used for escrow, payouts, and reward pool contributions.
+- `updateAGITokenAddress` is intentionally disabled in the corrected successor and cannot be used to switch tokens.
 - The token can only be changed while identity configuration is unlocked **and** before any jobs exist (`nextJobId == 0`) with zero escrow (`lockedEscrow == 0`).
 - Changing the token can break integrations and invalidate approvals. Ensure all users re‑approve the new token and carefully manage `lockedEscrow` vs balances before switching.
 - **Production invariant**: treat the escrow token as immutable once jobs are funded.

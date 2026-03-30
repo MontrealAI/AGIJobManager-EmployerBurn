@@ -13,7 +13,7 @@ Once locked, the contract keeps operating for normal jobs, escrows, and dispute 
 These functions are guarded by `whenIdentityConfigurable` and **revert** once the identity wiring is locked:
 
 **Identity wiring**
-- `updateAGITokenAddress` (only allowed before any job exists and before the lock)
+- `updateAGITokenAddress` (disabled in corrected successor; always reverts)
 - `updateEnsRegistry` (only allowed before any job exists and before the lock)
 - `updateNameWrapper` (only allowed before any job exists and before the lock)
 - `updateRootNodes` (only allowed before any job exists and before the lock)

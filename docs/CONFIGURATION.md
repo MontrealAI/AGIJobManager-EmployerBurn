@@ -3,7 +3,7 @@
 ## Configuration locking model
 
 `lockIdentityConfiguration()` permanently freezes identity wiring setters guarded by `whenIdentityConfigurable`:
-- `updateAGITokenAddress`
+- `updateAGITokenAddress` (disabled compatibility stub in successor; always reverts)
 - `updateEnsRegistry`
 - `updateNameWrapper`
 - `setEnsJobPages`
@@ -35,7 +35,7 @@ It **does not** freeze operational controls like pause, settlement pause, thresh
 | `additionalText1/2/3` | `updateAdditionalText1/2/3` | Yes | none | Informational metadata |
 | `settlementPaused` | `setSettlementPaused` | Yes | none | Blocks settlement-sensitive functions via custom modifier |
 | Pause state | `pause`/`unpause` | Yes | OpenZeppelin Pausable | Pausing required for treasury withdraw |
-| `agiToken` | `updateAGITokenAddress` | Yes | identity-configurable + empty locked balances + nonzero address | High impact; do before production jobs |
+| `agiToken` | `updateAGITokenAddress` | **No in successor** | Function is intentionally disabled and always reverts (`AGIALPHATokenPinned`) | AGIALPHA-pinned for corrected successor deployments; do not treat as mutable |
 | `ens` | `updateEnsRegistry` | Yes | identity-configurable + **empty locked balances** + nonzero | Identity gating dependency |
 | `nameWrapper` | `updateNameWrapper` | Yes | identity-configurable + **empty locked balances** + nonzero | Wrapped-root checks dependency |
 | `ensJobPages` | `setEnsJobPages` | Yes | identity-configurable; contract code required if nonzero | Enables lifecycle hooks |
