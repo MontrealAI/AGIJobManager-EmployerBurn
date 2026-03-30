@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `d0e48107604a`.
-- Source snapshot fingerprint: `d0e48107604a`.
+- Generated at (deterministic source fingerprint): `c46437195ed0`.
+- Source snapshot fingerprint: `c46437195ed0`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -28,6 +28,7 @@
 | `ensJobPages` | `address` |
 | `jobDurationLimit` | `uint256` |
 | `lockedAgentBonds` | `uint256` |
+| `lockedBurnReserves` | `uint256` |
 | `lockedDisputeBonds` | `uint256` |
 | `lockedEscrow` | `uint256` |
 | `lockedValidatorBonds` | `uint256` |
@@ -60,6 +61,7 @@
 | `applyForJob(uint256 _jobId, string memory subdomain, bytes32[] calldata proof)` | external | nonpayable | — |
 | `blacklistAgent(address _agent, bool _status)` | external | nonpayable | — |
 | `blacklistValidator(address _validator, bool _status)` | external | nonpayable | — |
+| `burn(uint256 value)` | external | nonpayable | — |
 | `burnFrom(address account, uint256 value)` | external | nonpayable | — |
 | `cancelJob(uint256 _jobId)` | external | nonpayable | — |
 | `createJob(string memory _jobSpecURI, uint256 _payout, uint256 _duration, string memory _details)` | external | nonpayable | — |
