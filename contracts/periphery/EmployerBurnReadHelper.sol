@@ -45,6 +45,8 @@ interface IERC20ReadOnly {
 /// @title EmployerBurnReadHelper
 /// @notice Read-only helper contract for Etherscan-first employer burn preflight checks.
 /// @dev This helper is additive and non-authoritative: AGIJobManager remains settlement source-of-truth.
+/// @dev Settlement readiness methods are kept for backward compatibility but no longer gate on burn funding,
+/// @dev because burn is charged only at createJob in corrected successor semantics.
 contract EmployerBurnReadHelper {
     uint8 public constant EMPLOYER_WIN_PATH_NONE = 0;
     uint8 public constant EMPLOYER_WIN_PATH_FINALIZE = 1;
@@ -157,10 +159,10 @@ contract EmployerBurnReadHelper {
     }
 
     function canFinalizeEmployerWinWithBurn(uint256 jobId) external view returns (bool) {
-        (bool ready, bool balanceOk, bool allowanceOk,, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
+        (bool ready,,, uint8 reasonCode, uint8 settlementPathCode) = _getEmployerBurnReadiness(jobId);
         bool isFinalizePath = settlementPathCode > EMPLOYER_WIN_PATH_NONE
             && settlementPathCode < EMPLOYER_WIN_PATH_DISPUTE_MODERATOR;
-        return ready && balanceOk && allowanceOk && isFinalizePath;
+        return ready && reasonCode == BURN_READINESS_OK && isFinalizePath;
     }
 
     function _getEmployerBurnReadiness(uint256 jobId) internal view returns (bool, bool, bool, uint8, uint8) {
@@ -199,12 +201,9 @@ contract EmployerBurnReadHelper {
         view
         returns (bool balanceSufficient, bool allowanceSufficient)
     {
-        if (burnAmount == 0) {
-            return (true, true);
-        }
-        address token = manager.agiToken();
-        balanceSufficient = IERC20ReadOnly(token).balanceOf(employer) >= burnAmount;
-        allowanceSufficient = IERC20ReadOnly(token).allowance(employer, address(manager)) >= burnAmount;
+        employer;
+        burnAmount;
+        return (true, true);
     }
 
     function _readinessForDisputed(
