@@ -1106,6 +1106,19 @@
     },
     {
       "inputs": [],
+      "name": "AGIALPHA_MAINNET_TOKEN",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "MAX_AGI_TYPES",
       "outputs": [
         {
