@@ -137,7 +137,7 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win: AGIALPHA refund transfer to employer, `EmployerBurnEnforced(jobId, employer, token, amount, finalizer, settlementPathCode)` event, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win (legacy reference): AGIALPHA refund transfer to employer, no completion NFT mint, and no `JobCompleted` event.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.
@@ -176,7 +176,7 @@ flowchart TD
 | `NotAuthorized` | bad proof / subdomain / list membership | verify allowlist, Merkle root proof, or ENS ownership path |
 | `InvalidState` on finalize | window not elapsed or wrong path | inspect `getJobCore(jobId)` + `getJobValidation(jobId)` and validator counts |
 | transfer failures | missing AGIALPHA allowance/balance | re-check token `approve` and balances |
-| employer-win settlement reverts unexpectedly | employer burn allowance/balance missing | increase employer AGIALPHA allowance/balance beyond escrow amount and retry |
+| createJob reverts unexpectedly | insufficient upfront allowance/balance for `escrow + burn` | increase employer AGIALPHA allowance/balance to the helper-quoted upfront total and retry createJob |
 | no ENS update visible | hook target reverted | inspect `EnsHookAttempted.success` and ENS helper config |
 | unexpected tokenURI | ENS URI rejected as unsafe | fallback uses jobCompletionURI; verify `tokenURI(tokenId)` |
 
@@ -201,7 +201,7 @@ flowchart TD
 3. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
 4. Employer ensures wallet balance can cover both escrow payout and burn.
 5. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
-6. On employer-win settlement, verify `EmployerBurnEnforced` event and amount when burn amount is non-zero.
+6. For corrected successor releases, verify `EmployerBurnChargedAtJobCreation` on createJob and do **not** expect any settlement-path burn event.
 
 ## Glossary
 - **Merkle proof:** cryptographic inclusion path showing an address is in an off-chain list committed on-chain.

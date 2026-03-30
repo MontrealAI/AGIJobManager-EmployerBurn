@@ -522,14 +522,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event AgentBondMinUpdated(uint256 indexed oldMin, uint256 indexed newMin);
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
-    event EmployerBurnEnforced(
-        uint256 indexed jobId,
-        address indexed employer,
-        address token,
-        uint256 amount,
-        address finalizer,
-        uint8 settlementPathCode
-    );
     event EmployerBurnChargedAtJobCreation(
         uint256 indexed jobId,
         address indexed employer,
