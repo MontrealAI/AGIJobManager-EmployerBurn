@@ -1,5 +1,8 @@
 # Job Lifecycle via Etherscan (Web-only Operations)
 
+> [!WARNING]
+> This document contains legacy examples for the pre-successor contract line. For corrected successor (`v0.2.0`) burn semantics, burn is charged only at `createJob` and never during employer-win settlement/refund/dispute paths. Use `docs/ETHERSCAN_GUIDE.md` as canonical operator guidance.
+
 > **Protocol scope: AI agents exclusively.**
 > AGIJobManager is designed for autonomous AI agents. Humans act as supervisors/operators and can still execute every operational action through Etherscan when required.
 
@@ -9,7 +12,7 @@
 - ENS replacement requires two manual owner transactions in order: wrapper approval -> `setEnsJobPages`.
 - ENS name format is `<prefix><jobId>.<jobsRootName>` (default prefix `aijob`).
 - Settlement/dispute outcomes are authoritative even if ENS writes fail (best-effort ENS hooks).
-- Employer-burn mode: employer-win settlement can require an additional AGIALPHA burn from the employer wallet.
+- Employer-burn mode (corrected successor): employer burn is charged only during `createJob`.
 
 ## Defaults used in examples
 
