@@ -94,17 +94,14 @@ contract('AGIJobManager createJob-only employer burn semantics', (accounts) => {
     assert.equal(econ.burnBpsSnapshot.toString(), '125');
   });
 
-  it('emits creation burn event even when burn bps is zero (audit traceability)', async () => {
+  it('does not emit creation burn event when burn bps is zero', async () => {
     await setup({ burnBps: 0 });
     const payout = toBN(toWei('10'));
     await token.mint(employer, payout, { from: owner });
     await token.approve(manager.address, payout, { from: employer });
     const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
     const ev = tx.logs.find((l) => l.event === 'EmployerBurnChargedAtJobCreation');
-    assert.ok(ev);
-    assert.equal(ev.args.burnAmount.toString(), '0');
-    assert.equal(ev.args.totalUpfront.toString(), payout.toString());
-    assert.equal(ev.args.burnBps.toString(), '0');
+    assert.equal(Boolean(ev), false);
   });
 
   it('requires total allowance for payout + burn', async () => {
