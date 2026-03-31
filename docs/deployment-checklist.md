@@ -108,9 +108,9 @@ After lock, operators should only use:
 - `pause()` / `unpause()` to stop intake once settlement is frozen; re-enable intake last after settlement is safe.
 - `resolveStaleDispute()` (owner‑only after `disputeReviewPeriod`; pause optional) for dispute recovery.
 - Optional moderator rotation if required.
-- Surplus withdrawals (`withdrawAGI`) while paused; escrowed funds and bonds remain reserved (`lockedEscrow`, `lockedAgentBonds`, `lockedValidatorBonds`).
+- Surplus withdrawals (`withdrawAGI`) while paused or unpaused; escrowed funds and bonds remain reserved (`lockedEscrow`, `lockedAgentBonds`, `lockedValidatorBonds`, `lockedDisputeBonds`).
 
-> **Escrow safety:** withdrawals can never touch escrowed job funds because `withdrawableAGI = balance - lockedEscrow - lockedAgentBonds - lockedValidatorBonds` and the call reverts if obligations are insolvent.
+> **Escrow safety:** withdrawals can never touch escrowed job funds because `withdrawableAGI = balance - lockedEscrow - lockedAgentBonds - lockedValidatorBonds - lockedDisputeBonds` and the call reverts if obligations are insolvent.
 
 Everything else remains operable but should be governed by your ops policy to keep the surface minimal.
 

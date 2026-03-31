@@ -27,7 +27,7 @@ These are considered **break-glass** or operational safety controls and remain a
 - `pause()` / `unpause()` — incident response.
 - `resolveStaleDispute()` — owner-only recovery after the dispute timeout (pause optional).
 - `addModerator()` / `removeModerator()` — optional moderator rotation for continuity.
-- `withdrawAGI()` — surplus withdrawals while paused (escrow is always reserved).
+- `withdrawAGI()` — surplus withdrawals (pause-independent; escrow is always reserved).
 
 Other configuration knobs (thresholds, review periods, allowlists, metadata, etc.) remain **tunable** after lock because they are not part of the identity wiring surface.
 

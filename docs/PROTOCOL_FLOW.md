@@ -10,7 +10,7 @@
 - `lockedDisputeBonds`: active dispute bonds.
 - `withdrawableAGI = agiToken.balanceOf(this) - (all locked*)` (reverts if insolvent).
 
-Owner withdrawals (`withdrawAGI`) are additionally restricted to **paused** mode and blocked if `settlementPaused` is true.
+Owner withdrawals (`withdrawAGI`) are owner-only, nonReentrant, and bounded solely by `withdrawableAGI()` (pause-independent).
 
 ## Bonds and settlement logic
 
@@ -82,5 +82,5 @@ Owner withdrawals (`withdrawAGI`) are additionally restricted to **paused** mode
 | `JobCancelled` | Job cancelled/delisted pre-assignment |
 | `NFTIssued` | Completion NFT minted to employer |
 | `PlatformRevenueAccrued` | Agent-win retained remainder recorded |
-| `AGIWithdrawn` | Owner withdraws treasury surplus while paused |
+| `AGIWithdrawn` | Owner withdraws treasury surplus (pause-independent, withdrawable-bound) |
 | `EnsHookAttempted` | AGIJobManager best-effort call to ENSJobPages |

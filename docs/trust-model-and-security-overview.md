@@ -12,7 +12,7 @@ and settlement invariants.
 
 **Owner powers (as implemented)**
 - **Pause/unpause** the contract.
-- **Withdraw treasury** (non‑escrow balance) while paused only.
+- **Withdraw treasury** (non‑escrow balance) subject to `withdrawableAGI()` bounds.
 - **Manage allowlists/blacklists** for agents and validators.
 - **Manage moderators** and AGI payout tiers (AGI types).
 - **Adjust economic parameters** (validator thresholds, review periods, job
@@ -40,14 +40,14 @@ and settlement invariants.
 
 **Withdrawal semantics**
 - `withdrawableAGI()` returns `balance - lockedEscrow - lockedAgentBonds - lockedValidatorBonds` and reverts on insolvency.
-- `withdrawAGI(amount)` is **owner‑only** and **paused‑only**.
+- `withdrawAGI(amount)` is **owner‑only**, `nonReentrant`, and `withdrawableAGI()`-bounded.
 
 **Example**
 - Contract balance: 1,000 AGI
 - `lockedEscrow`: 700 AGI
 - `lockedAgentBonds + lockedValidatorBonds`: 50 AGI
 - `withdrawableAGI()`: 250 AGI
-- `withdrawAGI(400)` reverts; `withdrawAGI(300)` succeeds while paused.
+- `withdrawAGI(400)` reverts; `withdrawAGI(250)` succeeds.
 
 ## 3) Pause semantics (blocked vs allowed)
 
@@ -68,7 +68,7 @@ Pausing is intended to stop new risk while preserving exits/settlement.
 | Dispute resolution | `resolveDispute`, `resolveDisputeWithCode` |
 | Owner recovery | `resolveStaleDispute` (owner‑only after `disputeReviewPeriod`; pause optional) |
 | Owner job delist | `delistJob` (owner‑only, unassigned only) |
-| Treasury withdrawal | `withdrawAGI` (owner‑only, paused‑only) |
+| Treasury withdrawal | `withdrawAGI` (owner‑only, withdrawable-bound) |
 
 **Rationale**: Pause is used to halt new obligations and risky actions, not to
 trap users or prevent settlement/exit paths.

@@ -68,9 +68,9 @@ Execute: create -> apply -> request completion -> vote -> finalize, then assert:
 | --- | --- | --- | --- |
 | `pause` / `unpause` | Owner | Critical | Pausable controls user entry and vote paths. |
 | `setSettlementPaused` | Owner | Critical | Freezes settlement exits when needed. |
-| `withdrawAGI` | Owner | Paused-only + settlement-not-paused | Withdraws only non-escrow AGI backing (`withdrawableAGI`). |
+| `withdrawAGI` | Owner | Withdrawable-bound (pause-independent) | Withdraws only non-escrow AGI backing (`withdrawableAGI`). |
 | `rescueETH` | Owner | NonReentrant | Recovers forced ETH (e.g., selfdestruct dust). |
-| `rescueERC20` (AGI) | Owner | Same safety posture as treasury path | Enforces pause + settlement-not-paused + `amount <= withdrawableAGI()`. |
+| `rescueERC20` (AGI) | Owner | Same safety posture as treasury path | Routes through AGI surplus logic and enforces `amount <= withdrawableAGI()`. |
 | `rescueERC20` (non-AGI) | Owner | NonReentrant | Recover unrelated ERC20s accidentally sent to contract. |
 | `rescueToken` | Owner | NonReentrant | Generic calldata rescue for non-AGI assets (e.g., ERC721/ERC1155). |
 | `lockIdentityConfiguration` | Owner | One-way | Permanently locks token/ENS/root-node identity wiring. |
@@ -117,7 +117,7 @@ If ENS mirror or ENS ownership infrastructure degrades:
 1. Confirm escrow solvency invariant.
 2. For forced ETH dust: call `rescueETH(amount)`.
 3. For non-AGI ERC20: call `rescueERC20(token, to, amount)`.
-4. For AGI treasury recovery: ensure `pause()==true`, `settlementPaused==false`, then call `rescueERC20(agiToken, to, amount)` or `withdrawAGI(amount)`.
+4. For AGI treasury recovery: call `rescueERC20(agiToken, to, amount)` or `withdrawAGI(amount)` with `amount <= withdrawableAGI()`.
 5. For accidentally sent NFTs/multi-tokens: use `rescueToken` with explicit calldata.
 
 ---
