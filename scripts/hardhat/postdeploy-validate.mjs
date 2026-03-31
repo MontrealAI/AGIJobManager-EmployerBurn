@@ -46,12 +46,23 @@ if (!deployment.contracts?.AGIJobManager?.address) {
   console.error('❌ Deployment record missing contracts.AGIJobManager.address');
   process.exit(1);
 }
+const helperAddress = deployment.contracts?.EmployerBurnReadHelper?.address;
+const strictSuccessor = process.env.POSTDEPLOY_REQUIRE_SUCCESSOR_HELPER === '1';
+if (!helperAddress && strictSuccessor) {
+  console.error('❌ Deployment record missing contracts.EmployerBurnReadHelper.address (strict successor mode enabled).');
+  process.exit(1);
+}
 
 console.log(`✅ Post-deploy metadata validated from ${latest.name}`);
 console.log(`- network: ${deployment.network}`);
 console.log(`- chainId: ${deployment.chainId}`);
 console.log(`- blockNumber: ${latest.blockNumber}`);
 console.log(`- AGIJobManager: ${deployment.contracts.AGIJobManager.address}`);
+if (helperAddress) {
+  console.log(`- EmployerBurnReadHelper: ${helperAddress}`);
+} else {
+  console.warn('- EmployerBurnReadHelper: not present in this deployment receipt (legacy-compatible path)');
+}
 
 const verifyTargetsPath = path.join(dir, 'verify-targets.json');
 if (!fs.existsSync(verifyTargetsPath)) {
@@ -86,6 +97,16 @@ if (!verification || (verification !== 'verified' && verification !== 'already_v
   process.exit(1);
 }
 console.log(`✅ AGIJobManager verification status: ${verification}`);
+const helperVerification = deployment.verification?.EmployerBurnReadHelper?.status;
+if (helperAddress) {
+  if (!helperVerification || (helperVerification !== 'verified' && helperVerification !== 'already_verified')) {
+    console.error(`❌ EmployerBurnReadHelper verification status not ready: ${helperVerification || 'missing'}`);
+    process.exit(1);
+  }
+  console.log(`✅ EmployerBurnReadHelper verification status: ${helperVerification}`);
+} else {
+  console.warn('⚠️ Skipping EmployerBurnReadHelper verification gate for legacy deployment receipt.');
+}
 
 const artifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'AGIJobManager.sol', 'AGIJobManager.json');
 if (!fs.existsSync(artifactPath)) {
