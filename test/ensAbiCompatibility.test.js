@@ -302,6 +302,8 @@ contract("ENS ABI compatibility + URI path", (accounts) => {
     await token.approve(manager.address, payout, { from: employer });
 
     const tx = await manager.createJob("ipfs://spec.json", payout, 60, "details", { from: employer });
-    assert.equal(tx.logs[0].event, "JobCreated");
+    const emittedEvents = tx.logs.map((log) => log.event);
+    assert.include(emittedEvents, "EmployerBurnChargedAtJobCreation");
+    assert.include(emittedEvents, "JobCreated");
   });
 });
