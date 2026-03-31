@@ -119,8 +119,11 @@ flowchart TD
 1. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, payoutInBaseUnits + expectedBurnInBaseUnits)`.
 2. On AGIJobManager, call `createJob(jobSpecURI, payout, duration, details)`.
 3. Confirm `JobCreated` event and record `jobId`.
-4. On `EmployerBurnReadHelper` `Read Contract`, call `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` as preflight helpers; use `canFinalizeEmployerWinWithBurn(jobId)` only when planning to call `finalizeJob`.
-5. Keep extra AGIALPHA balance in the employer wallet for possible employer-win burn (`payout * employerBurnBps / 10_000`).
+4. Before calling `createJob`, use `EmployerBurnReadHelper` `Read Contract` helpers:
+   - `quoteCreateJobBurn(payout)` for exact burn amount,
+   - `getCreateJobFundingRequirementWithToken(payout)` for escrow + burn + total upfront,
+   - `getCreateJobAllowanceRequirementWithToken(payout)` for exact `approve(...)` amount.
+5. Burn is charged exactly once at `createJob` and never in settlement paths (`finalizeJob`, refunds, disputes, delist, expiry, ties, or under-quorum forced dispute). No additional employer burn balance is needed later.
 
 ### 2) Agent: apply + complete
 1. Verify agent authorization path (additional list, Merkle root, or ENS ownership).
