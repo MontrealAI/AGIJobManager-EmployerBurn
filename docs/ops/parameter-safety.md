@@ -40,7 +40,7 @@ This document is a production-grade **operator checklist** for preventing and re
 | `premiumReputationThreshold` (`setPremiumReputationThreshold`) | points | `canAccessPremiumFeature`. | Any non-negative uint. | Mis-set only affects premium access (no settlement impact). | Adjust threshold. |
 | `AGIType.payoutPercentage` (`addAGIType`) | uint256 percentage | Agent payout percentage in `_completeJob`. | `1..100`; **highest** payout across AGI types must satisfy `maxAgentPayoutPercentage + validationRewardPercentage <= 100` (enforced). | If any agent holds a high-percentage NFT that pushes the sum > 100, completion can revert. | Lower AGI type percentage (or validation reward %); re-validate. |
 | `pause` / `unpause` | bool | **Intake pause** for most job actions. | Use `pause` for incident response, not normal ops. | If paused, new activity reverts (create/apply/validate/dispute/reward pool). Completion requests and settlement exits can still proceed. | Unpause after fixing parameters; no funds lost. |
-| `settlementPaused` (`setSettlementPaused`) | bool | **Emergency settlement freeze** for fund-out paths. | Use first in incidents to freeze settlement while preserving intake pause choice. | If set, settlement exits revert (`cancelJob`, `expireJob`, `finalizeJob`, `delistJob`, `resolveDispute*`, `resolveStaleDispute`, `withdrawAGI`). | Clear only after settlement math/invariants are safe; then unpause intake last if desired. |
+| `settlementPaused` (`setSettlementPaused`) | bool | **Emergency settlement freeze** for fund-out paths. | Use first in incidents to freeze settlement while preserving intake pause choice. | If set, settlement exits revert (`cancelJob`, `expireJob`, `finalizeJob`, `delistJob`, `resolveDispute*`, `resolveStaleDispute`). | Clear only after settlement math/invariants are safe; then unpause intake last if desired. |
 | `addAdditionalAgent` / `addAdditionalValidator` | allowlist | Eligibility bypass. | Only use for emergency recovery or vetted identities. | Overuse weakens gating; underuse when Merkle/ENS config is wrong can stall jobs. | Add temporary allowlist entries; remove later. |
 | `blacklistedAgents` / `blacklistedValidators` | bool | Eligibility gating. | Use sparingly with documented reasons. | If critical participants are blacklisted, jobs cannot progress (validate/apply revert). | Un-blacklist or resolve by moderator. |
 | `addModerator` / `removeModerator` | address | Dispute resolution authority. | Ensure ≥1 active moderator. | If no moderator exists, disputes can’t resolve → funds stuck. | Add a moderator (owner action). |
@@ -48,7 +48,7 @@ This document is a production-grade **operator checklist** for preventing and re
 | `clubRootNode`, `agentRootNode` (constructor) | ENS namehash | Eligibility gating. | Must match intended ENS hierarchy. | Wrong root nodes → `_verifyOwnership` fails → validators/agents cannot qualify. | Use `additional*` allowlist; redeploy if pervasive. |
 | `validatorMerkleRoot`, `agentMerkleRoot` (constructor) | Merkle root | Eligibility gating. | Must match allowlists; updatable via `updateMerkleRoots`. | Bad root means Merkle proofs always fail; gating relies solely on ENS or allowlist. | Use `additional*` allowlist for emergency access, then update roots. |
 | `ens`, `nameWrapper` (constructor) | contract address | ENS/NameWrapper ownership checks. | Must be correct chain-specific addresses. | Wrong addresses → ownership checks fail; `_verifyOwnership` emits recovery events and returns false. | Use `additional*` allowlist or redeploy. |
-| `withdrawAGI` | token amount | Owner withdraws surplus (`withdrawableAGI()`) while paused. | Only withdraw when paused and `withdrawableAGI()` is positive. | Withdrawal reverts if amount exceeds surplus. | Use `withdrawableAGI()` to size withdrawals; do not rely on raw balance. |
+| `withdrawAGI` | token amount | Owner withdraws surplus (`withdrawableAGI()`) while paused or unpaused. | Withdraw only when `withdrawableAGI()` is positive; amount must be strictly <= withdrawable surplus. | Withdrawal reverts if amount exceeds surplus. | Use `withdrawableAGI()` to size withdrawals; do not rely on raw balance. |
 | `baseIpfsUrl` (`setBaseIpfsUrl`) | string URL | Token URI for job NFTs. | Stable HTTP/IPFS base. | Wrong value breaks NFT metadata display (no settlement impact). | Update base URL; metadata reads fixed retroactively. |
 | `termsAndConditionsIpfsHash`, `contactEmail`, `additionalText1/2/3` | strings | UI/legal metadata only. | Non-empty strings recommended. | Mis-set affects UI/legal metadata only. | Update strings. |
 
@@ -70,7 +70,7 @@ This document is a production-grade **operator checklist** for preventing and re
 - **Escape hatch:** lower thresholds, add validators via `addAdditionalValidator`, update Merkle roots if needed, or moderator resolves disputes.
 
 4. **Owner attempts to withdraw escrow**
-   - **Prerequisite:** `withdrawAGI` called while jobs outstanding (and paused).
+   - **Prerequisite:** `withdrawAGI` called while jobs outstanding.
    - **Failure:** Withdrawal reverts with `InsufficientWithdrawableBalance`.
    - **Escape hatch:** use `withdrawableAGI()` to withdraw surplus only.
 

@@ -511,7 +511,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     event ValidatorBondParamsUpdated(uint256 indexed bps, uint256 indexed min, uint256 indexed max);
     event ChallengePeriodAfterApprovalUpdated(uint256 indexed oldPeriod, uint256 indexed newPeriod);
     event SettlementPauseSet(address indexed setter, bool indexed paused);
-    event AGITokenAddressUpdated(address indexed oldToken, address indexed newToken);
     event EnsJobPagesUpdated(address indexed oldEnsJobPages, address indexed newEnsJobPages);
     event VoteQuorumUpdated(uint256 indexed oldQuorum, uint256 indexed newQuorum);
     event RequiredValidatorApprovalsUpdated(uint256 indexed oldApprovals, uint256 indexed newApprovals);
@@ -526,7 +525,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         uint256 newMin,
         uint256 newMax
     );
-    event AgentBondMinUpdated(uint256 indexed oldMin, uint256 indexed newMin);
     event ValidatorSlashBpsUpdated(uint256 indexed oldBps, uint256 indexed newBps);
     event EnsHookAttempted(uint8 indexed hook, uint256 indexed jobId, address indexed target, bool success);
     event EmployerBurnChargedAtJobCreation(
@@ -1232,6 +1230,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         emit EmployerBurnBpsUpdated(oldBps, bps);
     }
 
+
     function getJobCore(uint256 jobId)
         external
         view
@@ -1286,6 +1285,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         Job storage job = _job(jobId);
         burnBpsSnapshot = job.employerBurnBpsSnapshot;
     }
+
 
     /// @notice Returns finalization-gate fields used by off-chain/periphery readiness checks.
     function getJobFinalizationGate(uint256 jobId) external view returns (bool validatorApproved, uint256 validatorApprovedAt) {

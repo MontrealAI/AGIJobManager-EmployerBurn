@@ -55,6 +55,7 @@ contract("AGIJobManager createJob funding + live surplus withdrawals", (accounts
 
     const jobBurn = await helper.getJobBurnAmountSnapshot(jobId);
     assert.equal(jobBurn.toString(), burnExpected.toString());
+
   });
 
   it("allows owner to withdraw AGI surplus while unpaused and protects active escrow", async () => {

@@ -1,6 +1,6 @@
 # Events and Errors Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `f40bc73fe95e`.
+- Generated at (deterministic source fingerprint): `a06090a1cfc7`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Events catalog
@@ -8,9 +8,7 @@
 | Event | Parameters | When emitted | Monitoring & alert guidance |
 | --- | --- | --- | --- |
 | `AgentBlacklisted` | `address indexed agent, bool indexed status` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
-| `AgentBondMinUpdated` | `uint256 indexed oldMin, uint256 indexed newMin` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `AgentBondParamsUpdated` | `uint256 indexed oldBps, uint256 indexed oldMin, uint256 indexed oldMax, uint256 newBps, uint256 newMin, uint256 newMax` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
-| `AGITokenAddressUpdated` | `address indexed oldToken, address indexed newToken` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `AGITypeUpdated` | `address indexed nftAddress, uint256 indexed payoutPercentage` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |
 | `AGIWithdrawn` | `address indexed to, uint256 indexed amount, uint256 remainingWithdrawable` | Owner treasury withdrawal | High-severity treasury-control alert |
 | `ChallengePeriodAfterApprovalUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` | Contract-defined emission point | Add event-specific monitors in SOC pipeline |

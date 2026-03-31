@@ -22,7 +22,7 @@
 | Finalize job | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Lock ENS page (without fuse burn) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Lock ENS page (with fuse burn) | ✅ only | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Owner treasury withdrawal (`withdrawAGI`) | ✅ (paused + settlement active) | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Owner treasury withdrawal (`withdrawAGI`) | ✅ (`withdrawableAGI`-bounded; pause-independent) | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ## Critical configuration knobs
 

@@ -9,16 +9,16 @@ safe day‑to‑day operations, emergency procedures, and monitoring.
 **Use when**: incident response, parameter change review, treasury withdrawal.
 
 - `pause()` blocks new activity (create/apply/vote/dispute/reward pool contribution) but preserves settlement exits.
-- `setSettlementPaused(true)` freezes settlement/exit paths (`cancelJob`, `expireJob`, `finalizeJob`, `delistJob`, `resolveDispute*`, `resolveStaleDispute`, `withdrawAGI`) guarded by `whenSettlementNotPaused`.
+- `setSettlementPaused(true)` freezes settlement/exit paths (`cancelJob`, `expireJob`, `finalizeJob`, `delistJob`, `resolveDispute*`, `resolveStaleDispute`) guarded by `whenSettlementNotPaused`.
 - **Incident sequence:** call `setSettlementPaused(true)` first to stop fund-out, then `pause()` to stop intake.
 - **Recovery:** unpause intake only after settlement is safe; keep `settlementPaused` on until final safety, then set it to false last.
 
-### 2) Treasury withdrawals (owner‑only, paused‑only)
+### 2) Treasury withdrawals (owner‑only, surplus‑only)
 **Process**
-1. **Pause** the contract.
-2. Check `withdrawableAGI()` = `balance - lockedEscrow - lockedAgentBonds - lockedValidatorBonds`.
-3. Withdraw up to `withdrawableAGI()` using `withdrawAGI(amount)`.
-4. **Unpause** after confirming balances.
+1. Check `withdrawableAGI()` = `balance - lockedEscrow - lockedAgentBonds - lockedValidatorBonds - lockedDisputeBonds`.
+2. Withdraw up to `withdrawableAGI()` using `withdrawAGI(amount)`.
+3. Optional: call `rescueERC20(agiToken, to, amount)` for the same accounting-safe AGI withdrawal path.
+4. Keep an operations log of `AGIWithdrawn` events and post-withdraw solvency checks.
 
 ### 3) Blacklisting / allowlisting
 - Use `blacklistAgent` / `blacklistValidator` for emergency removals.
