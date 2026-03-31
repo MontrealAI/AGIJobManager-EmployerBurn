@@ -13,9 +13,17 @@ const commands = [
   ['npm', ['run', 'release:postdeploy']]
 ];
 
+const strictSuccessor = process.env.RELEASE_SUCCESSOR_STRICT === '1';
+
 for (const [cmd, args] of commands) {
   console.log(`\n▶ ${cmd} ${args.join(' ')}`);
-  const out = spawnSync(cmd, args, { stdio: 'inherit', env: process.env });
+  const env = {
+    ...process.env,
+    ...(strictSuccessor && cmd === 'npm' && args.join(' ') === 'run release:postdeploy'
+      ? { POSTDEPLOY_REQUIRE_SUCCESSOR_HELPER: '1' }
+      : {})
+  };
+  const out = spawnSync(cmd, args, { stdio: 'inherit', env });
   if (out.status !== 0) {
     console.error(`\n❌ Release readiness failed at: ${cmd} ${args.join(' ')}`);
     process.exit(out.status ?? 1);
