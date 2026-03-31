@@ -7,7 +7,7 @@ This document is a production-grade **operator checklist** for preventing and re
 ## Lifecycle and settlement paths (full state machine trace)
 
 **Core job lifecycle:**
-1. **Create** → `createJob` (escrow funded).
+1. **Create** → `createJob` (escrow funded + immediate employer-funded create-job burn).
 2. **Assign** → `applyForJob` (agent assigned).
 3. **Completion request (optional)** → `requestJobCompletion` (agent signals completion; must be within duration).
 4. **Validate / Disapprove** → `validateJob` / `disapproveJob` (validator gated; thresholds trigger completion or dispute).
@@ -28,7 +28,7 @@ This document is a production-grade **operator checklist** for preventing and re
 
 | Parameter / lever | Type / units | Used in | Safe range / constraints | What breaks if wrong | Recovery / escape hatch |
 | --- | --- | --- | --- | --- | --- |
-| `agiToken` (`updateAGITokenAddress`) | ERC‑20 address | Escrow deposits, payouts, reward pool, `withdrawAGI`. | **Treat as immutable after any job is funded.** Must be a standard ERC‑20 (no fee-on-transfer, no rebasing). | If changed after funding, escrow in the old token becomes **unrecoverable**; new payouts can revert due to missing balance. | **No on-chain recovery** for old token escrow; redeploy + off-chain remediation. |
+| `agiToken` (`updateAGITokenAddress`) | ERC‑20 address | Escrow deposits, payouts, reward pool, `withdrawAGI`. | **Pinned in corrected successor** (`updateAGITokenAddress` disabled / reverts). Must be a standard ERC‑20 (no fee-on-transfer, no rebasing). | Misconfigured constructor token requires redeploy; no mutable token-switch safety valve in successor. | Redeploy with correct constructor token; old deployment remains deprecated/paused. |
 | `requiredValidatorApprovals` (`setRequiredValidatorApprovals`) | uint256 count | `validateJob` threshold → `_completeJob`. | `0..MAX_VALIDATORS_PER_JOB`, with `approvals + disapprovals <= MAX_VALIDATORS_PER_JOB`. Operationally keep ≤ active validator count. | Too high → completion unreachable; jobs stall unless a moderator resolves disputes. | Lower threshold or add validators with `addAdditionalValidator`. |
 | `requiredValidatorDisapprovals` (`setRequiredValidatorDisapprovals`) | uint256 count | `disapproveJob` threshold → dispute. | `0..MAX_VALIDATORS_PER_JOB`, with `approvals + disapprovals <= MAX_VALIDATORS_PER_JOB`. Keep low to enable disputes. | Too high → disputes never trigger; jobs can remain in limbo. | Lower threshold; use `disputeJob` + `resolveDisputeWithCode`. |
 | `validationRewardPercentage` (`setValidationRewardPercentage`) | uint256 percentage | Validator payout pool in `_completeJob`. | `1..100` on-chain; **enforced with** `maxAgentPayoutPercentage + validationRewardPercentage <= 100`. | If sum exceeds 100, payouts can exceed escrow → completion reverts. | Reduce `validationRewardPercentage` or reduce any AGI type payout percentage. |
@@ -54,10 +54,10 @@ This document is a production-grade **operator checklist** for preventing and re
 
 ## Stuck-funds scenarios (prerequisites + escape hatch)
 
-1. **Token address changed after escrow exists**
-   - **Prerequisite:** `updateAGITokenAddress` called after jobs funded.
-   - **Failure:** payouts/refunds revert; old-token escrow is unrecoverable.
-   - **Escape hatch:** none on-chain; **redeploy** and coordinate off-chain remediation.
+1. **Wrong token configured at deployment**
+   - **Prerequisite:** constructor token is wrong for intended network.
+   - **Failure:** create/settlement economic assumptions are invalid for that deployment.
+   - **Escape hatch:** none on-chain in corrected successor (token is pinned); **redeploy** and coordinate migration.
 
 2. **Validator + agent payout exceeds escrow**
    - **Prerequisite:** `validationRewardPercentage + maxAgentPayoutPercentage > 100` (blocked by setters, but still guarded at settlement).
@@ -119,7 +119,7 @@ This document is a production-grade **operator checklist** for preventing and re
    - Add emergency validators/agents with `addAdditionalValidator` / `addAdditionalAgent`.
    - Add a moderator if disputes are stuck.
    - Adjust `completionReviewPeriod` or `disputeReviewPeriod` if timeouts are misaligned.
-   - **Never** change `agiToken` if outstanding jobs exist.
+   - Do not assume token mutability exists; corrected successor keeps AGIALPHA pinned and requires redeploy if constructor token is wrong.
 
 4. **Unstick jobs (path depends on job state; always available if the correct role exists):**
    - **Unassigned jobs:** employer uses `cancelJob`; owner uses `delistJob` for recovery.
