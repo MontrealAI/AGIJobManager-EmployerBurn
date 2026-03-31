@@ -204,7 +204,7 @@ Notes:
 - Foundry remains audit/fuzz-only and is not a deployment source of truth.
 - Truffle remains available as legacy compatibility (`npm run build:legacy`, `npm run size:legacy`, `npm run deploy:agijobmanager:legacy`) and is not the default production release path.
 - `npm run size` enforces both active mainnet EIP limits and a no-growth baseline guard (`scripts/size-baseline.json`) for high-pressure contracts.
-- `npm run release:readiness:successor` enables strict successor gates for corrected semantics; add `RELEASE_EXPECT_FRESH_DEPLOYMENT=1` to require `EmployerBurnReadHelper` in the newest deployment receipt generated for that release candidate.
+- `npm run release:readiness:successor` enables strict successor gates for corrected semantics and requires `EmployerBurnReadHelper` in the latest deployment receipt.
 
 ## Local development checks
 
