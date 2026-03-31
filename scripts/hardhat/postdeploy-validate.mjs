@@ -97,7 +97,7 @@ const abi = artifact.abi || [];
 const selectors = new Set(abi.filter((x) => x.type === 'function').map((x) => x.name));
 const requiredHelpers = [
   'getJobBurnBpsSnapshot',
-  'getJobBurnTokenSnapshot',
+  'agiToken',
   'setEnsJobPages',
 ];
 for (const fn of requiredHelpers) {

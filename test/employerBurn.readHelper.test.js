@@ -94,7 +94,7 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(readiness.allowanceSufficient, false);
   });
 
-  it('snapshots job economics at create time and preserves burn token snapshot across token updates', async () => {
+  it('snapshots job economics at create time and enforces AGIALPHA token pinning stub', async () => {
     await setup({ burnBps: 100 });
     const payout = toBN(toWei('50'));
     const burn = payout.divn(100);

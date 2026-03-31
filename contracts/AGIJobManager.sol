@@ -443,7 +443,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         uint8 agentPayoutPct;
         uint8 validatorRewardPctSnapshot;
         uint16 employerBurnBpsSnapshot;
-        address burnTokenSnapshot;
         bool escrowReleased;
         bool validatorApproved;
         uint256 validatorApprovedAt;
@@ -790,7 +789,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         uint256 burnAmount = (_payout * burnBps) / 10_000;
         uint256 totalUpfront = _payout + burnAmount;
         job.employerBurnBpsSnapshot = uint16(burnBps);
-        job.burnTokenSnapshot = address(agiToken);
         TransferUtils.safeTransferFromExact(address(agiToken), msg.sender, address(this), _payout);
         if (burnAmount != 0) {
             IAGIALPHABurnable(address(agiToken)).burnFrom(msg.sender, burnAmount);
@@ -1285,11 +1283,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot) {
         Job storage job = _job(jobId);
         burnBpsSnapshot = job.employerBurnBpsSnapshot;
-    }
-
-    function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address tokenSnapshot) {
-        Job storage job = _job(jobId);
-        tokenSnapshot = job.burnTokenSnapshot;
     }
 
     /// @notice Returns finalization-gate fields used by off-chain/periphery readiness checks.

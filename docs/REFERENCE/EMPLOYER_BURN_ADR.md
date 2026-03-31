@@ -1,6 +1,6 @@
 # ADR — CreateJob-only Employer-funded AGIALPHA burn (successor release)
 
-- Date: 2026-03-30
+- Date: 2026-03-31
 - Status: Accepted
 - Scope: Corrected successor deployment (`v0.2.0`) for AGIJobManager EmployerBurn variant
 
@@ -23,7 +23,7 @@ Adopt createJob-only burn semantics in the authoritative manager:
 2. `createJob` transfers payout escrow into contract custody.
 3. `createJob` charges burn directly from Employer wallet via AGIALPHA `burnFrom`.
 4. Both actions execute in one transaction; if either fails, the whole transaction reverts.
-5. Job snapshots include burn configuration at creation (`employerBurnBpsSnapshot`, `burnTokenSnapshot`) for auditability.
+5. Job snapshots include only burn bps at creation (`employerBurnBpsSnapshot`); token is AGIALPHA-pinned globally for this successor.
 6. Burn observability is provided by `EmployerBurnChargedAtJobCreation`.
 7. Settlement paths (`_completeJob`, `_refundEmployer`, dispute/finalize/expiry/cancel/delist) do not burn.
 8. Corrected mainnet successor is AGIALPHA-pinned (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`) and token mutability is disabled (`updateAGITokenAddress` always reverts).
