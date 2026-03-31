@@ -117,25 +117,6 @@
         {
           "indexed": true,
           "internalType": "address",
-          "name": "oldToken",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "newToken",
-          "type": "address"
-        }
-      ],
-      "name": "AGITokenAddressUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
           "name": "nftAddress",
           "type": "address"
         },
@@ -191,25 +172,6 @@
         }
       ],
       "name": "AgentBlacklisted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "oldMin",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "newMin",
-          "type": "uint256"
-        }
-      ],
-      "name": "AgentBondMinUpdated",
       "type": "event"
     },
     {
