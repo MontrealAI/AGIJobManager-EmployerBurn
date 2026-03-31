@@ -5,7 +5,6 @@ interface IAGIJobManagerBurnView {
     function agiToken() external view returns (address);
     function employerBurnBps() external view returns (uint256);
     function getJobBurnBpsSnapshot(uint256 jobId) external view returns (uint256 burnBpsSnapshot);
-    function getJobBurnTokenSnapshot(uint256 jobId) external view returns (address tokenSnapshot);
     function getJobCore(uint256 jobId)
         external
         view
@@ -60,7 +59,7 @@ contract EmployerBurnReadHelper {
     {
         uint256 payout;
         (payer,, payout,,,,,,) = manager.getJobCore(jobId);
-        token = manager.getJobBurnTokenSnapshot(jobId);
+        token = manager.agiToken();
         burnBps = manager.getJobBurnBpsSnapshot(jobId);
         spender = address(manager);
         amount = (payout * burnBps) / 10_000;
@@ -114,7 +113,7 @@ contract EmployerBurnReadHelper {
         )
     {
         (employer,, payoutEscrowed,,,,,,) = manager.getJobCore(jobId);
-        token = manager.getJobBurnTokenSnapshot(jobId);
+        token = manager.agiToken();
         burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
         burnAmountCharged = (payoutEscrowed * burnBpsSnapshot) / 10_000;
         totalUpfrontAtCreate = payoutEscrowed + burnAmountCharged;
@@ -156,7 +155,7 @@ contract EmployerBurnReadHelper {
     {
         uint256 payout;
         (payer,, payout,,,,,,) = manager.getJobCore(jobId);
-        token = manager.getJobBurnTokenSnapshot(jobId);
+        token = manager.agiToken();
         spender = address(manager);
         uint256 burnBpsSnapshot = manager.getJobBurnBpsSnapshot(jobId);
         amount = (payout * burnBpsSnapshot) / 10_000;

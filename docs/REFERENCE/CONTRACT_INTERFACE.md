@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `fd05c193432e`.
-- Source snapshot fingerprint: `fd05c193432e`.
+- Generated at (deterministic source fingerprint): `bf4a3f54f0f4`.
+- Source snapshot fingerprint: `bf4a3f54f0f4`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -71,7 +71,6 @@
 | `finalizeJob(uint256 _jobId)` | external | nonpayable | — |
 | `getHighestPayoutPercentage(address agent)` | public | view | `uint256` |
 | `getJobBurnBpsSnapshot(uint256 jobId)` | external | view | `uint256 burnBpsSnapshot` |
-| `getJobBurnTokenSnapshot(uint256 jobId)` | external | view | `address tokenSnapshot` |
 | `getJobCompletionURI(uint256 jobId)` | external | view | `string memory` |
 | `getJobCore(uint256 jobId)` | external | view | `address employer, address assignedAgent, uint256 payout, uint256 duration, uint256 assignedAt, bool completed, bool disputed, bool expired, uint8 agentPayoutPct` |
 | `getJobFinalizationGate(uint256 jobId)` | external | view | `bool validatorApproved, uint256 validatorApprovedAt` |

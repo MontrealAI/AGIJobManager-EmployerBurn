@@ -22,9 +22,8 @@ If either transfer or burn fails, the entire transaction reverts atomically.
 - No protocol subsidy: protocol funds never front, reimburse, or absorb this burn.
 
 ## Auditability
-Per-job snapshot is persisted at create time:
-- `employerBurnBpsSnapshot`
-- `burnTokenSnapshot`
+Per-job snapshot persisted at create time:
+- `employerBurnBpsSnapshot` (token is globally AGIALPHA-pinned in this successor)
 
 Burn amount is deterministically derived later as:
 - `burnAmount = payout * employerBurnBpsSnapshot / 10_000`.
