@@ -46,12 +46,17 @@ if (!deployment.contracts?.AGIJobManager?.address) {
   console.error('❌ Deployment record missing contracts.AGIJobManager.address');
   process.exit(1);
 }
+if (!deployment.contracts?.EmployerBurnReadHelper?.address) {
+  console.error('❌ Deployment record missing contracts.EmployerBurnReadHelper.address');
+  process.exit(1);
+}
 
 console.log(`✅ Post-deploy metadata validated from ${latest.name}`);
 console.log(`- network: ${deployment.network}`);
 console.log(`- chainId: ${deployment.chainId}`);
 console.log(`- blockNumber: ${latest.blockNumber}`);
 console.log(`- AGIJobManager: ${deployment.contracts.AGIJobManager.address}`);
+console.log(`- EmployerBurnReadHelper: ${deployment.contracts.EmployerBurnReadHelper.address}`);
 
 const verifyTargetsPath = path.join(dir, 'verify-targets.json');
 if (!fs.existsSync(verifyTargetsPath)) {
@@ -86,6 +91,12 @@ if (!verification || (verification !== 'verified' && verification !== 'already_v
   process.exit(1);
 }
 console.log(`✅ AGIJobManager verification status: ${verification}`);
+const helperVerification = deployment.verification?.EmployerBurnReadHelper?.status;
+if (!helperVerification || (helperVerification !== 'verified' && helperVerification !== 'already_verified')) {
+  console.error(`❌ EmployerBurnReadHelper verification status not ready: ${helperVerification || 'missing'}`);
+  process.exit(1);
+}
+console.log(`✅ EmployerBurnReadHelper verification status: ${helperVerification}`);
 
 const artifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'AGIJobManager.sol', 'AGIJobManager.json');
 if (!fs.existsSync(artifactPath)) {
