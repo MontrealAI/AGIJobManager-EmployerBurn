@@ -65,6 +65,12 @@ contract('EmployerBurnReadHelper', (accounts) => {
     assert.equal(funding.burnAmount.toString(), burn.toString());
     assert.equal(funding.totalUpfront.toString(), total.toString());
 
+    const fundingWithToken = await helper.getCreateJobFundingRequirementWithToken(payout);
+    assert.equal(fundingWithToken.token, token.address);
+    assert.equal(fundingWithToken.escrowAmount.toString(), payout.toString());
+    assert.equal(fundingWithToken.burnAmount.toString(), burn.toString());
+    assert.equal(fundingWithToken.totalUpfront.toString(), total.toString());
+
     const allowanceRequired = await helper.getCreateJobAllowanceRequirement(payout);
     assert.equal(allowanceRequired.toString(), total.toString());
 

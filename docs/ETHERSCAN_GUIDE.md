@@ -16,7 +16,7 @@ Use this guide if you only have:
 
 Corrected successor semantics: burn is createJob-only.
 
-1. Read `getCreateJobFundingRequirement(payout)` on `EmployerBurnReadHelper`.
+1. Read `getCreateJobFundingRequirementWithToken(payout)` on `EmployerBurnReadHelper`.
 2. On AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`), approve **AGIJobManager** as spender for `totalUpfront = payout + burn`.
 3. Call `createJob(jobSpecURI, payout, duration, details)` once; this escrows payout and burns employer-funded amount in one atomic transaction.
 4. Verify event `EmployerBurnChargedAtJobCreation(...)` in the createJob transaction.
@@ -25,7 +25,8 @@ Corrected successor semantics: burn is createJob-only.
 
 1. Confirm you are on the verified AGIJobManager contract page (Write Contract tab).
 2. Confirm the AGIALPHA token is exactly `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
-3. Read `getCreateJobFundingRequirement(payout)` on `EmployerBurnReadHelper` and confirm:
+3. Read `getCreateJobFundingRequirementWithToken(payout)` on `EmployerBurnReadHelper` and confirm:
+   - `token == 0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`
    - `escrowAmount == payout`
    - `burnAmount` (non-refundable posting burn)
    - `totalUpfront = escrowAmount + burnAmount`
@@ -452,4 +453,3 @@ No. Standard `approve` is supported and is the default Etherscan-first path.
 - **Paused:** emergency stop state where protected functions revert.
 - **Revert:** transaction fails and all state changes in that tx are undone.
 - **Event:** log emitted by a contract, used as verifiable evidence of what happened.
-

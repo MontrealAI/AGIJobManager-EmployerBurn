@@ -34,7 +34,10 @@ Event emitted at create time:
 Helper views:
 - `quoteCreateJobBurn(uint256 payout)`
 - `getCreateJobFundingRequirement(uint256 payout)`
+- `getCreateJobFundingRequirementWithToken(uint256 payout)`
 - `getCreateJobAllowanceRequirement(uint256 payout)`
+- `getCreateJobAllowanceRequirementWithToken(uint256 payout)`
+- `getJobBurnAmountSnapshot(uint256 jobId)`
 - `getJobEconomicSnapshot(uint256 jobId)`
 
 ## Token pinning and mutability hardening
