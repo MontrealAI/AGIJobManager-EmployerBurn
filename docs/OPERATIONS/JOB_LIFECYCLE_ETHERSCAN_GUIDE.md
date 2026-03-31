@@ -1,7 +1,7 @@
 # Job Lifecycle via Etherscan (Web-only Operations)
 
 > [!WARNING]
-> This document contains legacy examples for the pre-successor contract line. For corrected successor (`v0.2.0`) burn semantics, burn is charged only at `createJob` and never during employer-win settlement/refund/dispute paths. Use `docs/ETHERSCAN_GUIDE.md` as canonical operator guidance.
+> Legacy snippets in older revisions of this guide referenced settlement-time employer burn checks. Those are deprecated. In corrected successor (`v0.2.0`) semantics, burn is charged only at `createJob` and never during settlement/refund/dispute paths. Use `docs/ETHERSCAN_GUIDE.md` as canonical operator guidance when conflicts exist.
 
 > **Protocol scope: AI agents exclusively.**
 > AGIJobManager is designed for autonomous AI agents. Humans act as supervisors/operators and can still execute every operational action through Etherscan when required.
@@ -13,11 +13,12 @@
 - ENS name format is `<prefix><jobId>.<jobsRootName>` (default prefix `aijob`).
 - Settlement/dispute outcomes are authoritative even if ENS writes fail (best-effort ENS hooks).
 - Employer-burn mode (corrected successor): employer burn is charged only during `createJob`.
+- Settlement, refund, cancellation, delisting, expiry, tie/under-quorum forced disputes, and dispute-resolution paths never trigger additional burn.
 
 ## Defaults used in examples
 
 - **Legacy mainnet AGIJobManager:** `0x0178b6bad606aaf908f72135b8ec32fc1d5ba477`.
-- **Legacy/default AGIALPHA token:** `0xa61a3b3a130a9c20768eebf97e21515a6046a1fa`.
+- **Mainnet AGIALPHA token (corrected successor pin):** `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Typical defaults in this repository build: `requiredValidatorApprovals=3`, `requiredValidatorDisapprovals=3`, `voteQuorum=3`, `completionReviewPeriod=7 days`, `disputeReviewPeriod=14 days`.
 
 ## Lifecycle state diagram
@@ -46,7 +47,7 @@ sequenceDiagram
     participant Agent
     participant Validator
 
-    Employer->>Token: approve(AGIJobManager, payout)
+    Employer->>Token: approve(AGIJobManager, payout + createJobBurn)
     Employer->>Mgr: createJob(...)
     Agent->>Mgr: read allowlist / Merkle / ENS config
     Agent->>Token: approve(AGIJobManager, expected agent bond)
@@ -119,8 +120,13 @@ flowchart TD
 1. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, payoutInBaseUnits + expectedBurnInBaseUnits)`.
 2. On AGIJobManager, call `createJob(jobSpecURI, payout, duration, details)`.
 3. Confirm `JobCreated` event and record `jobId`.
-4. On `EmployerBurnReadHelper` `Read Contract`, call `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` as preflight helpers; use `canFinalizeEmployerWinWithBurn(jobId)` only when planning to call `finalizeJob`.
-5. Keep extra AGIALPHA balance in the employer wallet for possible employer-win burn (`payout * employerBurnBps / 10_000`).
+4. On `EmployerBurnReadHelper` `Read Contract`, call:
+   - `quoteCreateJobBurn(payout)`
+   - `getCreateJobFundingRequirementWithToken(payout)`
+   - `getCreateJobAllowanceRequirementWithToken(payout)`
+   - `getCreateJobFundingReadiness(payout, employer)`
+5. Ensure allowance and balance are both greater than or equal to `totalUpfront = payout + burn`.
+6. After job creation, use `getJobBurnAmountSnapshot(jobId)` if you need an immutable burn snapshot for audit evidence.
 
 ### 2) Agent: apply + complete
 1. Verify agent authorization path (additional list, Merkle root, or ENS ownership).
@@ -137,7 +143,7 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win (legacy reference): AGIALPHA refund transfer to employer, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win: AGIALPHA escrow refund transfer to employer (net of validator economics), no completion NFT mint, and no `JobCompleted` event.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.
@@ -197,7 +203,7 @@ flowchart TD
 ## Employer-burn operator checklist (mainnet/testnet)
 
 1. Owner reads `employerBurnBps()` and confirms expected policy.
-2. Owner confirms `agiToken()` is the canonical AGIALPHA token before enabling non-zero burn policy.
+2. Owner confirms `agiToken()` is exactly the pinned AGIALPHA mainnet token `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA` before enabling non-zero burn policy.
 3. Employer pre-computes burn: `burn = payout * employerBurnBps / 10_000`.
 4. Employer ensures wallet balance can cover both escrow payout and burn.
 5. Employer approves AGIJobManager for `payout + burn` (or larger operational allowance).
