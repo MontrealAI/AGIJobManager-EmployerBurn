@@ -14,7 +14,7 @@ Smart contract engineers, auditors, operators.
 ## Roles and permissions
 | Role | Key capabilities |
 |---|---|
-| Owner | Pause/unpause, settlement pause, config setters, allowlists/blacklists, moderators, withdraw surplus while paused, lock identity config. |
+| Owner | Pause/unpause, settlement pause, config setters, allowlists/blacklists, moderators, withdraw surplus (withdrawable-bound), lock identity config. |
 | Moderator | Resolve disputes (`resolveDispute`, `resolveDisputeWithCode`). |
 | Employer | Create/cancel/dispute jobs, receive refund or completion NFT. |
 | Agent | Apply, request completion, receive payout on successful settlement. |
@@ -62,7 +62,7 @@ Checks include payout bounds, duration bounds, allowlist/ENS eligibility, blackl
 ### 5) Treasury and pause controls
 - `pause()` / `unpause()`
 - `setSettlementPaused(bool)`
-- `withdrawAGI(uint256 amount)` only when paused and settlement not paused.
+- `withdrawAGI(uint256 amount)` owner-only, nonReentrant, and bounded by `withdrawableAGI()` (pause-independent).
 
 ## Job lifecycle sequence
 ```mermaid

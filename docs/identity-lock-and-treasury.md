@@ -12,7 +12,7 @@ AGIJobManager is an operator-run escrow system: the owner retains operational co
 - Any attempt to withdraw more than the non-escrow balance reverts with `InsufficientWithdrawableBalance`.
 - Escrow is released only through job settlement flows (completion, cancellation, expiration, dispute resolution).
 
-## Treasury definition (owner-withdrawable during pause)
+## Treasury definition (owner-withdrawable surplus)
 
 The treasury is defined as **all AGI held by the contract that is *not* locked in escrow**. This includes:
 
@@ -20,9 +20,9 @@ The treasury is defined as **all AGI held by the contract that is *not* locked i
 - Reward-pool contributions (`contributeToRewardPool`).
 - Any direct transfers sent to the contract address.
 
-Treasury withdrawals are **only allowed while paused** via `withdrawAGI`, and never touch escrowed balances.
+Treasury withdrawals are allowed while paused or unpaused via `withdrawAGI`, and never touch escrowed balances.
 
-## Pause semantics (brief withdrawal pause)
+## Pause semantics
 
 Pausing is intended to be a **brief, operator-initiated window** (e.g., to withdraw treasury funds) with minimal user disruption.
 
@@ -34,7 +34,7 @@ Pausing is intended to be a **brief, operator-initiated window** (e.g., to withd
 ### Allowed while paused
 - **Completion submission**: assigned agents can call `requestJobCompletion` for valid, active jobs.
 - **Settlement exits**: `cancelJob`, `expireJob`, and `finalizeJob` still operate when their normal predicates are satisfied.
-- **Owner withdrawals**: `withdrawAGI` is available only while paused.
+- **Owner withdrawals**: `withdrawAGI` is available while paused or unpaused, always bounded by `withdrawableAGI()`.
 
 These exceptions ensure users can complete or exit positions even during a brief treasury withdrawal pause.
 
@@ -61,4 +61,4 @@ This lock is intended to **freeze identity wiring only**, allowing the operator 
 ## Additional notes
 
 - `additionalAgentPayoutPercentage` is **reserved for future use**; it is not currently used to modify settlement economics.
-- Reward-pool contributions are treated as **treasury funds** and are owner-withdrawable during pause, subject to the escrow invariant.
+- Reward-pool contributions are treated as **treasury funds** and are owner-withdrawable subject to the escrow invariant.

@@ -13,7 +13,7 @@ This document summarizes security considerations specific to the current `AGIJob
 - No public audit report is included in this repository. Treat deployments as experimental until independently reviewed.
 
 **Primary trust assumptions (centralization risks)**
-- **Owner powers**: can pause flows, update parameters (excluding AGIALPHA token pin), manage allowlists/blacklists, add AGI types, and withdraw ERC‑20 while paused (limited to `withdrawableAGI()`).
+- **Owner powers**: can pause flows, update parameters (excluding AGIALPHA token pin), manage allowlists/blacklists, add AGI types, and withdraw AGI/ERC‑20 surplus (bounded by `withdrawableAGI()` for AGI) without touching escrow/bonds.
 - **Policy control**: owner can update Merkle roots, validation thresholds, and payout percentages, which can materially change who can validate jobs and how funds are split.
 - **Moderator powers**: resolve disputes with typed action codes via `resolveDisputeWithCode`. Code `0` (NO_ACTION) logs a reason and keeps the dispute active; `1` (AGENT_WIN) pays the agent; `2` (EMPLOYER_WIN) refunds the employer. The legacy string-based `resolveDispute` is deprecated and maps exact `agent win` / `employer win` strings to the corresponding codes.
 - **Validator set**: validators are allowlisted or ENS/Merkle‑gated; the contract does not enforce decentralization or slashing.

@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-// Active Ethereum mainnet size limits:
+// Active Ethereum mainnet size limits (authoritative specs):
 // - EIP-170 (Spurious Dragon): runtime code size <= 24,576 bytes
+//   https://eips.ethereum.org/EIPS/eip-170
 // - EIP-3860 (Shanghai): initcode size <= 49,152 bytes
+//   https://eips.ethereum.org/EIPS/eip-3860
 const MAX_RUNTIME_BYTES = 24576;
 const MAX_INITCODE_BYTES = 49152;
 const TARGET_RUNTIME_BYTES = 23000;
