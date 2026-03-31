@@ -33,6 +33,10 @@ if (!deploymentFiles.length) {
 
 const latest = deploymentFiles[deploymentFiles.length - 1];
 const deployment = JSON.parse(fs.readFileSync(path.join(dir, latest.name), 'utf8'));
+const releaseTrack = String(deployment.releaseTrack || process.env.RELEASE_TRACK || '');
+const requireSuccessorHelper =
+  process.env.REQUIRE_SUCCESSOR_HELPER === '1' ||
+  /successor|createjob[-_]?burn|v0\.2\.0/i.test(releaseTrack);
 
 const requiredKeys = ['network', 'chainId', 'deployer', 'contracts'];
 for (const key of requiredKeys) {
@@ -46,12 +50,22 @@ if (!deployment.contracts?.AGIJobManager?.address) {
   console.error('❌ Deployment record missing contracts.AGIJobManager.address');
   process.exit(1);
 }
+const helperAddress = deployment.contracts?.EmployerBurnReadHelper?.address;
+if (!helperAddress && requireSuccessorHelper) {
+  console.error('❌ Deployment record missing contracts.EmployerBurnReadHelper.address for successor validation mode.');
+  process.exit(1);
+}
 
 console.log(`✅ Post-deploy metadata validated from ${latest.name}`);
 console.log(`- network: ${deployment.network}`);
 console.log(`- chainId: ${deployment.chainId}`);
 console.log(`- blockNumber: ${latest.blockNumber}`);
 console.log(`- AGIJobManager: ${deployment.contracts.AGIJobManager.address}`);
+if (helperAddress) {
+  console.log(`- EmployerBurnReadHelper: ${helperAddress}`);
+} else {
+  console.log('⚠️ EmployerBurnReadHelper address not present in this deployment record (legacy-compatible validation mode).');
+}
 
 const verifyTargetsPath = path.join(dir, 'verify-targets.json');
 if (!fs.existsSync(verifyTargetsPath)) {
@@ -86,6 +100,19 @@ if (!verification || (verification !== 'verified' && verification !== 'already_v
   process.exit(1);
 }
 console.log(`✅ AGIJobManager verification status: ${verification}`);
+if (helperAddress) {
+  const helperVerification = deployment.verification?.EmployerBurnReadHelper?.status;
+  if (!helperVerification || (helperVerification !== 'verified' && helperVerification !== 'already_verified')) {
+    console.error(`❌ EmployerBurnReadHelper verification status not ready: ${helperVerification || 'missing'}`);
+    process.exit(1);
+  }
+  console.log(`✅ EmployerBurnReadHelper verification status: ${helperVerification}`);
+} else if (requireSuccessorHelper) {
+  console.error('❌ Successor validation mode requires EmployerBurnReadHelper verification metadata.');
+  process.exit(1);
+} else {
+  console.log('⚠️ Skipping EmployerBurnReadHelper verification check for legacy deployment record.');
+}
 
 const artifactPath = path.join(root, 'hardhat', 'artifacts', 'contracts', 'AGIJobManager.sol', 'AGIJobManager.json');
 if (!fs.existsSync(artifactPath)) {

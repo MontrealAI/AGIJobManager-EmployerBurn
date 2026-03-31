@@ -20,6 +20,7 @@ const REQUIRED_COMPILER_SETTINGS = {
 
 const FQNS = {
   AGIJobManager: 'contracts/AGIJobManager.sol:AGIJobManager',
+  EmployerBurnReadHelper: 'contracts/periphery/EmployerBurnReadHelper.sol:EmployerBurnReadHelper',
   UriUtils: 'contracts/utils/UriUtils.sol:UriUtils',
   TransferUtils: 'contracts/utils/TransferUtils.sol:TransferUtils',
   BondMath: 'contracts/utils/BondMath.sol:BondMath',
@@ -353,6 +354,9 @@ async function main() {
   const managerDeployment = await deployContract('AGIJobManager', managerArgs, { libraries: linkedLibraries }, confirmations);
   deployments.AGIJobManager = managerDeployment;
   console.log(`[deployed] AGIJobManager ${managerDeployment.address} tx=${managerDeployment.txHash}`);
+  const helperDeployment = await deployContract('EmployerBurnReadHelper', [managerDeployment.address], {}, confirmations);
+  deployments.EmployerBurnReadHelper = helperDeployment;
+  console.log(`[deployed] EmployerBurnReadHelper ${helperDeployment.address} tx=${helperDeployment.txHash}`);
 
   for (const libName of LIBRARIES) {
     await sleep(verifyDelayMs);
@@ -365,6 +369,15 @@ async function main() {
       record: managerDeployment,
       constructorArguments: managerArgs,
       libraries: linkedLibraries,
+    },
+    verifyDelayMs
+  );
+  await sleep(verifyDelayMs);
+  verificationResults.EmployerBurnReadHelper = await verifyWithRetry(
+    {
+      name: 'EmployerBurnReadHelper',
+      record: helperDeployment,
+      constructorArguments: [managerDeployment.address],
     },
     verifyDelayMs
   );
@@ -399,6 +412,7 @@ async function main() {
   const record = {
     chainId,
     network: network.name,
+    releaseTrack: process.env.RELEASE_TRACK || null,
     explorerBaseUrl: explorerBase,
     timestamp: new Date().toISOString(),
     deployer: deployer.address,
@@ -442,7 +456,7 @@ async function main() {
   console.log(`receipt: ${receiptPath}`);
   console.log(`solc-input: ${solcInputPath}`);
   console.log(`verify-targets: ${verifyTargetsPath}`);
-  console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, verify attempts, optional transferOwnership(finalOwner).');
+  console.log('Post-deploy actions executed by this script: deploy libraries, deploy AGIJobManager, deploy EmployerBurnReadHelper, verify attempts, optional transferOwnership(finalOwner).');
   console.log('Mainnet dry-run reminder: run with DRY_RUN=1 first on every config change before live broadcast.');
   console.log('Manual operator actions remain required:');
   console.log('  1) Confirm owner/governance parameters on AGIJobManager.');
