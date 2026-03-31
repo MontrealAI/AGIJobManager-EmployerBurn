@@ -43,7 +43,7 @@ These wrappers call this Hardhat project and keep production operations on a sin
 | Transaction | Required signer | Notes |
 | --- | --- | --- |
 | `scripts/deploy.js` / `scripts/deploy-ens-job-pages.js` | deployer key | contract deploy + scripted setup |
-| `scripts/deploy-employer-burn-read-helper.js` | deployer key | optional additive deployment for Etherscan burn-read helper |
+| `scripts/deploy-employer-burn-read-helper.js` | deployer key | optional standalone helper deploy/redeploy against an existing AGIJobManager |
 | `NameWrapper.setApprovalForAll(newEnsJobPages, true)` | wrapped-root owner | manual, always required for wrapped-root control |
 | `AGIJobManager.setEnsJobPages(newEnsJobPages)` | AGIJobManager owner | manual pointer switch to new ENSJobPages |
 | `migrateLegacyWrappedJobPage(jobId, exactLabel)` | ENSJobPages owner | manual, only for affected legacy jobs |
@@ -57,11 +57,12 @@ These wrappers call this Hardhat project and keep production operations on a sin
 - Compiles contracts with pinned production compiler settings.
 - Deploys linked libraries (`UriUtils`, `TransferUtils`, `BondMath`, `ReputationMath`, `ENSOwnership`).
 - Deploys `AGIJobManager` from `scripts/deploy.js`.
+- Deploys `EmployerBurnReadHelper` from `scripts/deploy.js`, bound to the freshly deployed `AGIJobManager`.
 - Attempts Etherscan verification.
 - Optionally transfers AGIJobManager ownership to `FINAL_OWNER`.
 - Writes deployment artifacts for auditability and manual verification fallback.
 - Provides additive utility script to deploy/replace `ENSJobPages` (`scripts/deploy-ens-job-pages.js`).
-- Provides additive utility script to deploy `EmployerBurnReadHelper` (`scripts/deploy-employer-burn-read-helper.js`) bound to an existing AGIJobManager address.
+- Provides additive utility script to deploy/redeploy only `EmployerBurnReadHelper` (`scripts/deploy-employer-burn-read-helper.js`) against an existing AGIJobManager address.
 
 ### Does not
 - Perform runtime protocol tuning after deployment (pause flags, thresholds, roots, etc.).
@@ -199,7 +200,7 @@ FINAL_OWNER=0xYourOwner DEPLOY_CONFIRM_MAINNET=I_UNDERSTAND_MAINNET_DEPLOYMENT n
 ```
 
 Expected result:
-- Libraries + `AGIJobManager` deployed.
+- Libraries + `AGIJobManager` + `EmployerBurnReadHelper` deployed.
 - Verification attempts executed.
 - Optional `transferOwnership(finalOwner)` executed if deployer != final owner.
 - Deployment records written under `hardhat/deployments/mainnet/`.
