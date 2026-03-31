@@ -17,7 +17,7 @@ AGIJobManager is centralized by design. Users must trust the owner and moderator
 
 **Owner (operational authority)**
 - Pause/unpause operations.
-- Withdraw treasury funds **only while paused** (never escrow or bonded funds).
+- Withdraw treasury funds from true surplus (never escrow or bonded funds), while paused or unpaused.
 - Manage allowlists/blacklists and additional agents/validators.
 - Update economic parameters (validator thresholds, reward percentages, payout caps, duration limits, review periods, bonds).
 - Manage moderators and AGI payout tiers (AGI types).
@@ -60,7 +60,7 @@ The job struct encodes the state machine via fields like `assignedAgent`, `compl
 **Why this matters**: it defines the hard boundary auditors and users rely on to ensure escrowed job funds cannot be withdrawn by the operator.
 
 - `withdrawableAGI()` = `agiToken.balanceOf(this) - lockedEscrow - lockedAgentBonds - lockedValidatorBonds - lockedDisputeBonds` and **reverts** if obligations exceed balance.
-- `withdrawAGI()` is **owner‑only** and **paused‑only**, and cannot exceed `withdrawableAGI()`.
+- `withdrawAGI()` is **owner‑only**, `nonReentrant`, and cannot exceed `withdrawableAGI()`.
 
 **What becomes treasury**
 - Payout remainder when `agentPayoutPct + validationRewardPercentage < 100`.
@@ -93,7 +93,7 @@ The identity lock is a one‑way switch intended to freeze identity wiring after
 - `updateMerkleRoots` (allowlist roots remain adjustable).
 - Operational controls (pause/unpause, allowlists/blacklists, parameter tuning).
 - `setUseEnsJobTokenURI` (operational toggle for ENS-based token URIs).
-- Treasury withdrawals (still paused‑only).
+- Treasury withdrawals (still bounded by surplus accounting only).
 
 **Pre‑lock constraints**
 Even before locking, identity wiring updates require `nextJobId == 0` and `lockedEscrow == 0`.
@@ -127,7 +127,7 @@ unpause intake last.
 | `finalizeJob` | Any | Allowed | Finalizes after review windows/challenge periods; blocked by `settlementPaused`. |
 | `resolveDispute` / `resolveDisputeWithCode` | Moderator | Allowed | Dispute resolution remains available during pauses; blocked by `settlementPaused`. |
 | `delistJob` | Owner | Allowed | Owner can delist unassigned jobs; blocked by `settlementPaused`. |
-| `withdrawAGI` | Owner | **Allowed only while paused** | Treasury withdrawals are pause‑gated and blocked by `settlementPaused`. |
+| `withdrawAGI` | Owner | Allowed while paused or unpaused | Treasury withdrawals are bounded by `withdrawableAGI()` and cannot withdraw escrow/bonds. |
 | `resolveStaleDispute` | Owner | Allowed | Only after `disputeReviewPeriod`; blocked by `settlementPaused`. |
 
 ## 7) Security posture (operational highlights)

@@ -54,7 +54,7 @@ All parameters are upgradable by the owner. Defaults are set in the contract to 
 - When paused:
   - Most job actions are blocked (`createJob`, `applyForJob`, validation, disputes).
   - `requestJobCompletion` remains available for assigned agents so completion metadata can be submitted even during a brief pause.
-  - `withdrawAGI` requires the contract to be paused; `resolveStaleDispute` is owner‑only after `disputeReviewPeriod` (pause optional, but often used for incident recovery).
+  - `withdrawAGI` remains available to owner while paused or unpaused, but is always capped by `withdrawableAGI()` so escrow/bonds stay protected; `resolveStaleDispute` is owner‑only after `disputeReviewPeriod` (pause optional, but often used for incident recovery).
 
 ### Managing allowlists
 - **Merkle roots** are stored on‑chain and can be updated by the owner via `updateMerkleRoots`. Treat updates as governance events with audit logs.
@@ -81,7 +81,7 @@ All parameters are upgradable by the owner. Defaults are set in the contract to 
 
 ### Withdrawing ERC‑20
 - `withdrawAGI(amount)` can only withdraw surplus balances; it fails if `balance < lockedEscrow + lockedAgentBonds + lockedValidatorBonds + lockedDisputeBonds` or `amount > withdrawableAGI()`.
-- Withdrawals are only allowed while paused.
+- Withdrawals are allowed while paused or unpaused; pause is not required.
 
 ### Rotating the escrow token
 - `updateAGITokenAddress` is intentionally disabled in the corrected successor and cannot be used to switch tokens.
