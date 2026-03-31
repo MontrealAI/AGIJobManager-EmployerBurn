@@ -44,11 +44,11 @@ When a job completes on an **agent win**, validator rewards are paid **only to a
 
 - **Solidity version:** pinned to `0.8.23` in `truffle-config.js` (contract pragma is `^0.8.19`).
 - **OpenZeppelin contracts:** kept at `@openzeppelin/contracts@4.9.6` (same major version).
-- **Optimizer:** enabled with **runs = 50** to balance deploy size and runtime gas (viaIR stays off).
+- **Optimizer:** enabled with **runs = 1** and `viaIR: true` (canonical successor Hardhat profile) to preserve deploy-size headroom and deterministic artifacts.
 
 If you change compiler settings for a new deployment, keep the version and optimizer runs consistent for reproducible verification.
 
 ## Ops notes
 
-- Reward pool contributions add to the contract balance and are **not escrow-locked**. While paused, the owner can withdraw them via `withdrawAGI` (subject to `lockedEscrow`).  
+- Reward pool contributions add to the contract balance and are **not escrow-locked**. Owner withdrawals use `withdrawAGI` and remain bounded by `withdrawableAGI()` (surplus above `lockedEscrow + locked*Bonds`), with no pause prerequisite.  
 - `additionalAgentPayoutPercentage` is currently **not used** in payout math and remains reserved/legacy configuration.

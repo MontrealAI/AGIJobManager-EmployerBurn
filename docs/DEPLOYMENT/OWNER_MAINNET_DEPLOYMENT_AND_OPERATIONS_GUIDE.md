@@ -131,9 +131,9 @@ AGIJobManager is intended for AI agents exclusively for normal protocol particip
 | Disable AGI NFT type | `disableAGIType(address)` | Owner | Type must exist | Yes | Safe |
 | Delist unassigned job | `delistJob(uint256)` | Owner | Settlement not paused; job must exist; not completed; no assigned agent | Yes | Safe |
 | Resolve stale dispute after review timeout | `resolveStaleDispute(uint256,bool)` | Owner | Settlement not paused; active dispute; current time past `disputeReviewPeriod` | Yes | Safe |
-| Withdraw only non-escrow AGI | `withdrawAGI(uint256)` | Owner | `paused == true`; `settlementPaused == false`; amount `<= withdrawableAGI()` | Yes | Safe |
+| Withdraw only non-escrow AGI | `withdrawAGI(uint256)` | Owner | amount `<= withdrawableAGI()`; no pause prerequisite | Yes | Safe |
 | Rescue ETH | `rescueETH(uint256)` | Owner | None | Yes | Safe |
-| Rescue ERC20 | `rescueERC20(address,address,uint256)` | Owner | For non-AGI token: normal transfer. For AGI token path: same gates as `withdrawAGI` (`paused` true, settlement not paused, withdrawable bound). | Yes | Safe |
+| Rescue ERC20 | `rescueERC20(address,address,uint256)` | Owner | For non-AGI token: normal transfer. For AGI token path: same surplus bounds as `withdrawAGI` (`amount <= withdrawableAGI()`), no pause prerequisite. | Yes | Safe |
 | Low-level token call rescue | `rescueToken(address,bytes)` | Owner | Token must be a contract and cannot be the AGI token | Yes | Safe |
 | Owner cannot do these actions | N/A | N/A | Cannot reverse `lockIdentityConfiguration`; cannot force settlement while `settlementPaused == true`; cannot call `resolveDisputeWithCode` unless also a moderator; cannot withdraw escrow-backed AGI above `withdrawableAGI()` | N/A | N/A |
 
@@ -431,14 +431,13 @@ Etherscan field styling can change. Provide arrays in valid `bytes32[]` format.
 - Functions: `pause`, `unpause`, `pauseAll`, `unpauseAll`, `setSettlementPaused`
 - Allowed when: always (owner only)
 - Success signal: `paused()` and/or `settlementPaused()` changes
-- Safety note: for treasury withdrawal use-case, required state is `paused=true` and `settlementPaused=false`
+- Safety note: treasury withdrawal is live-operation safe; no pause posture required, but amount must remain `<= withdrawableAGI()`
 
 ### 9.9 Withdraw AGI
 
 - Function: `withdrawAGI(uint256)`
 - Allowed when:
-  - `paused == true`
-  - `settlementPaused == false`
+  - owner only
   - amount is `<= withdrawableAGI()`
 - Inputs: amount in token base units
 - Success signal: `AGIWithdrawn` event and token transfer to owner
@@ -450,7 +449,7 @@ Etherscan field styling can change. Provide arrays in valid `bytes32[]` format.
 - Allowed when:
   - `rescueETH`: always
   - `rescueERC20` non-AGI token: always
-  - `rescueERC20` with AGI token: same gates as `withdrawAGI`
+  - `rescueERC20` with AGI token: same surplus-bound logic as `withdrawAGI`
   - `rescueToken`: token cannot be AGI token
 - Success signal: transfer/call succeeds and on-chain balances reflect movement
 - Safety note: treat rescue calls as emergency controls with dual approval and post-action reconciliation
@@ -621,7 +620,7 @@ A participant can be authorized if they control the configured subdomain via Nam
 | Mainnet migration blocked with confirmation error | `DEPLOY_CONFIRM_MAINNET` missing or wrong | Set exact required string and rerun migration |
 | Etherscan verification fails with bytecode mismatch | Library addresses or compiler settings mismatch | Re-submit verify with exact linked libraries and compile settings |
 | Owner config call reverts with `InvalidState` | Function requires empty escrow/bonds and protocol still has active locked balances | Wait for settlement completion, verify `locked*` values are zero, retry |
-| `withdrawAGI` reverts | Contract not in required state (`paused=true`, `settlementPaused=false`) or amount exceeds `withdrawableAGI()` | Set pause posture correctly, read `withdrawableAGI()`, retry with lower amount |
+| `withdrawAGI` reverts | Amount exceeds `withdrawableAGI()` or escrow/bond accounting is insolvent (`InsolventEscrowBalance`) | Read `withdrawableAGI()`, reconcile locked balances, retry with lower amount |
 | Agents/validators cannot apply/validate | Misconfigured authorization: roots empty/wrong, direct lists missing, blacklist active, ENS config wrong | Verify allowlist path in Read Contract, then correct via owner function |
 | Merkle proof rejected | Proof built with wrong leaf/hash format | Rebuild using canonical leaf `keccak256(abi.encodePacked(address))` and deterministic script |
 | ENS authorization fails | Wrong root node, wrong subdomain label, or claimant not recognized by NameWrapper/resolver checks | Confirm root nodes and ownership path, then retry with correct subdomain |
