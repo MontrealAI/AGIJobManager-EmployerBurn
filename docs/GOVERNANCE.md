@@ -28,7 +28,7 @@ Use emergency controls only for incidents or recovery; keep an audit log.
   - Requires the contract to be paused.
   - Use when disputes exceed the review period and moderator action is unavailable.
 - **Withdraw non‑escrow funds** (`withdrawAGI`)
-  - Only while paused.
+  - While paused or unpaused (always bounded by `withdrawableAGI()`).
   - Never withdraw if it would dip below `lockedEscrow`.
 
 ## Day‑to‑day operations (low‑touch)
