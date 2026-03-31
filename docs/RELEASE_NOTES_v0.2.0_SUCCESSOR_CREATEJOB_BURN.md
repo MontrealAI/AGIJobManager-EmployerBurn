@@ -16,6 +16,7 @@
 ## Security and trust changes
 - `updateAGITokenAddress` is disabled in successor (`AGIALPHATokenPinned`).
 - Mainnet successor requires AGIALPHA token `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
+- `withdrawAGI(uint256)` is now safe for live operations without pause gating; withdrawals remain capped by `withdrawableAGI()` and cannot take funds backing active escrow/bonds.
 
 ## Etherscan-first helper surfaces
 - `quoteCreateJobBurn(uint256 payout)`

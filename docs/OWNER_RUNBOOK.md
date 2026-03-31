@@ -101,7 +101,7 @@ node scripts/advisor/state_advisor.js --input scripts/advisor/sample_job_state.j
 Before `withdrawAGI(amount)`:
 1. Read `withdrawableAGI()`.
 2. Ensure `amount <= withdrawableAGI()`.
-3. Confirm protocol is paused for withdrawals (`withdrawAGI` requires `whenPaused` and settlement not paused).
+3. Confirm withdrawal is operationally justified (treasury/surplus only), not an escrow/bond flow.
 4. Execute withdrawal in small chunks when uncertain.
 5. Save transaction hash in operations log and re-check `withdrawableAGI()` after each chunk.
 
@@ -153,4 +153,3 @@ Before `lockIdentityConfiguration()` or `lockConfiguration()`:
 - `setEmployerBurnBps`: economic-impact setting; announce before changing and verify employer-facing runbooks are updated.
 
 - `setJobLabelPrefix(string)` is owner-only and only available before `lockConfiguration()`; after lock, prefix is intentionally frozen.
-

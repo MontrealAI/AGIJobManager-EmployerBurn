@@ -171,8 +171,6 @@ contract("AGIJobManager admin ops", (accounts) => {
     await token.approve(manager.address, payout, { from: employer });
     await manager.createJob("spec://events", payout, duration, "", { from: employer });
 
-    await manager.pause({ from: owner });
-    await manager.setSettlementPaused(false, { from: owner });
     const withdrawTx = await manager.withdrawAGI(surplus, { from: owner });
     expectEvent(withdrawTx, "AGIWithdrawn", {
       to: owner,
@@ -196,8 +194,6 @@ contract("AGIJobManager admin ops", (accounts) => {
     await manager.lockIdentityConfiguration({ from: owner });
 
     const balanceBefore = await token.balanceOf(owner);
-    await expectRevert.unspecified(manager.withdrawAGI(surplus, { from: owner }));
-    await manager.pause({ from: owner });
     await expectCustomError(
       manager.withdrawAGI.call(payout, { from: owner }),
       "InsufficientWithdrawableBalance"

@@ -144,7 +144,7 @@ This section summarizes expected mechanics; the deployed code controls.
 
 1) Validator reward budget. The Protocol may allocate a portion of the Job payout as a validator reward budget (as snapshotted per job) for distribution to participating Validators, subject to code rules.
 2) Bond returns and slashing. Validator bonds may be returned in full, partially slashed, or redistributed depending on whether a Validator ends up on the correct side of the final outcome, as defined by the code.
-3) Protocol-retained remainder (platform revenue). On certain settlement paths (including Agent-win), the Protocol may retain the remainder of the Job payout after Agent and Validator allocations. This remainder may become withdrawable by the Owner under conditions specified in the code (e.g., when paused and when not backing active escrows/bonds).
+3) Protocol-retained remainder (platform revenue). On certain settlement paths (including Agent-win), the Protocol may retain the remainder of the Job payout after Agent and Validator allocations. This remainder may become withdrawable by the Owner under conditions specified in the code (only amounts not backing active escrows/bonds).
 4) No refunds from the Protocol. Token movements are governed by the smart contract; there is no guarantee of reversal, refunds, or discretionary recovery.
 5) Gas fees. Users pay their own gas/transaction fees and accept the risk of network congestion, failed transactions, MEV, reorgs, and other chain-level issues.
 
@@ -1395,7 +1395,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     }
 
     /// @dev On agent-win, any remainder after agent/validator allocations is intentional platform revenue.
-    /// @dev It stays in-contract and becomes withdrawable via withdrawAGI() when paused,
+    /// @dev It stays in-contract and becomes withdrawable via withdrawAGI() if surplus to locked obligations,
     /// @dev as long as lockedEscrow/locked*Bonds are fully covered.
     function _completeJob(uint256 _jobId, bool repEligible) internal {
         Job storage job = _job(_jobId);
@@ -1608,7 +1608,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         _setAddressFlag(additionalAgents, agent, false);
     }
 
-    /// @notice Includes retained payout remainders; withdrawable only via withdrawAGI() when paused.
+    /// @notice Includes retained payout remainders; withdrawable only via withdrawAGI() surplus accounting bounds.
     /// @dev Owner withdrawals are limited to balances not backing lockedEscrow/locked*Bonds.
     function withdrawableAGI() public view returns (uint256) {
         uint256 bal = agiToken.balanceOf(address(this));
@@ -1625,7 +1625,7 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         emit AGIWithdrawn(to, amount, available - amount);
     }
 
-    function withdrawAGI(uint256 amount) external onlyOwner whenSettlementNotPaused whenPaused nonReentrant {
+    function withdrawAGI(uint256 amount) external onlyOwner nonReentrant {
         _withdrawAGITo(msg.sender, amount);
     }
 
@@ -1637,8 +1637,6 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
     function rescueERC20(address token, address to, uint256 amount) external onlyOwner nonReentrant {
         if (token == address(0) || to == address(0) || amount == 0) revert InvalidParameters();
         if (token == address(agiToken)) {
-            if (settlementPaused) revert SettlementPaused();
-            if (!paused()) revert InvalidState();
             _withdrawAGITo(to, amount);
         } else {
             TransferUtils.safeTransfer(token, to, amount);

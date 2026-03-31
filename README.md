@@ -52,12 +52,14 @@ AGIJobManager EmployerBurn is an Ethereum smart-contract system for escrowed AGI
 - Mainnet AGIALPHA token: `0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`.
 - Burn executes only in `createJob`, not on finalization/refund/cancel/delist/expiry/dispute paths.
 - Operator configures burn rate with `setEmployerBurnBps(uint256)` (bps over job payout).
-- Etherscan helper views on additive `EmployerBurnReadHelper`:
+- Etherscan helper views are available on additive `EmployerBurnReadHelper`:
   - `quoteCreateJobBurn(payout)`
   - `getCreateJobFundingRequirement(payout)`
   - `getCreateJobAllowanceRequirement(payout)`
+  - `getJobBurnAmountSnapshot(jobId)`
   - `getJobEconomicSnapshot(jobId)`
 - Employers should approve one amount before posting: `escrow + burn`.
+- Owner AGI treasury withdrawals are live-operation safe and **not pause-gated**; they are strictly bounded by `withdrawableAGI()` and cannot touch active escrow/bonds.
 - Burn observability: `createJob` emits `EmployerBurnChargedAtJobCreation(jobId, employer, token, payoutAmount, burnAmount, totalUpfront, burnBps)` when `burnAmount > 0`.
 - **Disclosure:** AGIALPHA burned during job creation is permanently removed from circulation and is not received by the protocol, its owner, or any third party. The protocol does not derive revenue from this burn.
 - **Tax disclosure:** Users are solely responsible for any tax consequences arising from token burns, transfers, or usage.
