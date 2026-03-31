@@ -412,6 +412,7 @@ async function main() {
   const record = {
     chainId,
     network: network.name,
+    releaseTrack: process.env.RELEASE_TRACK || null,
     explorerBaseUrl: explorerBase,
     timestamp: new Date().toISOString(),
     deployer: deployer.address,
