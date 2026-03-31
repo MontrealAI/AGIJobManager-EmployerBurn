@@ -11,7 +11,7 @@ Accepted (successor release `v0.2.0`).
 5. AGIALPHA token is pinned (token update path hard-disabled with `AGIALPHATokenPinned`).
 6. Owner `withdrawAGI(uint256)` remains `onlyOwner nonReentrant`, is no longer pause-gated, and is bounded strictly by `withdrawableAGI()`.
 7. AGI branch of `rescueERC20` routes through the same surplus-accounting policy as `withdrawAGI`.
-8. Etherscan-first helpers are available on additive `EmployerBurnReadHelper` for burn quote/funding/allowance/snapshot transparency.
+8. Etherscan-first helpers are exposed on additive `EmployerBurnReadHelper` for burn quote/funding/allowance/snapshot transparency.
 
 ## Rationale
 - **Simplicity/liveness:** burn has one trigger point (`createJob`) and no settlement dependency.

@@ -92,7 +92,7 @@ flowchart LR
     ValBond[Validator bonds] --> Correct[Correct-side validators]
     ValBond --> Wrong[Wrong-side validators less slash]
     DisputeBond[Dispute bond] --> Winner[Winner side transfer]
-    Retained --> Treasury[withdrawableAGI when paused]
+    Retained --> Treasury[withdrawableAGI (pause-independent)]
 ```
 
 ### `withdrawableAGI`
@@ -101,8 +101,6 @@ flowchart LR
 
 `withdrawAGI` requires:
 - owner only,
-- `whenSettlementNotPaused`,
-- `whenPaused`,
 - amount > 0,
 - amount <= `withdrawableAGI`.
 
@@ -159,8 +157,8 @@ flowchart LR
 ## Operational notes: `pause` vs `settlementPaused`
 
 - `pause` (`Pausable`) blocks `whenNotPaused` entrypoints (e.g., create/apply/vote/dispute) but does not block all settlement-related paths.
-- `settlementPaused` blocks methods with `whenSettlementNotPaused` (e.g., finalize/cancel/expire/dispute resolution/withdraw).
-- `withdrawAGI` additionally requires `paused == true`, so treasury withdrawal is only possible during paused mode and while settlement is not paused.
+- `settlementPaused` blocks methods with `whenSettlementNotPaused` (e.g., finalize/cancel/expire/dispute resolution).
+- `withdrawAGI` is pause-independent and not gated by `settlementPaused`; it is strictly bounded by `withdrawableAGI()`.
 
 ### Safe shutdown sequence
 

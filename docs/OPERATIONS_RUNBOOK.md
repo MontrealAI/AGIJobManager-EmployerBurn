@@ -73,7 +73,7 @@ flowchart TD
 
 ## Gotchas / failure modes
 - `settlementPaused=true` blocks critical settlement routes; avoid prolonged use.
-- Paused state is required for `withdrawAGI`, but this should be operationally rare and logged.
+- `withdrawAGI` is available while paused or unpaused, but always capped by `withdrawableAGI()` and never allowed to consume escrow/bond backing.
 
 ## References
 - [`../contracts/AGIJobManager.sol`](../contracts/AGIJobManager.sol)

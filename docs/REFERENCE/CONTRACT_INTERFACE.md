@@ -1,7 +1,7 @@
 # AGIJobManager Interface Reference (Generated)
 
-- Generated at (deterministic source fingerprint): `f40bc73fe95e`.
-- Source snapshot fingerprint: `f40bc73fe95e`.
+- Generated at (deterministic source fingerprint): `a06090a1cfc7`.
+- Source snapshot fingerprint: `a06090a1cfc7`.
 - Source: `contracts/AGIJobManager.sol`.
 
 ## Operator-facing interface
@@ -130,9 +130,7 @@
 | Event | Parameters |
 | --- | --- |
 | `AgentBlacklisted` | `address indexed agent, bool indexed status` |
-| `AgentBondMinUpdated` | `uint256 indexed oldMin, uint256 indexed newMin` |
 | `AgentBondParamsUpdated` | `uint256 indexed oldBps, uint256 indexed oldMin, uint256 indexed oldMax, uint256 newBps, uint256 newMin, uint256 newMax` |
-| `AGITokenAddressUpdated` | `address indexed oldToken, address indexed newToken` |
 | `AGITypeUpdated` | `address indexed nftAddress, uint256 indexed payoutPercentage` |
 | `AGIWithdrawn` | `address indexed to, uint256 indexed amount, uint256 remainingWithdrawable` |
 | `ChallengePeriodAfterApprovalUpdated` | `uint256 indexed oldPeriod, uint256 indexed newPeriod` |
