@@ -21,7 +21,7 @@
 
 5. **Current burn enforcement location**
    - Burn occurs only in `createJob` via `IAGIALPHABurnable(agiToken).burnFrom(msg.sender, burnAmount)`.
-   - `EmployerBurnChargedAtJobCreation` event now emits for all job creations (including `burnAmount == 0`) with payout, burn, total upfront, and burn bps snapshot.
+   - `EmployerBurnChargedAtJobCreation` emits on create-job only when `burnAmount > 0`, with payout, burn, total upfront, and burn bps snapshot.
 
 6. **Documentation/release posture**
    - Existing docs already include successor/deprecation posture in multiple places.

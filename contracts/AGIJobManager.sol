@@ -793,15 +793,17 @@ contract AGIJobManager is Ownable, ReentrancyGuard, Pausable, ERC721 {
         if (burnAmount != 0) {
             IAGIALPHABurnable(address(agiToken)).burnFrom(msg.sender, burnAmount);
         }
-        emit EmployerBurnChargedAtJobCreation(
-            jobId,
-            msg.sender,
-            address(agiToken),
-            _payout,
-            burnAmount,
-            totalUpfront,
-            burnBps
-        );
+        if (burnAmount != 0) {
+            emit EmployerBurnChargedAtJobCreation(
+                jobId,
+                msg.sender,
+                address(agiToken),
+                _payout,
+                burnAmount,
+                totalUpfront,
+                burnBps
+            );
+        }
         unchecked {
             lockedEscrow += _payout;
         }
