@@ -32,7 +32,7 @@ Owner operators, reviewers, and incident responders.
 ## Identity and eligibility wiring
 | Variable | Setter | Lock status after `lockIdentityConfiguration()` |
 |---|---|---|
-| `agiToken` | `updateAGITokenAddress` | **Immutable after lock** |
+| `agiToken` | `updateAGITokenAddress` | **Pinned in corrected successor (`updateAGITokenAddress` always reverts)** |
 | `ens` | `updateEnsRegistry` | **Immutable after lock** |
 | `nameWrapper` | `updateNameWrapper` | **Immutable after lock** |
 | `ensJobPages` | `setEnsJobPages` | **Immutable after lock** |

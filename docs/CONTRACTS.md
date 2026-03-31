@@ -40,7 +40,7 @@
 | Validator bond params | `1500 / 10e18 / 88888888e18` | `setValidatorBondParams` | bps ≤ 10000; min/max consistency |
 | Agent bond params | `500 / 1e18 / 88888888e18` | `setAgentBondParams` | bps ≤ 10000; min/max consistency; supports full disable via 0/0/0 |
 | `validatorSlashBps` | `8000` | `setValidatorSlashBps` | bps ≤ 10000 |
-| ENS/identity addresses + roots | set in constructor | `updateAGITokenAddress`, `updateEnsRegistry`, `updateNameWrapper`, `setEnsJobPages`, `updateRootNodes` | identity-configurable only until `lockIdentityConfiguration`; some require empty escrow |
+| ENS/identity addresses + roots | set in constructor | `updateEnsRegistry`, `updateNameWrapper`, `setEnsJobPages`, `updateRootNodes` (`updateAGITokenAddress` is disabled and always reverts in corrected successor) | identity-configurable only until `lockIdentityConfiguration`; some require empty escrow |
 | Merkle roots | deploy config | `updateMerkleRoots` | owner only |
 | AGI type table | empty | `addAGIType`, `disableAGIType` | ERC-721 support check, max 32 entries, percentage sum safety with validation reward |
 

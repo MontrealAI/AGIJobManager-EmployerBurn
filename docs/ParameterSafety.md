@@ -10,7 +10,7 @@ The table below lists configurable parameters and relevant caps, including who c
 
 | Parameter | Who can change | How it is used | On-chain enforced bounds | Recommended operational range | Failure mode if mis-set |
 | --- | --- | --- | --- | --- | --- |
-| `agiToken` | Owner (`updateAGITokenAddress`) | ERC‑20 used for escrow deposits, payouts, reward pool, and withdrawals. | None. | **Never change** after any job funds are deposited. Treat as immutable post‑deploy. | If changed after jobs are funded, payouts will attempt the *new* token while escrow sits in the old token. Completion/cancellation transfers can revert from insufficient balance; old token escrow becomes unrecoverable (no in-contract method to transfer old token). Funds can become permanently stuck. |
+| `agiToken` | Disabled stub (`updateAGITokenAddress`) | ERC‑20 used for escrow deposits, payouts, reward pool, and withdrawals. | Not configurable in corrected successor (`AGIALPHATokenPinned`). | AGIALPHA-pinned for corrected mainnet successor deployment. | Misconfigured token requires redeployment; do not rely on post-deploy token mutation. |
 | `requiredValidatorApprovals` | Owner (`setRequiredValidatorApprovals`) | Approvals needed to auto‑complete a job via `validateJob`. | `<= MAX_VALIDATORS_PER_JOB`; `approvals + disapprovals <= MAX_VALIDATORS_PER_JOB`. | **2–5** (or <= available validator count). Ensure enough active validators can realistically approve. | Too high → job completion requires more validators than are available; jobs can stall and require moderator dispute resolution. Setting to `0` makes any validation sufficient, which may be too weak for trust. |
 | `requiredValidatorDisapprovals` | Owner (`setRequiredValidatorDisapprovals`) | Disapprovals needed to mark job as `disputed` in `disapproveJob`. | `<= MAX_VALIDATORS_PER_JOB`; `approvals + disapprovals <= MAX_VALIDATORS_PER_JOB`. | **1–3**; keep low so disputes are reachable with a small validator set. | Too high → disputes rarely trigger; jobs can remain in limbo if approvals never reach threshold. Setting to `0` means *any* disapproval triggers dispute. |
 | `validationRewardPercentage` | Owner (`setValidationRewardPercentage`) | Total % of payout distributed to validators on completion. | `1..100`; **enforced with** `maxAgentPayoutPercentage + validationRewardPercentage <= 100` | **Keep low enough so:** `maxAgentPayoutPercentage + validationRewardPercentage <= 100`. Commonly **1–10%**. | If `validationRewardPercentage + agent payout % > 100` and validators are present, settlement reverts due to insufficient escrow, making jobs uncompletable. |
@@ -175,6 +175,6 @@ Below are plausible misconfiguration or operational failures that can trap funds
 
 If you plan a future upgrade or redeploy, consider:
 - Enforce `agentPayoutPercentage + validationRewardPercentage <= 100` in `addAGIType` or `setValidationRewardPercentage` to prevent uncompletable jobs.
-- Disallow `updateAGITokenAddress` once `nextJobId > 0` or once any escrow exists.
+- In corrected successor, `updateAGITokenAddress` is already disabled and always reverts.
 - Add a controlled rescue method for non‑current tokens (with strict event logging and governance).
 - Require `completionRequested` before `validateJob` to align on‑chain behavior with off‑chain expectations.
