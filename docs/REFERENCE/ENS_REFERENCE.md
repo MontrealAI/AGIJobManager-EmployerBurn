@@ -1,7 +1,7 @@
 # ENS Reference (Generated)
 
 Generated at (UTC): 1970-01-01T00:00:00Z
-Source fingerprint: a4092a003038ce6e
+Source fingerprint: 5c0f64522834665b
 
 Source files used:
 - `contracts/AGIJobManager.sol`
@@ -89,6 +89,7 @@ Source files used:
 - @notice Freezes token/ENS/namewrapper/root nodes. Not a governance lock; ops remain owner-controlled. ([contracts/AGIJobManager.sol#L419](../../contracts/AGIJobManager.sol#L419))
 - @notice Anyone may lock ENS records after a job reaches a terminal state; only the owner may burn fuses. ([contracts/AGIJobManager.sol#L1351](../../contracts/AGIJobManager.sol#L1351))
 - @dev Fuse burning is irreversible and remains owner-only; ENS hook execution is best-effort. ([contracts/AGIJobManager.sol#L1352](../../contracts/AGIJobManager.sol#L1352))
+- @dev It stays in-contract and becomes withdrawable via withdrawAGI() if surplus to locked obligations, ([contracts/AGIJobManager.sol#L1398](../../contracts/AGIJobManager.sol#L1398))
 - @dev as long as lockedEscrow/locked*Bonds are fully covered. ([contracts/AGIJobManager.sol#L1399](../../contracts/AGIJobManager.sol#L1399))
 - @dev Owner withdrawals are limited to balances not backing lockedEscrow/locked*Bonds. ([contracts/AGIJobManager.sol#L1612](../../contracts/AGIJobManager.sol#L1612))
 - @notice Prefix used when constructing ENS job labels as prefix + decimal(jobId). ([contracts/ens/ENSJobPages.sol#L120](../../contracts/ens/ENSJobPages.sol#L120))

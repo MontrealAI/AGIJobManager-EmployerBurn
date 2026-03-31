@@ -31,7 +31,7 @@ contract("AGIJobManager rescue hardening", (accounts) => {
     );
   }
 
-  it("rescueERC20 keeps AGI backing safe and follows withdrawAGI pause posture", async () => {
+  it("rescueERC20 keeps AGI backing safe and follows withdrawableAGI surplus bounds", async () => {
     const agi = await MockERC20.new({ from: owner });
     const manager = await deployManager(agi);
 
@@ -39,12 +39,6 @@ contract("AGIJobManager rescue hardening", (accounts) => {
     await agi.approve(manager.address, web3.utils.toWei("10"), { from: employer });
     await manager.createJob("ipfs://spec", web3.utils.toWei("10"), 1000, "details", { from: employer });
 
-    await expectCustomError(
-      manager.rescueERC20.call(agi.address, owner, web3.utils.toWei("1"), { from: owner }),
-      "InvalidState"
-    );
-
-    await manager.pause({ from: owner });
     await expectCustomError(
       manager.rescueERC20.call(agi.address, owner, web3.utils.toWei("1"), { from: owner }),
       "InsufficientWithdrawableBalance"
@@ -55,10 +49,7 @@ contract("AGIJobManager rescue hardening", (accounts) => {
     assert.equal((await agi.balanceOf(owner)).toString(), web3.utils.toWei("4"));
 
     await manager.setSettlementPaused(true, { from: owner });
-    await expectCustomError(
-      manager.rescueERC20.call(agi.address, owner, "1", { from: owner }),
-      "SettlementPaused"
-    );
+    await expectCustomError(manager.rescueERC20.call(agi.address, owner, "1", { from: owner }), "InsufficientWithdrawableBalance");
   });
 
   it("rescueERC20 transfers arbitrary non-AGI tokens", async () => {
