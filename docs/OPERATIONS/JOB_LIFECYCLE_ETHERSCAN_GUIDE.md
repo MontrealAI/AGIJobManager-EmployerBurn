@@ -116,11 +116,15 @@ flowchart TD
 ## Role recipes (Etherscan Write Contract)
 
 ### 1) Employer: create job
-1. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, payoutInBaseUnits + expectedBurnInBaseUnits)`.
-2. On AGIJobManager, call `createJob(jobSpecURI, payout, duration, details)`.
-3. Confirm `JobCreated` event and record `jobId`.
-4. On `EmployerBurnReadHelper` `Read Contract`, call `quoteEmployerBurn(jobId)` and `getEmployerBurnReadiness(jobId)` as preflight helpers; use `canFinalizeEmployerWinWithBurn(jobId)` only when planning to call `finalizeJob`.
-5. Keep extra AGIALPHA balance in the employer wallet for possible employer-win burn (`payout * employerBurnBps / 10_000`).
+1. On `EmployerBurnReadHelper` `Read Contract`, preflight **before** writing:
+   - `quoteCreateJobBurn(payout)`
+   - `getCreateJobFundingRequirement(payout)` or `getCreateJobFundingRequirementWithToken(payout)`
+   - `getCreateJobAllowanceRequirement(payout)` or `getCreateJobAllowanceRequirementWithToken(payout)`
+2. Confirm helper token output is AGIALPHA (`0xA61a3B3a130a9c20768EEBF97E21515A6046a1fA`) for corrected mainnet successor deployments.
+3. On AGIALPHA token Etherscan page, call `approve(AGIJobManager, totalUpfront)` where `totalUpfront = payout + burn`.
+4. On AGIJobManager, call `createJob(jobSpecURI, payout, duration, details)`.
+5. Confirm `JobCreated` event and, when `burnAmount > 0`, confirm `EmployerBurnChargedAtJobCreation`.
+6. For historical audit of a posted job, call `getJobBurnAmountSnapshot(jobId)` and/or `getJobEconomicSnapshot(jobId)` on `EmployerBurnReadHelper`.
 
 ### 2) Agent: apply + complete
 1. Verify agent authorization path (additional list, Merkle root, or ENS ownership).
@@ -137,7 +141,8 @@ flowchart TD
 - Call `finalizeJob(jobId)` when windows/thresholds allow.
 - Success indicators:
   - Agent-win: `JobCompleted`, `NFTIssued`, token transfers.
-  - Employer-win (legacy reference): AGIALPHA refund transfer to employer, no completion NFT mint, and no `JobCompleted` event.
+  - Employer-win: AGIALPHA refund transfer to employer, no completion NFT mint, and no `JobCompleted` event.
+  - Corrected successor invariant: finalization/dispute/refund paths do **not** burn.
 
 ### 5) Disputes
 - Compute dispute bond as `min(max(payout*50/10000, 1e18), 200e18)` then cap at payout, approve AGIALPHA, then call `disputeJob(jobId)`.
