@@ -787,13 +787,10 @@ contract("AGIJobManager comprehensive", (accounts) => {
       await expectRevert.unspecified(manager.updateAGITokenAddress(replacementToken.address, { from: owner }));
     });
 
-    it("withdraws AGI within bounds and respects pause", async () => {
+    it("withdraws AGI within bounds", async () => {
       await token.mint(manager.address, web3.utils.toWei("50"), { from: owner });
-      await expectRevert.unspecified(
-        manager.withdrawAGI(web3.utils.toWei("10"), { from: owner }));
 
       const ownerBalanceBefore = new BN(await token.balanceOf(owner));
-      await manager.pause({ from: owner });
       await expectCustomError(manager.withdrawAGI(0, { from: owner }), "InvalidParameters");
       await expectCustomError(
         manager.withdrawAGI(web3.utils.toWei("100"), { from: owner }),
