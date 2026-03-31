@@ -149,7 +149,7 @@ This path uses the Etherscan **Write Contract** UI. You will need the contract a
 3. Call `approve(spender, amount)` where:
    - `spender` = AGIJobManager contract address
    - `amount` = at least `payout + expectedBurn` for EmployerBurn variant
-   - `expectedBurn` = `payout * employerBurnBps / 10_000` (burn only if employer wins settlement)
+   - `expectedBurn` = `payout * employerBurnBps / 10_000` (burn is charged immediately at `createJob` and is never charged in settlement/refund paths)
 4. **After the job completes**, revoke or reduce the allowance by calling `approve(spender, 0)`.
 
 ### Common calls (click‑by‑click)

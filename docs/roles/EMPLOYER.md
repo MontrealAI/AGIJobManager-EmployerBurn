@@ -9,14 +9,12 @@ This guide is for job posters (employers). It shows how to safely create and man
 
 ## Step‑by‑step (non‑technical, Etherscan-first)
 > **Screenshot placeholder:** Etherscan “Write Contract” tab showing `createJob` inputs filled in.
-### 1) Approve escrow amount
+### 1) Approve total createJob funding amount
 Use your wallet or Etherscan to approve AGIALPHA to the **AGIJobManager contract**.
 
-- Minimum safe approval for EmployerBurn variant:
-  - `approval >= payout + expectedBurn`
-  - where `expectedBurn = payout * employerBurnBps / 10_000`.
-- The extra burn approval is only consumed if settlement ends in an employer-win path.
-- If burn policy is `0` bps, extra burn approval is not required.
+- Set allowance to at least `payout + expectedBurn` where `expectedBurn = payout * employerBurnBps / 10_000`.
+- In successor `v0.2.0`, the burn is charged only at `createJob` and is non-refundable.
+- If burn policy is `0` bps, total allowance equals payout only.
 
 ### 2) Create a job
 Generate/upload the **job spec metadata** JSON and call `createJob(jobSpecURI, payout, duration, details)`.
@@ -27,7 +25,7 @@ Generate/upload the **job spec metadata** JSON and call `createJob(jobSpecURI, p
 
 **On‑chain results**
 - Event: `JobCreated`
-- Token movement: employer → contract (escrow)
+- Token movement: employer → contract (escrow) and employer wallet → burn via AGIALPHA `burnFrom` when burn bps > 0
 
 ### 3) Monitor applications and completion
 Agents can apply and then request completion. You can monitor events:
@@ -40,12 +38,13 @@ If no agent has been assigned and the job is not completed, call `cancelJob(jobI
 ### 5) Dispute (if needed)
 Call `disputeJob(jobId)` if you disagree with the completion or validation direction.
 
-### 6) Employer-burn preflight checks (recommended)
-Use `EmployerBurnReadHelper` in Etherscan **Read Contract** before settlement:
-- `quoteEmployerBurn(jobId)`
-- `getEmployerBurnRequirements(jobId)`
-- `getEmployerBurnReadiness(jobId)`
-- `canFinalizeEmployerWinWithBurn(jobId)` (for `finalizeJob` path only)
+### 6) Employer create-job funding preflight checks (recommended)
+Use `EmployerBurnReadHelper` in Etherscan **Read Contract** before posting:
+- `quoteCreateJobBurn(payout)`
+- `getCreateJobFundingRequirement(payout)`
+- `getCreateJobAllowanceRequirement(payout)`
+- `getCreateJobFundingRequirementWithToken(payout)` (includes token address)
+- `getJobBurnAmountSnapshot(jobId)` / `getJobEconomicSnapshot(jobId)` for completed preflight audits
 
 ### 7) Receive NFT receipt
 When a job completes, an NFT is minted to your wallet.
@@ -54,7 +53,7 @@ When a job completes, an NFT is minted to your wallet.
 
 ## Common mistakes
 - **Insufficient allowance** → `TransferFailed`
-- **Employer-win settlement revert after dispute/finalize** → usually missing employer burn allowance or wallet balance for `burnFrom`.
+- **`createJob` revert** → usually missing total allowance/balance for `payout + burn` or invalid payout/duration.
 - **Job already assigned or completed** → `InvalidState`
 - **Wrong jobId** → `JobNotFound`
 

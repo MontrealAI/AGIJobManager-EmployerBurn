@@ -10,7 +10,7 @@
 
 ## What remained intentionally unchanged
 - On-chain contract names remain `AGIJobManager` / `ENSJobPages` for ABI/address compatibility.
-- Employer burn economics remain unchanged: burn only on employer-win finalization paths and only via employer `burnFrom` authorization.
+- This handoff note is superseded by successor `v0.2.0`: burn is charged only at `createJob`, funded from employer wallet, with no settlement-path burn.
 - ENS hooks remain best-effort and non-authoritative for settlement correctness.
 
 ## External sign-offs still required
