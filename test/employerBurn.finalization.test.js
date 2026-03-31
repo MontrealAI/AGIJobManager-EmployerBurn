@@ -294,7 +294,32 @@ contract('AGIJobManager createJob-only employer burn semantics', (accounts) => {
     assert.equal(req.burnAmount.toString(), burn.toString());
     assert.equal(req.totalUpfront.toString(), total.toString());
 
+    const reqWithToken = await helper.getCreateJobFundingRequirementWithToken(payout);
+    assert.equal(reqWithToken.token, token.address);
+    assert.equal(reqWithToken.escrowAmount.toString(), payout.toString());
+    assert.equal(reqWithToken.burnAmount.toString(), burn.toString());
+    assert.equal(reqWithToken.totalUpfront.toString(), total.toString());
+
     const allowance = await helper.getCreateJobAllowanceRequirement(payout);
     assert.equal(allowance.toString(), total.toString());
+  });
+
+  it('never treats create-time burn as escrow or protocol-funded refundable balance', async () => {
+    await setup({ burnBps: 100 });
+    const payout = toBN(toWei('60'));
+    const burn = payout.divn(100);
+    const total = payout.add(burn);
+
+    await token.mint(employer, total, { from: owner });
+    await token.approve(manager.address, total, { from: employer });
+    const tx = await manager.createJob('ipfs-job', payout, 3600, 'details', { from: employer });
+    const jobId = tx.logs.find((l) => l.event === 'JobCreated').args.jobId.toNumber();
+    assert.equal((await manager.lockedEscrow()).toString(), payout.toString(), 'locked escrow must only track payout');
+    assert.equal((await token.balanceOf(manager.address)).toString(), payout.toString(), 'contract only receives escrow, not burn');
+
+    await manager.cancelJob(jobId, { from: employer });
+    assert.equal((await token.balanceOf(manager.address)).toString(), '0', 'refund drains escrow only');
+    assert.equal((await token.balanceOf(employer)).toString(), payout.toString(), 'employer receives escrow refund only');
+    assert.equal((await token.totalSupply()).toString(), web3.utils.toBN(toWei('3000')).add(payout).toString(), 'create-time burn remains destroyed and unreimbursed');
   });
 });

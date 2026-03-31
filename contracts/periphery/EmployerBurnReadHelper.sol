@@ -80,6 +80,17 @@ contract EmployerBurnReadHelper {
         totalUpfront = escrowAmount + burnAmount;
     }
 
+    function getCreateJobFundingRequirementWithToken(uint256 payout)
+        external
+        view
+        returns (address token, uint256 escrowAmount, uint256 burnAmount, uint256 totalUpfront)
+    {
+        token = manager.agiToken();
+        escrowAmount = payout;
+        burnAmount = (payout * manager.employerBurnBps()) / 10_000;
+        totalUpfront = escrowAmount + burnAmount;
+    }
+
     function getCreateJobAllowanceRequirement(uint256 payout) external view returns (uint256 allowanceRequired) {
         allowanceRequired = payout + ((payout * manager.employerBurnBps()) / 10_000);
     }
