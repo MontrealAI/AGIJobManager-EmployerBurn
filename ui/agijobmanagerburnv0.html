@@ -872,7 +872,7 @@
 
       <div class="card">
         <div class="noticeTitle">Quick Bond Calculator</div>
-        <div class="helper" style="margin-bottom:10px">Fast planning tool using the live contract parameters shown on this page. Validator bond uses the public bond parameters directly. Dispute bond follows the contract constants in the verified source. Agent bond uses deterministic client-side math that mirrors the verified BondMath parameters (payout, duration, bps, min, max, and duration limit).</div>
+        <div class="helper" style="margin-bottom:10px">Fast planning tool using the live contract parameters shown on this page. Validator/dispute/agent bond math remains unchanged, and createJob-time employer burn is shown separately as non-escrow burn plus total upfront.</div>
         <div class="calc-grid">
           <div class="miniStat" style="grid-column:1/-1">
             <label for="calcPayout">Job payout ($AGIALPHA)</label>
@@ -886,10 +886,12 @@
           <div class="miniStat"><span class="k">Validator bond</span><span class="v" id="calcValidatorBond">—</span></div>
           <div class="miniStat"><span class="k">Dispute bond</span><span class="v" id="calcDisputeBond">—</span></div>
           <div class="miniStat"><span class="k">Validator reward pool</span><span class="v" id="calcRewardPool">—</span></div>
+          <div class="miniStat"><span class="k">Employer burn (createJob)</span><span class="v" id="calcEmployerBurn">—</span></div>
+          <div class="miniStat"><span class="k">Total upfront now</span><span class="v" id="calcTotalUpfront">—</span></div>
         </div>
         <details style="margin-top:10px">
           <summary>Calculation trace audit</summary>
-          <div class="helper" id="calcTraceAudit">Enter payout/duration to inspect raw-unit clamp and premium steps.</div>
+          <div class="helper" id="calcTraceAudit">Enter payout/duration to inspect bond math plus createJob burn/upfront math.</div>
         </details>
       </div>
     </div>
@@ -1068,7 +1070,7 @@
     <div class="card" id="workflowSection">
       <h2 style="margin:0 0 12px">Lifecycle Guide</h2>
       <div class="stepGrid">
-        <div class="stepCard"><div class="stepNum">1</div><b>Post</b><div class="tiny" style="margin-top:8px">Employer escrows the full payout in $AGIALPHA and publishes a job URI plus optional details.</div></div>
+        <div class="stepCard"><div class="stepNum">1</div><b>Post</b><div class="tiny" style="margin-top:8px">Employer escrows payout and pays the createJob employer burn in $AGIALPHA, then publishes a job URI plus optional details.</div></div>
         <div class="stepCard"><div class="stepNum">2</div><b>Apply</b><div class="tiny" style="margin-top:8px">The first eligible agent can apply, provided ENS or allowlist authorization passes and the agent bond can be posted.</div></div>
         <div class="stepCard"><div class="stepNum">3</div><b>Complete + Review</b><div class="tiny" style="margin-top:8px">Assigned agent requests completion within the allowed duration; validators can then approve or disapprove during review.</div></div>
         <div class="stepCard"><div class="stepNum">4</div><b>Settle</b><div class="tiny" style="margin-top:8px">After challenge/review rules are satisfied, anyone may finalize; otherwise the job can dispute, expire, refund, or complete.</div></div>
@@ -1350,7 +1352,7 @@
 
     <div class="card">
       <h2 style="margin:0 0 10px">Protocol Parameters (Mainnet)</h2>
-      <div class="muted" style="margin-bottom:10px">These values are read directly from the contract. Bonds are computed on-chain from payout/duration using these parameters.</div>
+      <div class="muted" style="margin-bottom:10px">These values are read directly from the contract. Bonds are computed on-chain from payout/duration, while employer burn bps applies separately at createJob time.</div>
       <div class="twoCol">
         <div>
           <div class="muted">agentBond() live floor: <b><span id="agentBondMin">—</span></b> $AGIALPHA</div>
@@ -1366,6 +1368,7 @@
         </div>
         <div>
           <div class="muted">Validation reward %: <b><span id="validationRewardPct">—</span></b></div>
+          <div class="muted">Employer burn bps (createJob): <b><span id="employerBurnBps">—</span></b></div>
           <div class="muted">Max job payout: <b><span id="maxJobPayout">—</span></b> $AGIALPHA</div>
           <div class="muted">Job duration limit: <b><span id="jobDurationLimit">—</span></b> seconds</div>
         </div>
@@ -1745,7 +1748,7 @@ Evaluation methodology"></textarea>
 
       <div class="softCard" style="margin-top:12px">
         <div class="subtleTitle">On-Chain Create Job Transaction</div>
-        <div class="helper" style="margin-bottom:12px">The contract still requires a valid <b>Job Spec URI</b>. Use either an existing URI or the metadata URI generated above. The form below remains the exact transaction payload that will be sent to <code>createJob(jobSpecURI, payout, duration, details)</code>.</div>
+        <div class="helper" style="margin-bottom:12px">The contract still requires a valid <b>Job Spec URI</b>. Use either an existing URI or the metadata URI generated above. The form below remains the exact transaction payload sent to <code>createJob(jobSpecURI, payout, duration, details)</code>; employer burn is charged internally from live protocol bps and is not an extra function argument.</div>
         <div class="twoCol">
           <div>
             <label for="jobSpecURI">Job Spec URI (must be a valid URI)</label>
@@ -1770,10 +1773,19 @@ Evaluation methodology"></textarea>
           <button class="btn" id="useEnsUriPreviewBtn">Copy effective ens:// URI</button>
           <button class="btn btn-primary" id="createJobBtn" data-tx="1">Create Job</button>
         </div>
+        <div class="softCard" style="margin-top:12px">
+          <div class="subtleTitle">Create-time economics preview</div>
+          <div class="kpiGrid">
+            <div class="kpi"><span class="label">Payout escrow</span><span class="value" id="createPayoutEscrowPreview">—</span></div>
+            <div class="kpi"><span class="label">Employer burn (non-refundable)</span><span class="value" id="createEmployerBurnPreview">—</span></div>
+            <div class="kpi"><span class="label">Total upfront now</span><span class="value" id="createTotalUpfrontPreview">—</span></div>
+          </div>
+          <div class="smallNote" style="margin-top:8px">The employer burn is charged during <code>createJob</code>, removed from circulation, and is separate from payout escrow.</div>
+        </div>
         <div class="smallNote" id="createJobReadinessNote" style="margin-top:10px">Best practice: use a canonical <code>ipfs://...</code> Job Spec URI and keep the on-chain details field concise.</div>
         <div class="hintBox" style="margin-top:12px">
           <b>What happens next</b><br>
-          The employer escrows the payout, the contract emits <code>JobCreated</code>, and the ENSJobPages hook may attempt to create or update a corresponding job ENS page using the configured root and resolver stack.
+          The employer escrows payout and pays a separate non-refundable createJob burn, the contract emits <code>JobCreated</code>, and the ENSJobPages hook may attempt to create or update a corresponding job ENS page using the configured root and resolver stack.
         </div>
       </div>
     </div>
@@ -2197,7 +2209,7 @@ Evaluation methodology"></textarea>
       <div class="scrollTerms">
         <details class="term-block" open id="1-definitions">
   <summary>1. Definitions</summary>
-  <div class="term-body">- &quot;Protocol&quot; / &quot;AGIJobManager&quot;: The AGIJobManager smart contract(s) implementing job posting, assignment, escrow, bonds, validation, disputes, and settlement.<br>- &quot;$AGIALPHA&quot;: The ERC-20 token used by the Protocol for job payouts, validator rewards, agent/validator/dispute bonds, and any protocol-retained amounts.<br>- &quot;Employer&quot;: Any person or entity that posts a Job and escrows a payout in $AGIALPHA.<br>- &quot;Agent&quot;: Any person or entity that applies for, performs, and requests completion of a Job.<br>- &quot;Validator&quot;: Any person or entity that votes to approve or disapprove a Job completion request under the Protocol rules, posting any required validator bond.<br>- &quot;Moderator&quot;: An address designated by the Protocol owner with permission to resolve disputes through the Protocol&#x27;s dispute-resolution functions.<br>- &quot;Owner&quot;: The address holding administrative permissions in the Protocol (e.g., pausing, parameter updates, allowlist/blacklist management, moderator management, delisting unassigned jobs, and withdrawing certain withdrawable balances as permitted by the code).<br>- &quot;Job&quot;: A work request defined by an on-chain job id plus off-chain/on-chain references (e.g., jobSpecURI, details, and later jobCompletionURI).<br>- &quot;Job Spec URI&quot;: A URI describing the Job requested by the Employer.<br>- &quot;Job Completion URI&quot;: A URI submitted by the Agent describing or containing the completion deliverable(s).<br>- &quot;Escrow&quot;: The $AGIALPHA amount deposited by the Employer as the Job payout and held by the Protocol until settlement according to code.<br>- &quot;Bonds&quot;: Any $AGIALPHA amounts posted as Agent bonds, Validator bonds, or Dispute bonds per the Protocol.<br>- &quot;Settlement&quot;: The Protocol&#x27;s distribution of escrowed payout and bonds according to the on-chain rules.<br>- &quot;User Content&quot;: Any Job Spec URI, Job Completion URI, details, or any referenced content (including IPFS/HTTP content) supplied by users.</div>
+  <div class="term-body">- &quot;Protocol&quot; / &quot;AGIJobManager&quot;: The AGIJobManager smart contract(s) implementing job posting, assignment, escrow, bonds, validation, disputes, and settlement.<br>- &quot;$AGIALPHA&quot;: The ERC-20 token used by the Protocol for job payouts, validator rewards, agent/validator/dispute bonds, and any protocol-retained amounts.<br>- &quot;Employer&quot;: Any person or entity that posts a Job, escrows payout, and pays any create-time employer burn in $AGIALPHA.<br>- &quot;Agent&quot;: Any person or entity that applies for, performs, and requests completion of a Job.<br>- &quot;Validator&quot;: Any person or entity that votes to approve or disapprove a Job completion request under the Protocol rules, posting any required validator bond.<br>- &quot;Moderator&quot;: An address designated by the Protocol owner with permission to resolve disputes through the Protocol&#x27;s dispute-resolution functions.<br>- &quot;Owner&quot;: The address holding administrative permissions in the Protocol (e.g., pausing, parameter updates, allowlist/blacklist management, moderator management, delisting unassigned jobs, and withdrawing certain withdrawable balances as permitted by the code).<br>- &quot;Job&quot;: A work request defined by an on-chain job id plus off-chain/on-chain references (e.g., jobSpecURI, details, and later jobCompletionURI).<br>- &quot;Job Spec URI&quot;: A URI describing the Job requested by the Employer.<br>- &quot;Job Completion URI&quot;: A URI submitted by the Agent describing or containing the completion deliverable(s).<br>- &quot;Escrow&quot;: The $AGIALPHA amount deposited by the Employer as the Job payout and held by the Protocol until settlement according to code.<br>- &quot;Bonds&quot;: Any $AGIALPHA amounts posted as Agent bonds, Validator bonds, or Dispute bonds per the Protocol.<br>- &quot;Settlement&quot;: The Protocol&#x27;s distribution of escrowed payout and bonds according to the on-chain rules.<br>- &quot;User Content&quot;: Any Job Spec URI, Job Completion URI, details, or any referenced content (including IPFS/HTTP content) supplied by users.</div>
 </details>
 <details class="term-block" open id="2-nature-of-the-protocol-no-intermediary-code-controls">
   <summary>2. Nature of the Protocol; No Intermediary; Code Controls</summary>
@@ -2209,11 +2221,11 @@ Evaluation methodology"></textarea>
 </details>
 <details class="term-block" id="4-roles-and-exclusive-responsibilities">
   <summary>4. Roles and Exclusive Responsibilities</summary>
-  <div class="term-body">4.1 Employer Responsibilities (Exclusive)<br>The Employer is solely and exclusively responsible for:<br><br>- The legality, accuracy, and completeness of the Job description, Job Spec URI, details, and any referenced content.<br>- Ensuring the Job does not solicit or require unlawful acts, regulated acts without permits, infringement, malware, fraud, or rights violations.<br>- Determining whether a Job creates (or could be interpreted as creating) an employment relationship, and satisfying all obligations associated with such classification, including payroll, withholding, insurance, benefits, reporting, and worker protections.<br>- All tax obligations relating to posting the Job, escrowing $AGIALPHA, receiving any refunds, or any other token transfers.<br>- Any off-chain contracting, NDAs, IP assignments/licenses, confidentiality terms, acceptance criteria, warranties, or service levels for the Job.<br><br>4.2 Agent Responsibilities (Exclusive)<br>The Agent is solely and exclusively responsible for:<br><br>- Performing the Job in accordance with any off-chain agreement with the Employer.<br>- Ensuring all deliverables and the Job Completion URI content are lawful and do not violate third-party rights.<br>- All tax obligations relating to receiving $AGIALPHA payments, posting or forfeiting Agent bonds, or receiving any additional settlement amounts.<br>- Maintaining operational security of wallets, private keys, endpoints, and any systems used to perform Jobs.<br>- Understanding that Agent bonds may be forfeited under certain settlement paths per the code.<br><br>4.3 Validator Responsibilities (Exclusive)<br>Each Validator is solely and exclusively responsible for:<br><br>- Performing independent diligence before approving/disapproving completion, and voting honestly according to their own judgment and any standards they adopt or communicate.<br>- All consequences of their votes, including the possibility of slashing or reduced returns per the Protocol rules.<br>- All tax obligations relating to validator rewards, bond returns, slashing outcomes, and any other transfers.<br>- Compliance with all applicable laws (including any professional, licensing, or regulatory obligations that might apply to their validation activity).<br>- Avoiding bribery, collusion, or manipulation; recognizing that the Protocol&#x27;s incentives may not prevent manipulation and that participation is at their own risk.<br><br>4.4 No Reliance on Validators, Moderators, or Owner<br><br>- Employers and Agents acknowledge that Validator participation may be insufficient, adversarial, mistaken, or absent.<br>- Moderators (where enabled) may act at their discretion, may be unavailable, and owe no duty to any user.<br>- The Owner may pause or restrict functions per the code and owes no duty to keep the Protocol available or to resolve disputes.</div>
+  <div class="term-body">4.1 Employer Responsibilities (Exclusive)<br>The Employer is solely and exclusively responsible for:<br><br>- The legality, accuracy, and completeness of the Job description, Job Spec URI, details, and any referenced content.<br>- Ensuring the Job does not solicit or require unlawful acts, regulated acts without permits, infringement, malware, fraud, or rights violations.<br>- Determining whether a Job creates (or could be interpreted as creating) an employment relationship, and satisfying all obligations associated with such classification, including payroll, withholding, insurance, benefits, reporting, and worker protections.<br>- All tax obligations relating to posting the Job, escrowing $AGIALPHA, paying any non-refundable createJob burn, receiving any refunds, or any other token transfers/burns.<br>- Any off-chain contracting, NDAs, IP assignments/licenses, confidentiality terms, acceptance criteria, warranties, or service levels for the Job.<br><br>4.2 Agent Responsibilities (Exclusive)<br>The Agent is solely and exclusively responsible for:<br><br>- Performing the Job in accordance with any off-chain agreement with the Employer.<br>- Ensuring all deliverables and the Job Completion URI content are lawful and do not violate third-party rights.<br>- All tax obligations relating to receiving $AGIALPHA payments, posting or forfeiting Agent bonds, or receiving any additional settlement amounts.<br>- Maintaining operational security of wallets, private keys, endpoints, and any systems used to perform Jobs.<br>- Understanding that Agent bonds may be forfeited under certain settlement paths per the code.<br><br>4.3 Validator Responsibilities (Exclusive)<br>Each Validator is solely and exclusively responsible for:<br><br>- Performing independent diligence before approving/disapproving completion, and voting honestly according to their own judgment and any standards they adopt or communicate.<br>- All consequences of their votes, including the possibility of slashing or reduced returns per the Protocol rules.<br>- All tax obligations relating to validator rewards, bond returns, slashing outcomes, and any other transfers.<br>- Compliance with all applicable laws (including any professional, licensing, or regulatory obligations that might apply to their validation activity).<br>- Avoiding bribery, collusion, or manipulation; recognizing that the Protocol&#x27;s incentives may not prevent manipulation and that participation is at their own risk.<br><br>4.4 No Reliance on Validators, Moderators, or Owner<br><br>- Employers and Agents acknowledge that Validator participation may be insufficient, adversarial, mistaken, or absent.<br>- Moderators (where enabled) may act at their discretion, may be unavailable, and owe no duty to any user.<br>- The Owner may pause or restrict functions per the code and owes no duty to keep the Protocol available or to resolve disputes.</div>
 </details>
 <details class="term-block" id="5-job-lifecycle-and-core-mechanics-disclosure">
   <summary>5. Job Lifecycle and Core Mechanics (Disclosure)</summary>
-  <div class="term-body">This section summarizes expected mechanics; the deployed code controls.<br><br>5.1 Posting a Job (Employer)<br><br>- To post a Job, the Employer escrows the full payout amount in $AGIALPHA into the Protocol.<br>- The Employer provides a Job Spec URI and optional details.<br>- Jobs may have maximum payout and duration limits set by the Protocol.<br><br>5.2 Applying / Assignment (Agent)<br><br>- A Job may be assigned to the first eligible Agent who successfully applies under the Protocol rules.<br>- Eligibility may depend on authorization mechanisms (e.g., allowlists, Merkle proofs, or ENS-based authorization).<br>- The Protocol may require an Agent bond (computed by code) to be posted at application/assignment time.<br>- The Agent&#x27;s payout percentage may be determined by the Agent&#x27;s holdings of specific NFT types configured in the Protocol and snapshotted at assignment time.<br><br>5.3 Completion Request (Agent)<br><br>- The Agent requests completion by submitting a Job Completion URI within the permitted time windows enforced by the Protocol.<br>- The Protocol may enforce review periods and timeouts.<br><br>5.4 Validation Voting (Validators)<br><br>- Authorized Validators may approve or disapprove during the completion review window.<br>- Validator voting may require posting a Validator bond per vote (computed by code).<br>- Validator votes can trigger:<br>  - Approval threshold reached (with a subsequent challenge window before settlement), or<br>  - Disapproval threshold reached, which may put the Job into dispute.<br><br>5.5 Finalization / Settlement (Anyone may be able to call)<br><br>- After the applicable review/challenge windows, settlement can occur according to the Protocol logic, including outcomes where:<br>  - The Agent wins (payout to Agent, validator rewards distributed, remainder retained by protocol), or<br>  - The Employer wins (refund to Employer, validator settlement, possible agent bond forfeiture), or<br>  - A dispute is forced due to insufficient participation or ties.<br><br>5.6 Expiration<br><br>- If conditions in the code are met (e.g., time elapsed without completion request), a Job may be expired, which can trigger refund mechanics and bond settlement.<br><br>5.7 Cancellation / Delisting<br><br>- An Employer may be able to cancel an unassigned Job (per code).<br>- The Owner may delist/cancel unassigned Jobs (per code).<br>- Users acknowledge there is no obligation to keep a Job listed or available.</div>
+  <div class="term-body">This section summarizes expected mechanics; the deployed code controls.<br><br>5.1 Posting a Job (Employer)<br><br>- To post a Job, the Employer funds two create-time amounts in one transaction: (i) payout escrow deposited into the Protocol, and (ii) a non-refundable employer burn charged only at job creation.<br>- The Employer provides a Job Spec URI and optional details.<br>- Jobs may have maximum payout and duration limits set by the Protocol.<br><br>5.2 Applying / Assignment (Agent)<br><br>- A Job may be assigned to the first eligible Agent who successfully applies under the Protocol rules.<br>- Eligibility may depend on authorization mechanisms (e.g., allowlists, Merkle proofs, or ENS-based authorization).<br>- The Protocol may require an Agent bond (computed by code) to be posted at application/assignment time.<br>- The Agent&#x27;s payout percentage may be determined by the Agent&#x27;s holdings of specific NFT types configured in the Protocol and snapshotted at assignment time.<br><br>5.3 Completion Request (Agent)<br><br>- The Agent requests completion by submitting a Job Completion URI within the permitted time windows enforced by the Protocol.<br>- The Protocol may enforce review periods and timeouts.<br><br>5.4 Validation Voting (Validators)<br><br>- Authorized Validators may approve or disapprove during the completion review window.<br>- Validator voting may require posting a Validator bond per vote (computed by code).<br>- Validator votes can trigger:<br>  - Approval threshold reached (with a subsequent challenge window before settlement), or<br>  - Disapproval threshold reached, which may put the Job into dispute.<br><br>5.5 Finalization / Settlement (Anyone may be able to call)<br><br>- After the applicable review/challenge windows, settlement can occur according to the Protocol logic, including outcomes where:<br>  - The Agent wins (payout to Agent, validator rewards distributed, remainder retained by protocol), or<br>  - The Employer wins (refund to Employer, validator settlement, possible agent bond forfeiture), or<br>  - A dispute is forced due to insufficient participation or ties.<br><br>5.6 Expiration<br><br>- If conditions in the code are met (e.g., time elapsed without completion request), a Job may be expired, which can trigger refund mechanics and bond settlement.<br><br>5.7 Cancellation / Delisting<br><br>- An Employer may be able to cancel an unassigned Job (per code).<br>- The Owner may delist/cancel unassigned Jobs (per code).<br>- Users acknowledge there is no obligation to keep a Job listed or available.</div>
 </details>
 <details class="term-block" id="6-disputes-moderation-no-duty-to-resolve">
   <summary>6. Disputes; Moderation; No Duty to Resolve</summary>
@@ -2221,11 +2233,11 @@ Evaluation methodology"></textarea>
 </details>
 <details class="term-block" id="7-protocol-economics-fees-retained-remainder-disclosure">
   <summary>7. Protocol Economics; Fees; Retained Remainder Disclosure</summary>
-  <div class="term-body">1) Validator reward budget. The Protocol may allocate a portion of the Job payout as a validator reward budget (as snapshotted per job) for distribution to participating Validators, subject to code rules.<br>2) Bond returns and slashing. Validator bonds may be returned in full, partially slashed, or redistributed depending on whether a Validator ends up on the correct side of the final outcome, as defined by the code.<br>3) Protocol-retained remainder (platform revenue). On certain settlement paths (including Agent-win), the Protocol may retain the remainder of the Job payout after Agent and Validator allocations. This remainder may become withdrawable by the Owner under conditions specified in the code (e.g., when paused and when not backing active escrows/bonds).<br>4) No refunds from the Protocol. Token movements are governed by the smart contract; there is no guarantee of reversal, refunds, or discretionary recovery.<br>5) Gas fees. Users pay their own gas/transaction fees and accept the risk of network congestion, failed transactions, MEV, reorgs, and other chain-level issues.</div>
+  <div class="term-body">1) Validator reward budget. The Protocol may allocate a portion of the Job payout as a validator reward budget (as snapshotted per job) for distribution to participating Validators, subject to code rules.<br>2) Bond returns and slashing. Validator bonds may be returned in full, partially slashed, or redistributed depending on whether a Validator ends up on the correct side of the final outcome, as defined by the code.<br>3) Protocol-retained remainder (platform revenue). On certain settlement paths (including Agent-win), the Protocol may retain the remainder of the Job payout after Agent and Validator allocations. This remainder may become withdrawable by the Owner under conditions specified in the code (e.g., when paused and when not backing active escrows/bonds).<br>4) createJob burn disclosure. Any $AGIALPHA burned during job creation is permanently removed from circulation, is not received by the Protocol, Owner, or any third party, and does not represent protocol revenue.<br>5) No refunds from the Protocol. Token movements are governed by the smart contract; there is no guarantee of reversal, refunds, or discretionary recovery.<br>6) Gas fees. Users pay their own gas/transaction fees and accept the risk of network congestion, failed transactions, MEV, reorgs, and other chain-level issues.</div>
 </details>
 <details class="term-block" id="8-taxes-withholding-reporting-exclusive-user-responsibility">
   <summary>8. Taxes, Withholding, Reporting (Exclusive User Responsibility)</summary>
-  <div class="term-body">The Employer, Agent, and each Validator are exclusively responsible for:<br><br>- Determining and paying any and all taxes (income, payroll, self-employment, VAT/GST/sales tax, withholding, capital gains, information reporting, etc.) arising from:<br>  - Job payouts, validator rewards, protocol distributions, refunds;<br>  - Posting, returning, or forfeiting bonds;<br>  - Token price volatility and taxable events in their jurisdiction.<br>- Maintaining records and issuing any required invoices, receipts, and tax forms.<br>- Handling any withholding obligations, if applicable.<br><br>The Protocol does not provide tax advice, does not withhold taxes, and does not issue tax forms.</div>
+  <div class="term-body">The Employer, Agent, and each Validator are exclusively responsible for:<br><br>- Determining and paying any and all taxes (income, payroll, self-employment, VAT/GST/sales tax, withholding, capital gains, information reporting, etc.) arising from:<br>  - Job payouts, validator rewards, protocol distributions, refunds, and create-time token burns;<br>  - Posting, returning, or forfeiting bonds;<br>  - Token price volatility and taxable events in their jurisdiction.<br>- Maintaining records and issuing any required invoices, receipts, and tax forms.<br>- Handling any withholding obligations, if applicable.<br><br>The Protocol does not provide tax advice, does not withhold taxes, and does not issue tax forms.</div>
 </details>
 <details class="term-block" id="9-no-employment-relationship-independent-contractors-only">
   <summary>9. No Employment Relationship; Independent Contractors Only</summary>
@@ -2323,6 +2335,7 @@ Evaluation methodology"></textarea>
     let draftPacketRole = "agent";
     let livePacketRole = "agent";
     let currentLivePacket = null;
+    let currentJobBurnSnapshot = null;
     let jobSearchText = "";
     let jobStatusFilter = "all";
     let jobRoleFilter = "all";
@@ -2398,6 +2411,7 @@ Evaluation methodology"></textarea>
         : (!userAccount ? 'Connect wallet to submit completion.' : (!isMainnet ? 'Switch to Ethereum Mainnet to submit completion.' : (!hasAcceptedTerms ? 'Accept the Terms & Conditions before submitting completion.' : 'Paste a bare CID, ipfs:// URI, or gateway URL. The assistant will canonicalize it, inspect metadata, and preview NFT readiness.')));
       if(el('completionAssistantHint')) el('completionAssistantHint').textContent = completionMsg;
       updateMissionControl();
+      updateCreateJobEconomicsPreview();
     }
     function updateWriteGate(){
       const enabled = isMainnet && hasAcceptedTerms;
@@ -3390,6 +3404,13 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
       const afterPayoutClampRaw = afterMaxClampRaw > payout ? payout : afterMaxClampRaw;
       return { payoutRaw:payout, baseBondRaw, afterMinClampRaw, afterMaxClampRaw, afterPayoutClampRaw, finalBondRaw: afterPayoutClampRaw };
     }
+    function buildEmployerBurnTrace(payoutRaw, burnBpsRaw){
+      const payout = BigInt(payoutRaw || 0);
+      const burnBps = BigInt(burnBpsRaw || 0);
+      const burnAmountRaw = (payout * burnBps) / 10000n;
+      const totalUpfrontRaw = payout + burnAmountRaw;
+      return { payoutRaw:payout, burnBpsRaw:burnBps, burnAmountRaw, totalUpfrontRaw };
+    }
     function buildTraceAuditHtml(title, entries){
       const rows = entries.map(([label, value])=>`<div><b>${escapeHtml(label)}:</b> <code>${escapeHtml(String(value))}</code></div>`).join('');
       return `<details><summary>${escapeHtml(title)}</summary><div class="helper" style="margin-top:8px">${rows}</div></details>`;
@@ -3546,7 +3567,9 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
         el("calcValidatorBond").textContent = "—";
         el("calcDisputeBond").textContent = "—";
         el("calcRewardPool").textContent = "—";
-        if(traceBox) traceBox.textContent = 'Enter payout/duration to inspect raw-unit clamp and premium steps.';
+        el("calcEmployerBurn").textContent = "—";
+        el("calcTotalUpfront").textContent = "—";
+        if(traceBox) traceBox.textContent = 'Enter payout/duration to inspect bond math plus createJob burn/upfront math.';
         return;
       }
       try{
@@ -3556,16 +3579,22 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
         const agentTrace = buildAgentBondTrace({ payout:String(payout), duration:String(duration) });
         const validatorTrace = buildValidatorBondTrace(payout);
         const disputeTrace = buildDisputeBondTrace(payout);
+        const burnTrace = buildEmployerBurnTrace(payout, getProtocolBigInt('employerBurnBps', 0n));
         const rewardPool = (payout * validationPct) / 100n;
         el("calcAgentBond").textContent = formatUnitsToAmount(agentTrace.finalBondRaw);
         el("calcValidatorBond").textContent = formatUnitsToAmount(validatorTrace.finalBondRaw);
         el("calcDisputeBond").textContent = formatUnitsToAmount(disputeTrace.finalBondRaw);
         el("calcRewardPool").textContent = formatUnitsToAmount(rewardPool);
+        el("calcEmployerBurn").textContent = formatUnitsToAmount(burnTrace.burnAmountRaw);
+        el("calcTotalUpfront").textContent = formatUnitsToAmount(burnTrace.totalUpfrontRaw);
         if(traceBox){
           traceBox.innerHTML = [
             `<div><b>Agent final:</b> ${escapeHtml(formatRawAmountTrace(agentTrace.finalBondRaw))}</div>`,
             `<div><b>Validator final:</b> ${escapeHtml(formatRawAmountTrace(validatorTrace.finalBondRaw))}</div>`,
             `<div><b>Dispute final:</b> ${escapeHtml(formatRawAmountTrace(disputeTrace.finalBondRaw))}</div>`,
+            `<div><b>Employer burn bps:</b> ${escapeHtml(burnTrace.burnBpsRaw.toString())} (${escapeHtml((Number(burnTrace.burnBpsRaw)/100).toFixed(2))}%)</div>`,
+            `<div><b>Burn amount raw:</b> ${escapeHtml(formatRawAmountTrace(burnTrace.burnAmountRaw))}</div>`,
+            `<div><b>Total upfront raw:</b> ${escapeHtml(formatRawAmountTrace(burnTrace.totalUpfrontRaw))}</div>`,
             `<div><b>Agent steps:</b> base=${escapeHtml(agentTrace.baseBondRaw.toString())}, minClamp=${escapeHtml(agentTrace.afterMinClampRaw.toString())}, premium=${escapeHtml(agentTrace.durationPremiumRaw.toString())}, maxClamp=${escapeHtml(agentTrace.afterMaxClampRaw.toString())}, payoutClamp=${escapeHtml(agentTrace.afterPayoutClampRaw.toString())}</div>`
           ].join('');
         }
@@ -3574,10 +3603,30 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
         el("calcValidatorBond").textContent = "—";
         el("calcDisputeBond").textContent = "—";
         el("calcRewardPool").textContent = "—";
+        el("calcEmployerBurn").textContent = "—";
+        el("calcTotalUpfront").textContent = "—";
         if(traceBox) traceBox.textContent = 'Unable to build trace. Check payout/duration values.';
       }
     }
 
+
+    function updateCreateJobEconomicsPreview(){
+      const payoutRaw = (el('jobPayout')?.value || '').trim();
+      let payoutUnits = 0n;
+      if(payoutRaw){
+        try{ payoutUnits = parseAmountToUnits(payoutRaw); }
+        catch{
+          if(el('createPayoutEscrowPreview')) el('createPayoutEscrowPreview').textContent = '—';
+          if(el('createEmployerBurnPreview')) el('createEmployerBurnPreview').textContent = '—';
+          if(el('createTotalUpfrontPreview')) el('createTotalUpfrontPreview').textContent = '—';
+          return;
+        }
+      }
+      const burnTrace = buildEmployerBurnTrace(payoutUnits, getProtocolBigInt('employerBurnBps', 0n));
+      if(el('createPayoutEscrowPreview')) el('createPayoutEscrowPreview').textContent = `${formatUnitsToAmount(burnTrace.payoutRaw)} $AGIALPHA`;
+      if(el('createEmployerBurnPreview')) el('createEmployerBurnPreview').textContent = `${formatUnitsToAmount(burnTrace.burnAmountRaw)} $AGIALPHA`;
+      if(el('createTotalUpfrontPreview')) el('createTotalUpfrontPreview').textContent = `${formatUnitsToAmount(burnTrace.totalUpfrontRaw)} $AGIALPHA`;
+    }
 
     function setMeter(id, textId, pct, label){
       const p = Math.max(0, Math.min(100, Number(pct||0)));
@@ -3615,6 +3664,7 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
       setMeter("meterTerms","meterTermsText", hasAcceptedTerms ? 100 : 0, hasAcceptedTerms ? "Ready" : "0%");
       setMeter("meterRole","meterRoleText", roleReady ? 100 : 0, roleReady ? "Ready" : "0%");
       updateMissionControl();
+      updateCreateJobEconomicsPreview();
     }
     async function updateDynamicInsights(){
       try{
@@ -4191,6 +4241,7 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
       await refreshFreeTrialRegistrarState();
       await refreshIdentityState().catch(()=>{});
       await updateMissionControl();
+      updateCreateJobEconomicsPreview();
     }
     function renderRegistrarAdminControls(){
       const box = el('registrarAdminControls');
@@ -4362,6 +4413,7 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
       }
       renderIdentityAdminControls(owner, pendingOwner);
       updateMissionControl();
+      updateCreateJobEconomicsPreview();
     }
     function openAlphaIdentityReview(action){
       const local = validateAlphaLabelLocal(el('mintAlphaLabel')?.value || '');
@@ -5062,6 +5114,7 @@ async function updateSummary(){
         aMin,aBps,aMax,maxActive,
         vBps,vMin,vMax,vSlash,
         vReward,maxPayout,jobLimit,
+        employerBurnBpsRead,
         pausedState,settlePausedRead,drpRead
       ] = await Promise.all([
         agiJobManager.methods.agentBond().call(),
@@ -5075,11 +5128,13 @@ async function updateSummary(){
         agiJobManager.methods.validationRewardPercentage().call(),
         agiJobManager.methods.maxJobPayout().call(),
         agiJobManager.methods.jobDurationLimit().call(),
+        runSafeReadStep('employerBurnBps', ()=>agiJobManager.methods.employerBurnBps().call(), {silent:true}),
         agiJobManager.methods.paused().call(),
         runSafeReadStep('settlementPaused', ()=>agiJobManager.methods.settlementPaused().call(), {silent:true}),
         runSafeReadStep('disputeReviewPeriod', ()=>agiJobManager.methods.disputeReviewPeriod().call(), {silent:true})
       ]);
       const maxActiveSafe = maxActive?.__safeReadError ? '—' : maxActive;
+      const employerBurnBps = employerBurnBpsRead?.__safeReadError ? String(prior.employerBurnBps ?? 0) : String(employerBurnBpsRead || '0');
       const settlePaused = settlePausedRead?.__safeReadError ? (prior.settlementPaused ?? null) : !!settlePausedRead;
       const drp = drpRead?.__safeReadError ? (prior.disputeReviewPeriod ?? null) : Number(drpRead);
 
@@ -5092,6 +5147,7 @@ async function updateSummary(){
       el("validatorBondMin").textContent = formatUnitsToAmount(vMin);
       el("validatorBondMax").textContent = formatUnitsToAmount(vMax);
       el("validatorSlashBps").textContent = vSlash;
+      if(el("employerBurnBps")) el("employerBurnBps").textContent = `${employerBurnBps} (${(Number(employerBurnBps)/100).toFixed(2)}%)`;
 
       window.protocolState = {
         chainId: APP_STATE.wallet.chainId,
@@ -5108,7 +5164,8 @@ async function updateSummary(){
         agentBondBps: String(aBps),
         agentBondMin: String(aMin),
         agentBondMax: String(aMax),
-        jobDurationLimit: String(jobLimit)
+        jobDurationLimit: String(jobLimit),
+        employerBurnBps: Number(employerBurnBps)
       };
       el("validationRewardPct").textContent = String(vReward) + "%";
       el("maxJobPayout").textContent = formatUnitsToAmount(maxPayout);
@@ -5125,6 +5182,7 @@ async function updateSummary(){
 
       el("myJobs").textContent = "—";
       updateCalculator();
+      updateCreateJobEconomicsPreview();
       await updateDynamicInsights();
     }
 
@@ -5207,7 +5265,7 @@ async function updateSummary(){
         if(btn){ btn.textContent = jobFavorites.has(key) ? "★" : "☆"; btn.classList.toggle("active", jobFavorites.has(key)); }
       }
     }
-    function buildJobDossier(job, ens, sim, timeline){
+    function buildJobDossier(job, ens, sim, timeline, burnSnapshot=null){
       return {
         exportedAt: new Date().toISOString(),
         jobId: job.id,
@@ -5216,6 +5274,7 @@ async function updateSummary(){
         job,
         ens,
         simulation: sim,
+        burnSnapshot,
         timeline,
         localNotes: loadJobNotes(job.id)
       };
@@ -5325,6 +5384,7 @@ async function updateSummary(){
       jobStats = stats;
       renderPulse();
       updateMissionControl();
+      updateCreateJobEconomicsPreview();
     }
 
 
@@ -5567,30 +5627,45 @@ async function updateSummary(){
         const payoutUnits = parseAmountToUnits(payout);
         const durationInt = BigInt(duration);
         if(durationInt <= 0n) throw new Error("Duration must be > 0.");
+        const burnTrace = buildEmployerBurnTrace(payoutUnits, getProtocolBigInt('employerBurnBps', 0n));
+        const burnBpsLabel = `${burnTrace.burnBpsRaw.toString()} (${(Number(burnTrace.burnBpsRaw)/100).toFixed(2)}%)`;
         openActionReview({
-          title:`Create Job · escrow ${formatUnitsToAmount(payoutUnits)} $AGIALPHA`,
-          body:'You are about to publish a new job and escrow the full payout into AGIJobManager. If token allowance is insufficient, the UI will guide you through approval first.',
+          title:`Create Job · total upfront ${formatUnitsToAmount(burnTrace.totalUpfrontRaw)} $AGIALPHA`,
+          body:'You are about to publish a new job. createJob escrows payout and separately charges a non-refundable employer burn at creation.',
           facts:[
             {label:'Job Spec URI', value: spec},
             {label:'On-chain details', value: details},
-            {label:'Payout escrow', value: `${formatUnitsToAmount(payoutUnits)} $AGIALPHA`},
+            {label:'Payout escrow', value: `${formatUnitsToAmount(burnTrace.payoutRaw)} $AGIALPHA`},
+            {label:'Employer burn', value: `${formatUnitsToAmount(burnTrace.burnAmountRaw)} $AGIALPHA · ${burnBpsLabel}`},
+            {label:'Total upfront now', value: `${formatUnitsToAmount(burnTrace.totalUpfrontRaw)} $AGIALPHA`},
             {label:'Duration', value: `${durationInt.toString()} seconds · ${secondsToHuman(durationInt.toString())}`}
           ],
           checks:[
             {state:'URI', badge: spec.startsWith('ipfs://') ? 'good' : 'warn', text:'Canonical ipfs:// URIs are preferred for durable job specs.'},
-            {state:'Escrow', badge:'good', text:'The full payout is transferred into the contract on successful createJob.'},
-            {state:'Allowance', badge:'warn', text:'A token approval transaction may be required before createJob can be sent.'}
+            {state:'Escrow', badge:'good', text:'Payout is escrowed in AGIJobManager on successful createJob.'},
+            {state:'Burn', badge: burnTrace.burnAmountRaw > 0n ? 'warn' : 'good', text:'Employer burn is non-refundable and separate from escrow.'},
+            {state:'Allowance', badge:'warn', text:'Approval/allowance may be required for payout + burn total upfront.'}
           ],
           method:`createJob(${JSON.stringify(spec)}, payout=${payoutUnits.toString()}, duration=${durationInt.toString()}, details=${JSON.stringify(details)})`,
           confirmLabel:'Create job',
-          footer:'After confirmation, the UI may first request approve() if your AGIALPHA allowance is below the escrow amount.',
+          footer:'After confirmation, the UI may request approve() if your AGIALPHA allowance is below the total upfront amount.',
           run: async ()=>{
-            const approval = await ensureApproval(payoutUnits, { actionLabel: 'creating this job', explanation: 'Job creation escrows the full payout amount into AGIJobManager.', postActionLabel:`createJob(${spec},${payoutUnits.toString()},${durationInt.toString()},details)` });
+            const freshBurnBpsRead = await runSafeReadStep('employerBurnBps(pre-send)', ()=>agiJobManager.methods.employerBurnBps().call(), {silent:true});
+            const effectiveBurnBpsRaw = freshBurnBpsRead?.__safeReadError ? getProtocolBigInt('employerBurnBps', burnTrace.burnBpsRaw) : BigInt(freshBurnBpsRead || 0);
+            const liveBurnTrace = buildEmployerBurnTrace(payoutUnits, effectiveBurnBpsRaw);
+            if(liveBurnTrace.totalUpfrontRaw !== burnTrace.totalUpfrontRaw){
+              setToast(`Burn bps updated since review: using ${liveBurnTrace.burnBpsRaw.toString()} bps (${formatUnitsToAmount(liveBurnTrace.totalUpfrontRaw)} $AGIALPHA upfront).`, 'warn');
+            }
+            const approval = await ensureApproval(liveBurnTrace.totalUpfrontRaw, { actionLabel: 'creating this job', explanation: 'Job creation escrows payout and charges a separate non-refundable employer burn.', postActionLabel:`createJob(${spec},${payoutUnits.toString()},${durationInt.toString()},details)` });
             if(!approval.ok) return;
             const finalGate = await getTokenBalanceAndAllowance();
-            if(finalGate.balance < payoutUnits || finalGate.allowance < payoutUnits) throw new Error('Create job preflight drifted after approval: allowance or balance is no longer sufficient for escrow. Refresh and retry.');
-            setToast('Sending createJob transaction…', 'warn');
-            await runTrackedTx('Create job', ()=>agiJobManager.methods.createJob(spec, String(payoutUnits), String(durationInt), details).send({from:userAccount}), { pendingDetail:'Escrowing payout and creating the job on-chain.', successDetail:'Job created successfully.' });
+            if(finalGate.balance < liveBurnTrace.totalUpfrontRaw || finalGate.allowance < liveBurnTrace.totalUpfrontRaw) throw new Error('Create job preflight drifted after approval: allowance or balance is no longer sufficient for payout + burn upfront. Refresh and retry.');
+            setToast('Sending createJob transaction (payout escrow + burn)…', 'warn');
+            const receipt = await runTrackedTx('Create job', ()=>agiJobManager.methods.createJob(spec, String(payoutUnits), String(durationInt), details).send({from:userAccount}), { pendingDetail:'Escrowing payout and charging create-time employer burn on-chain.', successDetail: liveBurnTrace.burnAmountRaw > 0n ? `Job created. Employer burn charged: ${formatUnitsToAmount(liveBurnTrace.burnAmountRaw)} $AGIALPHA.` : 'Job created successfully.' });
+            const burnEvt = receipt?.events?.EmployerBurnChargedAtJobCreation?.returnValues;
+            if(burnEvt){
+              setToast(`CreateJob burn: ${formatUnitsToAmount(burnEvt.burnAmount || '0')} $AGIALPHA · total upfront ${formatUnitsToAmount(burnEvt.totalUpfront || '0')} · ${burnEvt.burnBps || '0'} bps.`, 'ok');
+            }
             if(el('jobSpecURI')) el('jobSpecURI').value = spec;
             await refreshAll();
           }
@@ -6621,7 +6696,7 @@ function normalizeIpfsToHttp(uri){
       if(!job) return;
       const sim = simulateJobSettlement(job);
       const [timeline, ens] = await Promise.all([fetchJobTimeline(currentJobDetailId), fetchEnsVisibility(currentJobDetailId)]);
-      const dossier = buildJobDossier(job, ens, sim, timeline);
+      const dossier = buildJobDossier(job, ens, sim, timeline, currentJobBurnSnapshot);
       await navigator.clipboard.writeText(dossierText(dossier));
       setToast("Per-job dossier copied.", "ok");
     }
@@ -6631,7 +6706,7 @@ function normalizeIpfsToHttp(uri){
       if(!job) return;
       const sim = simulateJobSettlement(job);
       const [timeline, ens] = await Promise.all([fetchJobTimeline(currentJobDetailId), fetchEnsVisibility(currentJobDetailId)]);
-      const dossier = buildJobDossier(job, ens, sim, timeline);
+      const dossier = buildJobDossier(job, ens, sim, timeline, currentJobBurnSnapshot);
       downloadTextFile(`agijobmanager-job-${currentJobDetailId}-dossier.json`, dossierText(dossier));
       setToast("Per-job dossier downloaded.", "ok");
     }
@@ -6676,14 +6751,17 @@ function normalizeIpfsToHttp(uri){
         jobCache.set(String(id), job);
       }
       const sim = simulateJobSettlement(job);
+      const burnSnapshotRead = await runSafeReadStep(`getJobBurnBpsSnapshot(${id})`, ()=>agiJobManager.methods.getJobBurnBpsSnapshot(String(id)).call(), {silent:true});
+      const burnSnapshot = burnSnapshotRead?.__safeReadError ? null : buildEmployerBurnTrace(BigInt(job.payout || 0), burnSnapshotRead);
+      currentJobBurnSnapshot = burnSnapshot;
       const [timeline, ens] = await Promise.all([fetchJobTimeline(id), fetchEnsVisibility(id)]);
-      currentLivePacket = buildLiveAutonomousPacket(job, sim, ens);
+      currentLivePacket = buildLiveAutonomousPacket(job, sim, ens, burnSnapshot);
       const title = ens.ensName || ensLabelPreviewForJobId(id);
       el('jobDetailTitle').textContent = `Job #${id} · ${title}`;
       el('jobDetailSubtitle').innerHTML = `${statusPillFrom(job)} <span class="smallNote" style="margin-left:8px">${sim.headline}</span>`;
       el('jobOverview').innerHTML = [
         ['Employer', shortAddr(job.employer)], ['Assigned agent', job.assignedAgent==='0x0000000000000000000000000000000000000000' ? '—' : shortAddr(job.assignedAgent)],
-        ['Payout', formatUnitsToAmount(job.payout)+' $AGIALPHA'], ['Duration', secondsToHuman(job.duration)],
+        ['Payout', formatUnitsToAmount(job.payout)+' $AGIALPHA'], ['Duration', secondsToHuman(job.duration)], ['Employer burn bps snapshot', burnSnapshot ? `${burnSnapshot.burnBpsRaw.toString()} (${(Number(burnSnapshot.burnBpsRaw)/100).toFixed(2)}%)` : 'Unavailable'], ['Create-time burn', burnSnapshot ? `${formatUnitsToAmount(burnSnapshot.burnAmountRaw)} $AGIALPHA` : 'Unavailable'], ['Create-time total upfront', burnSnapshot ? `${formatUnitsToAmount(burnSnapshot.totalUpfrontRaw)} $AGIALPHA` : 'Unavailable'],
         ['Agent payout %', String(job.agentPayoutPct)+'%'], ['Validator reward pool', formatUnitsToAmount(sim.rewardPool)+' $AGIALPHA'],
         ['Validator bond', formatUnitsToAmount(sim.validatorBond)+' $AGIALPHA'], ['Dispute bond', formatUnitsToAmount(computeDisputeBondFromPayout(BigInt(job.payout)))+' $AGIALPHA'],
         ['Assigned at', formatDateTime(job.assignedAt)], ['Completion requested at', formatDateTime(job.completionRequestedAt)],
@@ -6740,7 +6818,7 @@ function normalizeIpfsToHttp(uri){
       el('jobPreflight').innerHTML = buildPreflight(job, sim);
       const notes = loadJobNotes(id);
       if(el('jobPrivateNotes')) el('jobPrivateNotes').value = notes;
-      const dossier = buildJobDossier(job, ens, sim, timeline);
+      const dossier = buildJobDossier(job, ens, sim, timeline, burnSnapshot);
       if(el('jobExportPreview')) el('jobExportPreview').textContent = dossierText(dossier);
       const watchBtn = el('jobWatchToggleBtn');
       if(watchBtn){
@@ -6753,7 +6831,7 @@ function normalizeIpfsToHttp(uri){
       updateModalHash(id);
     }
 
-    function closeJobDetails(){ currentJobDetailId = null; currentLivePacket = null; renderLivePacket(); el('jobDetailModal')?.classList.remove('open'); el('jobDetailModal')?.setAttribute('aria-hidden','true'); clearModalHash(); }
+    function closeJobDetails(){ currentJobDetailId = null; currentLivePacket = null; currentJobBurnSnapshot = null; renderLivePacket(); el('jobDetailModal')?.classList.remove('open'); el('jobDetailModal')?.setAttribute('aria-hidden','true'); clearModalHash(); }
 
     
     function buildPacketBase(source){
@@ -6770,6 +6848,8 @@ function normalizeIpfsToHttp(uri){
     function buildDraftAutonomousPacket(){
       const md = lastGeneratedMetadata || {};
       const p = md.properties || {};
+      const draftPayoutRaw = (()=>{ try{ return parseAmountToUnits((el('jobPayout')?.value || '').trim() || '0'); }catch{ return 0n; } })();
+      const draftBurnTrace = buildEmployerBurnTrace(draftPayoutRaw, getProtocolBigInt('employerBurnBps', 0n));
       return {
         ...buildPacketBase('draft'),
         draft: true,
@@ -6787,9 +6867,16 @@ function normalizeIpfsToHttp(uri){
           predictedEnsName: el('predictedEnsName')?.textContent || null,
           predictedEnsURI: el('predictedEnsURI')?.textContent || null
         },
+        createTimeEconomicsPreview: {
+          employerBurnBps: Number(draftBurnTrace.burnBpsRaw),
+          estimatedBurnAmount: formatUnitsToAmount(draftBurnTrace.burnAmountRaw),
+          estimatedBurnAmountRaw: draftBurnTrace.burnAmountRaw.toString(),
+          estimatedTotalUpfront: formatUnitsToAmount(draftBurnTrace.totalUpfrontRaw),
+          estimatedTotalUpfrontRaw: draftBurnTrace.totalUpfrontRaw.toString()
+        },
         roles: {
           employer: {
-            objective: 'Publish a precise, machine-readable job and escrow the payout.',
+            objective: 'Publish a precise, machine-readable job and fund payout escrow + create-time burn.',
             nextAction: 'createJob(jobSpecURI, payout, duration, details)',
             checklist: ['Confirm payout and duration.', 'Confirm Job Spec URI resolves.', 'Confirm details summary is sufficient for on-chain display.']
           },
@@ -6811,7 +6898,7 @@ function normalizeIpfsToHttp(uri){
         }
       };
     }
-    function buildLiveAutonomousPacket(job, sim, ens){
+    function buildLiveAutonomousPacket(job, sim, ens, burnSnapshot=null){
       return {
         ...buildPacketBase('live-job'),
         job: {
@@ -6837,7 +6924,12 @@ function normalizeIpfsToHttp(uri){
           validatorRewardPool: formatUnitsToAmount(sim.rewardPool),
           retainedRemainder: formatUnitsToAmount(sim.retained),
           validatorBond: formatUnitsToAmount(sim.validatorBond),
-          slashedPerIncorrect: formatUnitsToAmount(sim.slashedPerIncorrect)
+          slashedPerIncorrect: formatUnitsToAmount(sim.slashedPerIncorrect),
+          employerBurnBpsSnapshot: burnSnapshot ? Number(burnSnapshot.burnBpsRaw) : null,
+          createTimeBurnAmount: burnSnapshot ? formatUnitsToAmount(burnSnapshot.burnAmountRaw) : null,
+          createTimeBurnAmountRaw: burnSnapshot ? burnSnapshot.burnAmountRaw.toString() : null,
+          createTimeTotalUpfront: burnSnapshot ? formatUnitsToAmount(burnSnapshot.totalUpfrontRaw) : null,
+          createTimeTotalUpfrontRaw: burnSnapshot ? burnSnapshot.totalUpfrontRaw.toString() : null
         },
         nextLikelyOutcome: {
           headline: sim.headline,
@@ -6954,6 +7046,7 @@ function normalizeIpfsToHttp(uri){
       setAgentBondParams:[{name:'bps',type:'uint256'},{name:'min',type:'uint256'},{name:'max',type:'uint256'}],
       setAgentBond:[{name:'v',type:'uint256'}],
       setValidatorSlashBps:[{name:'v',type:'uint256'}],
+      setEmployerBurnBps:[{name:'bps',type:'uint256'}],
       setChallengePeriodAfterApproval:[{name:'v',type:'uint256'}],
       setValidationRewardPercentage:[{name:'v',type:'uint256'}],
       addAdditionalValidator:[{name:'a',type:'address'}], removeAdditionalValidator:[{name:'a',type:'address'}],
@@ -7090,7 +7183,7 @@ function normalizeIpfsToHttp(uri){
       if(el('managerModeratorPosture')) el('managerModeratorPosture').textContent = isModerator ? 'Connected wallet is moderator' : 'Connected wallet is not moderator';
       if(el('managerAdminPostureBadges')) el('managerAdminPostureBadges').innerHTML = [postureBadge(!!userAccount, 'Wallet connected', 'Wallet disconnected'),postureBadge(!!isManagerOwner, 'AGIJobManager owner', 'Not AGIJobManager owner'),postureBadge(!!isModerator, 'Moderator', 'Not moderator')].join(' ');
       if(el('ensAdminPostureBadges')) el('ensAdminPostureBadges').innerHTML = [postureBadge(!!userAccount, 'Wallet connected', 'Wallet disconnected'),postureBadge(!!isEnsOwner, 'ENSJobPages owner', 'Not ENSJobPages owner')].join(' ');
-      if(el('managerRoutineControls')) el('managerRoutineControls').innerHTML = ['pause','unpause','pauseIntake','unpauseIntake','pauseAll','unpauseAll','setSettlementPaused','addModerator','removeModerator','blacklistAgent','blacklistValidator','delistJob','withdrawAGI','setUseEnsJobTokenURI','updateMerkleRoots','setBaseIpfsUrl','setRequiredValidatorApprovals','setRequiredValidatorDisapprovals','setPremiumReputationThreshold','setVoteQuorum','setMaxJobPayout','setJobDurationLimit','setMaxActiveJobsPerAgent','setCompletionReviewPeriod','setDisputeReviewPeriod','setValidatorBondParams','setAgentBondParams','setAgentBond','setValidatorSlashBps','setChallengePeriodAfterApproval','setValidationRewardPercentage','addAdditionalValidator','removeAdditionalValidator','addAdditionalAgent','removeAdditionalAgent','addAGIType','disableAGIType'].map(m=>adminControlButton('manager',m,false)).join(' ');
+      if(el('managerRoutineControls')) el('managerRoutineControls').innerHTML = ['pause','unpause','pauseIntake','unpauseIntake','pauseAll','unpauseAll','setSettlementPaused','addModerator','removeModerator','blacklistAgent','blacklistValidator','delistJob','withdrawAGI','setUseEnsJobTokenURI','updateMerkleRoots','setBaseIpfsUrl','setRequiredValidatorApprovals','setRequiredValidatorDisapprovals','setPremiumReputationThreshold','setVoteQuorum','setMaxJobPayout','setJobDurationLimit','setMaxActiveJobsPerAgent','setCompletionReviewPeriod','setDisputeReviewPeriod','setValidatorBondParams','setAgentBondParams','setAgentBond','setValidatorSlashBps','setEmployerBurnBps','setChallengePeriodAfterApproval','setValidationRewardPercentage','addAdditionalValidator','removeAdditionalValidator','addAdditionalAgent','removeAdditionalAgent','addAGIType','disableAGIType'].map(m=>adminControlButton('manager',m,false)).join(' ');
       if(el('managerDangerControls')) el('managerDangerControls').innerHTML = ['updateAGITokenAddress','updateEnsRegistry','updateNameWrapper','updateRootNodes','setEnsJobPages','lockIdentityConfiguration','rescueETH','rescueERC20','rescueToken','resolveDisputeWithCode','resolveStaleDispute','withdrawAGI'].map(m=>adminControlButton('manager',m,true)).join(' ');
       if(el('ensRoutineControls')) el('ensRoutineControls').innerHTML = ['setJobLabelPrefix','setENSRegistry','setNameWrapper','setPublicResolver','setJobsRoot','setJobManager','setUseEnsJobTokenURI','createJobPage','onAgentAssigned','onCompletionRequested','revokePermissions','lockJobENS'].map(m=>adminControlButton('ens',m,false)).join(' ');
       if(el('ensDangerControls')) el('ensDangerControls').innerHTML = ['lockConfiguration','migrateLegacyWrappedJobPage'].map(m=>adminControlButton('ens',m,true)).join(' ');
@@ -7159,6 +7252,8 @@ function normalizeIpfsToHttp(uri){
       el("collapseTermsBtn").addEventListener("click", ()=>document.querySelectorAll(".term-block").forEach((d,i)=>d.open=i<2));
       el("calcPayout").addEventListener("input", updateCalculator);
       el("calcDuration").addEventListener("input", updateCalculator);
+      if(el('jobPayout')) el('jobPayout').addEventListener('input', ()=>updateCreateJobEconomicsPreview());
+      if(el('jobDuration')) el('jobDuration').addEventListener('input', ()=>updateCreateJobEconomicsPreview());
       el("closeJobDetailModal").addEventListener("click", closeJobDetails);
       if(el('closeActionReviewModal')) el('closeActionReviewModal').addEventListener('click', closeActionReview);
       if(el('cancelActionReviewBtn')) el('cancelActionReviewBtn').addEventListener('click', closeActionReview);
@@ -7225,6 +7320,7 @@ function normalizeIpfsToHttp(uri){
       updateWriteGate();
       renderCommandPalette('');
       updateMissionControl();
+      updateCreateJobEconomicsPreview();
       renderAttentionQueue();
 
       if(window.ethereum){
