@@ -5150,6 +5150,7 @@ async function updateSummary(){
       if(el("employerBurnBps")) el("employerBurnBps").textContent = `${employerBurnBps} (${(Number(employerBurnBps)/100).toFixed(2)}%)`;
 
       window.protocolState = {
+        ...(prior||{}),
         chainId: APP_STATE.wallet.chainId,
         completionReviewPeriod: Number(crp),
         challengePeriodAfterApproval: chp,
