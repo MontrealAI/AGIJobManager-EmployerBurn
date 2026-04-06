@@ -1943,7 +1943,7 @@ Evaluation methodology"></textarea>
       <h2 style="margin:0 0 12px">Practical Guidance</h2>
       <div class="insightGrid">
         <div class="callout">
-          <b>For Employers</b><br><span class="tiny">Think of this as a dual-funding workflow at posting: payout escrow plus a non-refundable create-time burn. Once a job is created, escrow remains locked by contract rules and burn is already final. The biggest quality lever is the clarity of the jobSpecURI and acceptance criteria.</span>
+          <b>For Employers</b><br><span class="tiny">Think of this as a create-time upfront workflow. Once a job is created, payout is escrowed and a separate non-refundable burn is charged. The biggest quality lever is the clarity of the jobSpecURI and acceptance criteria.</span>
         </div>
         <div class="callout">
           <b>For Agents</b><br><span class="tiny">Your eligibility and payout share depend on the contract rules. Verify your ENS and understand your bond exposure before racing to apply for open work.</span>
@@ -5266,8 +5266,19 @@ async function updateSummary(){
       }
     }
     function buildJobDossier(job, ens, sim, timeline, burnSnapshot=null){
-      const payoutRaw = BigInt(job?.payout || 0);
-      const estimatedBurnTrace = burnSnapshot || buildEmployerBurnTrace(payoutRaw, getProtocolBigInt('employerBurnBps', 0n));
+      const burnEconomics = burnSnapshot ? {
+        employerBurnBpsSnapshot: Number(burnSnapshot.burnBpsRaw),
+        createTimeBurnAmount: formatUnitsToAmount(burnSnapshot.burnAmountRaw),
+        createTimeBurnAmountRaw: burnSnapshot.burnAmountRaw.toString(),
+        createTimeTotalUpfront: formatUnitsToAmount(burnSnapshot.totalUpfrontRaw),
+        createTimeTotalUpfrontRaw: burnSnapshot.totalUpfrontRaw.toString()
+      } : {
+        employerBurnBpsSnapshot: null,
+        createTimeBurnAmount: null,
+        createTimeBurnAmountRaw: null,
+        createTimeTotalUpfront: null,
+        createTimeTotalUpfrontRaw: null
+      };
       return {
         exportedAt: new Date().toISOString(),
         jobId: job.id,
@@ -5277,14 +5288,7 @@ async function updateSummary(){
         ens,
         simulation: sim,
         burnSnapshot,
-        createTimeEconomics: {
-          mode: burnSnapshot ? 'snapshot' : 'estimate',
-          employerBurnBps: Number(estimatedBurnTrace.burnBpsRaw),
-          burnAmount: formatUnitsToAmount(estimatedBurnTrace.burnAmountRaw),
-          burnAmountRaw: estimatedBurnTrace.burnAmountRaw.toString(),
-          totalUpfront: formatUnitsToAmount(estimatedBurnTrace.totalUpfrontRaw),
-          totalUpfrontRaw: estimatedBurnTrace.totalUpfrontRaw.toString()
-        },
+        burnEconomics,
         timeline,
         localNotes: loadJobNotes(job.id)
       };
