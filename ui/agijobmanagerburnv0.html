@@ -5650,12 +5650,18 @@ async function updateSummary(){
           confirmLabel:'Create job',
           footer:'After confirmation, the UI may request approve() if your AGIALPHA allowance is below the total upfront amount.',
           run: async ()=>{
-            const approval = await ensureApproval(burnTrace.totalUpfrontRaw, { actionLabel: 'creating this job', explanation: 'Job creation escrows payout and charges a separate non-refundable employer burn.', postActionLabel:`createJob(${spec},${payoutUnits.toString()},${durationInt.toString()},details)` });
+            const freshBurnBpsRead = await runSafeReadStep('employerBurnBps(pre-send)', ()=>agiJobManager.methods.employerBurnBps().call(), {silent:true});
+            const effectiveBurnBpsRaw = freshBurnBpsRead?.__safeReadError ? getProtocolBigInt('employerBurnBps', burnTrace.burnBpsRaw) : BigInt(freshBurnBpsRead || 0);
+            const liveBurnTrace = buildEmployerBurnTrace(payoutUnits, effectiveBurnBpsRaw);
+            if(liveBurnTrace.totalUpfrontRaw !== burnTrace.totalUpfrontRaw){
+              setToast(`Burn bps updated since review: using ${liveBurnTrace.burnBpsRaw.toString()} bps (${formatUnitsToAmount(liveBurnTrace.totalUpfrontRaw)} $AGIALPHA upfront).`, 'warn');
+            }
+            const approval = await ensureApproval(liveBurnTrace.totalUpfrontRaw, { actionLabel: 'creating this job', explanation: 'Job creation escrows payout and charges a separate non-refundable employer burn.', postActionLabel:`createJob(${spec},${payoutUnits.toString()},${durationInt.toString()},details)` });
             if(!approval.ok) return;
             const finalGate = await getTokenBalanceAndAllowance();
-            if(finalGate.balance < burnTrace.totalUpfrontRaw || finalGate.allowance < burnTrace.totalUpfrontRaw) throw new Error('Create job preflight drifted after approval: allowance or balance is no longer sufficient for payout + burn upfront. Refresh and retry.');
+            if(finalGate.balance < liveBurnTrace.totalUpfrontRaw || finalGate.allowance < liveBurnTrace.totalUpfrontRaw) throw new Error('Create job preflight drifted after approval: allowance or balance is no longer sufficient for payout + burn upfront. Refresh and retry.');
             setToast('Sending createJob transaction (payout escrow + burn)…', 'warn');
-            const receipt = await runTrackedTx('Create job', ()=>agiJobManager.methods.createJob(spec, String(payoutUnits), String(durationInt), details).send({from:userAccount}), { pendingDetail:'Escrowing payout and charging create-time employer burn on-chain.', successDetail: burnTrace.burnAmountRaw > 0n ? `Job created. Employer burn charged: ${formatUnitsToAmount(burnTrace.burnAmountRaw)} $AGIALPHA.` : 'Job created successfully.' });
+            const receipt = await runTrackedTx('Create job', ()=>agiJobManager.methods.createJob(spec, String(payoutUnits), String(durationInt), details).send({from:userAccount}), { pendingDetail:'Escrowing payout and charging create-time employer burn on-chain.', successDetail: liveBurnTrace.burnAmountRaw > 0n ? `Job created. Employer burn charged: ${formatUnitsToAmount(liveBurnTrace.burnAmountRaw)} $AGIALPHA.` : 'Job created successfully.' });
             const burnEvt = receipt?.events?.EmployerBurnChargedAtJobCreation?.returnValues;
             if(burnEvt){
               setToast(`CreateJob burn: ${formatUnitsToAmount(burnEvt.burnAmount || '0')} $AGIALPHA · total upfront ${formatUnitsToAmount(burnEvt.totalUpfront || '0')} · ${burnEvt.burnBps || '0'} bps.`, 'ok');
