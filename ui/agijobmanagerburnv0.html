@@ -3612,7 +3612,16 @@ function abiHas(name){ return (x)=>x.type==='function' && x.name===name; }
 
     function updateCreateJobEconomicsPreview(){
       const payoutRaw = (el('jobPayout')?.value || '').trim();
-      const payoutUnits = payoutRaw ? parseAmountToUnits(payoutRaw) : 0n;
+      let payoutUnits = 0n;
+      if(payoutRaw){
+        try{ payoutUnits = parseAmountToUnits(payoutRaw); }
+        catch{
+          if(el('createPayoutEscrowPreview')) el('createPayoutEscrowPreview').textContent = '—';
+          if(el('createEmployerBurnPreview')) el('createEmployerBurnPreview').textContent = '—';
+          if(el('createTotalUpfrontPreview')) el('createTotalUpfrontPreview').textContent = '—';
+          return;
+        }
+      }
       const burnTrace = buildEmployerBurnTrace(payoutUnits, getProtocolBigInt('employerBurnBps', 0n));
       if(el('createPayoutEscrowPreview')) el('createPayoutEscrowPreview').textContent = `${formatUnitsToAmount(burnTrace.payoutRaw)} $AGIALPHA`;
       if(el('createEmployerBurnPreview')) el('createEmployerBurnPreview').textContent = `${formatUnitsToAmount(burnTrace.burnAmountRaw)} $AGIALPHA`;
