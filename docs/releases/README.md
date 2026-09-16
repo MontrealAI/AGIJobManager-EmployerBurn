@@ -17,7 +17,7 @@ node scripts/release/verify-employerburn-ui.mjs
 python3 scripts/release/package-release.py
 ```
 
-Artifacts appear in `dist/release/v0.3.0/`; the output directory must be empty. The downloadable ZIP includes the original application source under `source/`, separate release references, documentation, and copies of the packaging/validation scripts for inspection. Reproduction requires this release-tooling checkout, not just the original application tag.
+Artifacts appear in `build/release/v0.3.0/`; the output directory must be empty. The downloadable ZIP includes the original application source under `source/`, separate release references, documentation, and copies of the packaging/validation scripts for inspection. Reproduction requires this release-tooling checkout, not just the original application tag.
 
 GitHub creates the `v0.3.0` tag at the configured full commit SHA. The source tag and SHA-256 files are not cryptographic signatures. Preserve existing tags and published assets. Use a new version for subsequent changes; do not reuse this one-shot manifest as a general release switch.
 

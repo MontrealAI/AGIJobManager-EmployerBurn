@@ -43,7 +43,7 @@ jobs:
         run: |
           python3 scripts/release/package-release.py
           python3 scripts/release/package-release.py --out /tmp/employerburn-release-rebuild
-          diff -r dist/release/v0.3.0 /tmp/employerburn-release-rebuild
+          diff -r build/release/v0.3.0 /tmp/employerburn-release-rebuild
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

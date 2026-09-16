@@ -4,7 +4,7 @@ root = pathlib.Path(__file__).resolve().parents[2]
 meta = root / 'docs/releases/v0.3.0'
 config = json.loads((meta / 'release.json').read_text())
 parser = argparse.ArgumentParser()
-parser.add_argument('--out', type=pathlib.Path, default=root / 'dist/release/v0.3.0')
+parser.add_argument('--out', type=pathlib.Path, default=root / 'build/release/v0.3.0')
 args = parser.parse_args()
 out = args.out.resolve()
 out.mkdir(parents=True, exist_ok=True)
