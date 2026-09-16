@@ -1,0 +1,41 @@
+{
+  "network": "mainnet",
+  "chainId": 1,
+  "targets": [
+    {
+      "name": "UriUtils",
+      "fqn": "contracts/utils/UriUtils.sol:UriUtils",
+      "address": "0xC3AB963f5fA639682a6F65C980D0a37E9Fe2376A"
+    },
+    {
+      "name": "TransferUtils",
+      "fqn": "contracts/utils/TransferUtils.sol:TransferUtils",
+      "address": "0x187cd1233623299eD42C67C7725a4A7b62383C99"
+    },
+    {
+      "name": "BondMath",
+      "fqn": "contracts/utils/BondMath.sol:BondMath",
+      "address": "0xA425E4A3d41F95523CF29Bc28e370b0E39e1e89e"
+    },
+    {
+      "name": "ReputationMath",
+      "fqn": "contracts/utils/ReputationMath.sol:ReputationMath",
+      "address": "0x825A62E719b14fab76d4CA6385ab40A239F69739"
+    },
+    {
+      "name": "ENSOwnership",
+      "fqn": "contracts/utils/ENSOwnership.sol:ENSOwnership",
+      "address": "0x95A0c4C251B62abF6cE2e9BA96b635B6A4a7bb0C"
+    },
+    {
+      "name": "AGIJobManager",
+      "fqn": "contracts/AGIJobManager.sol:AGIJobManager",
+      "address": "0xBF6699c1F24BEBBFaBb515583e88a055BF2F9eC2"
+    },
+    {
+      "name": "EmployerBurnReadHelper",
+      "fqn": "contracts/periphery/EmployerBurnReadHelper.sol:EmployerBurnReadHelper",
+      "address": "0x8D22A1070d3BAA01dA77564df5fC0B6bff5fA399"
+    }
+  ]
+}

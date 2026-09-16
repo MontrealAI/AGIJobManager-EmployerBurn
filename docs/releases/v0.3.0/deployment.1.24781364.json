@@ -1,0 +1,121 @@
+{
+  "chainId": 1,
+  "network": "mainnet",
+  "explorerBaseUrl": "https://etherscan.io",
+  "timestamp": "2026-04-01T01:10:01.066Z",
+  "deployer": "0x6c8B8897Fb6b08B4070387233B89b3E9A94eD00E",
+  "finalOwner": "0xa9eD0539c2fbc5C6BC15a2E168bd9BCd07c01201",
+  "contracts": {
+    "UriUtils": {
+      "address": "0xC3AB963f5fA639682a6F65C980D0a37E9Fe2376A",
+      "txHash": "0x96ed31940536e8eb69bae5b92786fc9cd89a8bb51fc1e81692eb830f9975f8f5",
+      "blockNumber": 24781341
+    },
+    "TransferUtils": {
+      "address": "0x187cd1233623299eD42C67C7725a4A7b62383C99",
+      "txHash": "0x4fc3ff89922377bcd64e0fa65f39873e1f06bb98d78c6df1b2e2d4c778e5ffa8",
+      "blockNumber": 24781344
+    },
+    "BondMath": {
+      "address": "0xA425E4A3d41F95523CF29Bc28e370b0E39e1e89e",
+      "txHash": "0x3e2bef9bfe322d1afcd22ee28b4f8757c601830642f6f23236da9a65ce2ebde1",
+      "blockNumber": 24781347
+    },
+    "ReputationMath": {
+      "address": "0x825A62E719b14fab76d4CA6385ab40A239F69739",
+      "txHash": "0x19ce2a01964e50b9a326100700cdcbcacce709c6012e2c443532752e0daa39d7",
+      "blockNumber": 24781352
+    },
+    "ENSOwnership": {
+      "address": "0x95A0c4C251B62abF6cE2e9BA96b635B6A4a7bb0C",
+      "txHash": "0xd2e8159b0ad676e9df4eeab23222918591bbf66031ef715cd83d8bcdab8ce916",
+      "blockNumber": 24781356
+    },
+    "AGIJobManager": {
+      "address": "0xBF6699c1F24BEBBFaBb515583e88a055BF2F9eC2",
+      "txHash": "0x4294fe156f5cc5860b7726232d05f7be791cdd0f52466d3b2a22bb08accee343",
+      "blockNumber": 24781364
+    },
+    "EmployerBurnReadHelper": {
+      "address": "0x8D22A1070d3BAA01dA77564df5fC0B6bff5fA399",
+      "txHash": "0xb10ac1b298d50153c4c2b8b3dd3b5c6559417ff64c1cbcccf6d6c1780ca466c4",
+      "blockNumber": 24781367
+    }
+  },
+  "constructorArgs": {
+    "agiTokenAddress": "0xa61a3b3a130a9c20768eebf97e21515a6046a1fa",
+    "baseIpfsUrl": "https://ipfs.io/ipfs/",
+    "ensConfig": [
+      "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
+      "0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401"
+    ],
+    "rootNodes": [
+      "0x39eb848f88bdfb0a6371096249dd451f56859dfe2cd3ddeab1e26d5bb68ede16",
+      "0x2c9c6189b2e92da4d0407e9deb38ff6870729ad063af7e8576cb7b7898c88e2d",
+      "0x6487f659ec6f3fbd424b18b685728450d2559e4d68768393f9c689b2b6e5405e",
+      "0xc74b6c5e8a0d97ed1fe28755da7d06a84593b4de92f6582327bc40f41d6c2d5e"
+    ],
+    "merkleRoots": [
+      "0x0effa6c54d4c4866ca6e9f4fc7426ba49e70e8f6303952e04c8f0218da68b99b",
+      "0x0effa6c54d4c4866ca6e9f4fc7426ba49e70e8f6303952e04c8f0218da68b99b"
+    ]
+  },
+  "libraries": {
+    "contracts/utils/UriUtils.sol:UriUtils": "0xC3AB963f5fA639682a6F65C980D0a37E9Fe2376A",
+    "contracts/utils/TransferUtils.sol:TransferUtils": "0x187cd1233623299eD42C67C7725a4A7b62383C99",
+    "contracts/utils/BondMath.sol:BondMath": "0xA425E4A3d41F95523CF29Bc28e370b0E39e1e89e",
+    "contracts/utils/ReputationMath.sol:ReputationMath": "0x825A62E719b14fab76d4CA6385ab40A239F69739",
+    "contracts/utils/ENSOwnership.sol:ENSOwnership": "0x95A0c4C251B62abF6cE2e9BA96b635B6A4a7bb0C"
+  },
+  "ownershipTransfer": {
+    "executed": true,
+    "txHash": "0x590e66eff097d58278cbe44baeac9c348a590caf3a2e93d759315b2bb2e6153c",
+    "blockNumber": 24781374,
+    "reason": null
+  },
+  "verification": {
+    "UriUtils": {
+      "contract": "UriUtils",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "TransferUtils": {
+      "contract": "TransferUtils",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "BondMath": {
+      "contract": "BondMath",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "ReputationMath": {
+      "contract": "ReputationMath",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "ENSOwnership": {
+      "contract": "ENSOwnership",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "AGIJobManager": {
+      "contract": "AGIJobManager",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    },
+    "EmployerBurnReadHelper": {
+      "contract": "EmployerBurnReadHelper",
+      "status": "verified",
+      "attempts": 1,
+      "error": null
+    }
+  },
+  "configHash": "0xa7ac3ca1ddf50ce9795205467affd4f315b620e86652153f12f746b7e308309c"
+}

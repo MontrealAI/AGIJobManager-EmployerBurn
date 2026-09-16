@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "repository": "MontrealAI/AGIJobManager-EmployerBurn",
+  "tag": "v0.3.0",
+  "name": "v0.3.0 \u2014 EmployerBurn UI \u00b7 Current-State Final Release",
+  "releaseDate": "2026-09-16",
+  "sourceCommit": "cdf75e7a95afa0894be253a1929d3ca5e8c16ca1",
+  "sourceTree": "2669f53eb05dcb1f87d38114611cc622ad4c0268",
+  "previousTag": "v0.2.0",
+  "uiValidationCommit": "a28ba651ad0714cfaad856b1e40f8c3ee3728387",
+  "primaryUI": "ui/agijobmanagerburnv2.html",
+  "scope": "Frozen source and standalone UI release; no contract deployment or fresh production certification.",
+  "releaseAssets": {
+    "deployment.1.24781364.json": "0ff3bcacbf334917aa5d854931ceddb7cb4a2673da753659cfd51c635decc23c",
+    "verify-targets.json": "2d086f116b4c45d91583ef4db745e77304142fb27fdc0e0b3bcdb049e551c160"
+  },
+  "requiredSourceRuns": {
+    "ci": {
+      "id": 24054258867,
+      "workflow": "ci.yml"
+    },
+    "docs": {
+      "id": 24054258883,
+      "workflow": "docs.yml"
+    },
+    "security": {
+      "id": 24054258894,
+      "workflow": "security-verification.yml"
+    }
+  },
+  "requiredUIRun": {
+    "id": 24052606787,
+    "workflow": "ui.yml"
+  }
+}
